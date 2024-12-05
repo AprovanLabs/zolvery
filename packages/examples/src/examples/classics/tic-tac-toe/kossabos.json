@@ -1,0 +1,12 @@
+{
+    "name": "Tic Tac Toe",
+    "description": "A simple game of tic tac toe",
+    "version": "0.0.1",
+    "author": {
+        "name": "Jacob Sampson",
+        "email": "jacob.samps@gmail.com"
+    },
+    "tags": [
+        "game"
+    ]
+}

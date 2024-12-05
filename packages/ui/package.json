@@ -1,0 +1,38 @@
+{
+    "name": "@kossabos/ui",
+    "version": "3.0.1",
+    "description": "Kossabos UI components",
+    "main": "dist/main.js",
+    "types": "types/main.d.ts",
+    "author": "kossabos",
+    "homepage": "https://motioncanvas.io/",
+    "bugs": "https://github.com/JacobSampson/kossabos/issues",
+    "license": "MIT",
+    "type": "module",
+    "scripts": {
+        "dev": "vite",
+        "build": "tsc && vite build",
+        "type": "tsc -w",
+        "showcase": "tsc && vite build -c vite.showcase.ts",
+        "preview": "vite preview"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/JacobSampson/kossabos.git"
+    },
+    "files": [
+        "dist",
+        "types"
+    ],
+    "dependencies": {
+        "@kossabos/core": "^0.0.0"
+    },
+    "devDependencies": {
+        "@preact/preset-vite": "^2.5.0",
+        "clsx": "^1.2.1",
+        "highlight.js": "^11.7.0",
+        "preact": "^10.13.0",
+        "sass": "^1.58.0",
+        "source-map-js": "^1.0.2"
+    }
+}

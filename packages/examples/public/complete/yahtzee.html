@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script lang="text/js" defer>
+        window.__unocss = {
+            theme: {
+                colors: {
+                    nytimes: {
+                        green: '#6aaa64',
+                        yellow: '#c9b458',
+                        background: '#ffffff',
+                        text: '#1a1a1a',
+                        border: '#d3d6da'
+                    }
+                }
+            }
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@unocss/runtime"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@unocss/reset/tailwind.min.css" />
+</head>
+
+<body>
+    <div id="app"></div>
+
+    <script type="module" defer>
+        import {
+            MotionPlugin,
+            useMotion,
+        } from 'https://cdn.jsdelivr.net/npm/@vueuse/motion@2.2.6/+esm';
+
+        const { ref, computed, createApp } = Vue;
+
+        const app = createApp({
+            setup() {
+                const dice = ref([
+                    { value: 1, held: false },
+                    { value: 1, held: false },
+                    { value: 1, held: false },
+                    { value: 1, held: false },
+                    { value: 1, held: false }
+                ]);
+
+                const rolls = ref(3);
+                const score = ref(0);
+                const gameOver = ref(false);
+
+                const diceMotion = useMotion(dice);
+
+                const rollDice = () => {
+                    if (rolls.value > 0 && !gameOver.value) {
+                        dice.value.forEach((die, index) => {
+                            if (!die.held) {
+                                die.value = Math.floor(Math.random() * 6) + 1;
+                                diceMotion.apply({
+                                    initial: { scale: 1, rotate: 0 },
+                                    enter: {
+                                        scale: [1.2, 1],
+                                        rotate: 360,
+                                        transition: { duration: 500 }
+                                    }
+                                });
+                            }
+                        });
+                        rolls.value--;
+                    }
+                };
+
+                const toggleHold = (index) => {
+                    if (rolls.value < 3 && !gameOver.value) {
+                        dice.value[index].held = !dice.value[index].held;
+                    }
+                };
+
+                const resetGame = () => {
+                    dice.value.forEach(die => {
+                        die.value = 1;
+                        die.held = false;
+                    });
+                    rolls.value = 3;
+                    score.value = 0;
+                    gameOver.value = false;
+                };
+
+                const scoreHand = () => {
+                    const values = dice.value.map(d => d.value);
+                    const counts = new Array(7).fill(0);
+                    values.forEach(v => counts[v]++);
+
+                    // Calculate Yahtzee
+                    if (counts.some(c => c === 5)) {
+                        score.value = 50;
+                    }
+                    gameOver.value = true;
+                };
+
+                return {
+                    dice,
+                    rolls,
+                    score,
+                    gameOver,
+                    rollDice,
+                    toggleHold,
+                    resetGame,
+                    scoreHand
+                };
+            },
+            template: `
+          <div class="flex flex-col items-center justify-center min-h-screen bg-nytimes-background p-4">
+            <h1 class="text-4xl font-bold mb-8 text-nytimes-text">Yahtzee</h1>
+            
+            <div class="flex gap-4 mb-8">
+              <div
+                v-for="(die, index) in dice"
+                :key="index"
+                @click="toggleHold(index)"
+                class="w-16 h-16 flex items-center justify-center text-2xl font-bold rounded-lg cursor-pointer transition-all duration-200"
+                :class="die.held ? 'bg-nytimes-yellow text-white' : 'bg-white border-2 border-nytimes-border'"
+              >
+                {{ die.value }}
+              </div>
+            </div>
+
+            <div class="flex gap-4 mb-8">
+              <button
+                @click="rollDice"
+                :disabled="rolls === 0 || gameOver"
+                class="px-6 py-2 rounded-full font-bold transition-all duration-200"
+                :class="rolls > 0 && !gameOver ? 'bg-nytimes-green text-white hover:opacity-90' : 'bg-gray-200 text-gray-500'"
+              >
+                Roll ({{ rolls }} left)
+              </button>
+
+              <button
+                @click="scoreHand"
+                :disabled="gameOver"
+                class="px-6 py-2 rounded-full bg-nytimes-yellow text-white font-bold hover:opacity-90 transition-all duration-200"
+                :class="gameOver ? 'opacity-50' : ''"
+              >
+                Score Hand
+              </button>
+            </div>
+
+            <div v-if="gameOver" class="text-center">
+              <p class="text-2xl font-bold mb-4">Final Score: {{ score }}</p>
+              <button
+                @click="resetGame"
+                class="px-6 py-2 rounded-full bg-nytimes-green text-white font-bold hover:opacity-90 transition-all duration-200"
+              >
+                Play Again
+              </button>
+            </div>
+          </div>
+        `,
+        });
+
+        app.use(MotionPlugin);
+        app.mount('#app');
+    </script>
+</body>
+
+</html>

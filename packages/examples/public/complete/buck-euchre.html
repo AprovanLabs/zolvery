@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buck Euchre - NY Times Style</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script lang="text/js" defer>
+        window.__unocss = {
+            theme: { colors: { nytimes: { green: '#6aaa64', yellow: '#c9b458' } } }
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@unocss/runtime"></script>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@unocss/reset/tailwind.min.css">
+</head>
+
+<body>
+    <div id="app"></div>
+
+    <script type="module" defer>
+        import { useMotion, MotionPlugin } from 'https://cdn.jsdelivr.net/npm/@vueuse/motion@2.2.6/+esm';
+        const { ref, computed, createApp } = Vue
+
+        const app = createApp({
+            setup() {
+                const deck = ref([]);
+                const players = ref([
+                    { name: 'Player 1', hand: [], score: 0 },
+                    { name: 'Player 2', hand: [], score: 0 },
+                    { name: 'Player 3', hand: [], score: 0 },
+                    { name: 'Player 4', hand: [], score: 0 }
+                ]);
+                const currentPlayer = ref(0);
+                const trumpSuit = ref('');
+                const playedCards = ref([]);
+                const gameState = ref('start'); // start, playing, end
+
+                const suits = ['♠', '♥', '♣', '♦'];
+                const values = ['9', '10', 'J', 'Q', 'K', 'A'];
+
+                const initializeDeck = () => {
+                    deck.value = [];
+                    for (let suit of suits) {
+                        for (let value of values) {
+                            deck.value.push({ suit, value });
+                        }
+                    }
+                };
+
+                const shuffleDeck = () => {
+                    for (let i = deck.value.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [deck.value[i], deck.value[j]] = [deck.value[j], deck.value[i]];
+                    }
+                };
+
+                const dealCards = () => {
+                    for (let player of players.value) {
+                        player.hand = deck.value.splice(0, 6);
+                    }
+                    console.log('Dealt cards:', deck.value[0]);
+                    trumpSuit.value = { suit: suits[0], value: values[0] };
+                };
+
+                const startGame = () => {
+                    initializeDeck();
+                    shuffleDeck();
+                    dealCards();
+                    gameState.value = 'playing';
+                };
+
+                const playCard = (playerIndex, cardIndex) => {
+                    if (playerIndex !== currentPlayer.value) return;
+
+                    const card = players.value[playerIndex].hand.splice(cardIndex, 1)[0];
+                    playedCards.value.push({ ...card, playerIndex });
+
+                    if (playedCards.value.length === 4) {
+                        setTimeout(() => {
+                            const winningCard = determineWinningCard();
+                            players.value[winningCard.playerIndex].score += 1;
+                            playedCards.value = [];
+                            currentPlayer.value = winningCard.playerIndex;
+                        }, 1000);
+                    } else {
+                        currentPlayer.value = (currentPlayer.value + 1) % 4;
+                    }
+
+                    if (players.value.every(player => player.hand.length === 0)) {
+                        gameState.value = 'end';
+                    }
+                };
+
+                const determineWinningCard = () => {
+                    return playedCards.value.reduce((winner, card) => {
+                        if (card.suit === trumpSuit.value && winner.suit !== trumpSuit.value) {
+                            return card;
+                        }
+                        if (card.suit === winner.suit && values.indexOf(card.value) > values.indexOf(winner.value)) {
+                            return card;
+                        }
+                        return winner;
+                    });
+                };
+
+                const cardMotion = useMotion({
+                    initial: { scale: 0, opacity: 0 },
+                    enter: { scale: 1, opacity: 1 },
+                    leave: { scale: 0, opacity: 0 },
+                });
+
+                return {
+                    players,
+                    currentPlayer,
+                    trumpSuit,
+                    playedCards,
+                    gameState,
+                    startGame,
+                    playCard,
+                    cardMotion
+                }
+            },
+            template: `
+        <div class="flex flex-col items-center justify-center min-h-screen p-4 bg-gray-100">
+          <h1 class="mb-8 text-4xl font-bold text-gray-800">Buck Euchre</h1>
+          <div v-if="gameState === 'start'" class="text-center">
+            <button @click="startGame" class="px-4 py-2 font-bold text-white transition-colors rounded bg-nytimes-green hover:bg-opacity-80">
+              Start Game
+            </button>
+          </div>
+          <div v-else-if="gameState === 'playing'" class="w-full max-w-4xl">
+            <div class="mb-4 text-center">
+              <span class="font-bold">Trump Suit:</span> {{ trumpSuit }}
+            </div>
+            <div class="grid grid-cols-2 gap-4 mb-8">
+              <div v-for="(player, index) in players" :key="index" class="p-4 bg-white rounded shadow">
+                <h2 class="mb-2 text-xl font-bold">{{ player.name }} (Score: {{ player.score }})</h2>
+                <div class="flex flex-wrap gap-2">
+                  <button
+                    v-for="(card, cardIndex) in player.hand"
+                    :key="cardIndex"
+                    @click="playCard(index, cardIndex)"
+                    :disabled="currentPlayer !== index"
+                    class="px-3 py-2 font-bold text-black transition-colors rounded bg-nytimes-yellow hover:bg-opacity-80 disabled:opacity-50"
+                    v-motion="cardMotion"
+                  >
+                    {{ card.value }}{{ card.suit }}
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="mb-4 text-center">
+              <h3 class="mb-2 text-xl font-bold">Played Cards</h3>
+              <div class="flex justify-center gap-4">
+                <div
+                  v-for="(card, index) in playedCards"
+                  :key="index"
+                  class="p-2 bg-white rounded shadow"
+                  v-motion="cardMotion"
+                >
+                  {{ card.value }}{{ card.suit }}
+                </div>
+              </div>
+            </div>
+            <div class="text-center">
+              <span class="font-bold">Current Player:</span> {{ players[currentPlayer].name }}
+            </div>
+          </div>
+          <div v-else-if="gameState === 'end'" class="text-center">
+            <h2 class="mb-4 text-2xl font-bold">Game Over</h2>
+            <div v-for="player in players" :key="player.name" class="mb-2">
+              {{ player.name }}: {{ player.score }} points
+            </div>
+            <button @click="startGame" class="px-4 py-2 mt-4 font-bold text-white transition-colors rounded bg-nytimes-green hover:bg-opacity-80">
+              Play Again
+            </button>
+          </div>
+        </div>
+      `
+        })
+
+        app.use(MotionPlugin)
+        app.mount('#app')
+    </script>
+</body>
+
+</html>
