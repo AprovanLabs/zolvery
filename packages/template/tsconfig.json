@@ -1,0 +1,13 @@
+{
+    "extends": "@kossabos/core/tsconfig.json",
+    "compilerOptions": {
+        "baseUrl": "src",
+        "types": [
+            "node",
+            "dom-webcodecs"
+        ]
+    },
+    "include": [
+        "src"
+    ]
+}

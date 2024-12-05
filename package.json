@@ -1,0 +1,47 @@
+{
+    "name": "kossabos",
+    "private": true,
+    "workspaces": [
+        "packages/*"
+    ],
+    "scripts": {
+        "prepare": "husky install",
+        "core:build": "npm run build -w packages/core",
+        "core:watch": "npm run watch -w packages/core",
+        "core:test": "npm run test -w packages/core",
+        "ui:build": "npm run build -w packages/ui",
+        "ui:dev": "npm run dev -w packages/ui",
+        "ui:showcase": "npm run showcase -w packages/ui",
+        "template:serve": "npm run serve -w packages/template",
+        "template:build": "npm run build -w packages/template",
+        "examples:serve": "npm run serve -w packages/examples",
+        "examples:build": "npm run build -w packages/examples",
+        "docs:start": "npm run start -w packages/docs",
+        "docs:build": "npm run build -w packages/docs",
+        "vite-plugin:build": "npm run build -w packages/vite-plugin",
+        "vite-plugin:watch": "npm run watch -w packages/vite-plugin",
+        "e2e:test": "npm run test -w packages/e2e",
+        "eslint": "eslint --fix \"**/*.ts?(x)\"",
+        "prettier": "prettier --write ."
+    },
+    "devDependencies": {
+        "@commitlint/cli": "^17.0.3",
+        "@commitlint/config-conventional": "^17.0.3",
+        "@typescript-eslint/eslint-plugin": "^8.14.0",
+        "@typescript-eslint/parser": "^8.14.0",
+        "eslint": "^9.16.0",
+        "eslint-plugin-tsdoc": "^0.2.16",
+        "husky": "^8.0.0",
+        "lerna": "^5.3.0",
+        "lint-staged": "^13.0.3",
+        "prettier": "^2.7.1",
+        "vitest": "2.1.5"
+    },
+    "lint-staged": {
+        "*.{ts,tsx}": "eslint --fix",
+        "*.{js,jsx,ts,tsx,md,scss}": "prettier --write"
+    },
+    "dependencies": {
+        "@trivago/prettier-plugin-sort-imports": "4.3.0"
+    }
+}

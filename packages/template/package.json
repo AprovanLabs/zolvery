@@ -1,0 +1,20 @@
+{
+    "name": "@kossabos/template",
+    "private": true,
+    "version": "0.0.0",
+    "description": "Basic project template for Motion Canvas",
+    "author": "kossabos",
+    "license": "MIT",
+    "main": "src/project.ts",
+    "scripts": {
+        "serve": "vite",
+        "build": "tsc && vite build"
+    },
+    "dependencies": {
+        "@kossabos/core": "*"
+    },
+    "devDependencies": {
+        "@kossabos/ui": "*",
+        "vite": "^5.4.11"
+    }
+}

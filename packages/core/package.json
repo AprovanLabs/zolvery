@@ -1,0 +1,16 @@
+{
+    "name": "@kossabos/core",
+    "private": true,
+    "version": "0.0.0",
+    "scripts": {
+        "serve": "vite",
+        "build": "tsc && vite build"
+    },
+    "dependencies": {
+        "@kossabos/core": "*"
+    },
+    "devDependencies": {
+        "@kossabos/ui": "*",
+        "vite": "*"
+    }
+}
