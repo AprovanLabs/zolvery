@@ -7,7 +7,7 @@
         window.__unocss = {
             theme: {
                 colors: {
-                    nytimes: {
+                    kossabos: {
                         green: '#6aaa64',
                         yellow: '#c9b458',
                         blue: '#385898',
@@ -97,13 +97,13 @@
             },
             template: `
           <div class="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-4">
-            <h1 class="text-4xl font-bold mb-8 text-nytimes-blue">NY Times Poker</h1>
+            <h1 class="text-4xl font-bold mb-8 text-kossabos-blue">NY Times Poker</h1>
             
             <div v-if="gameState === 'initial'" 
                  v-motion="{ initial: { scale: 0.8, opacity: 0 }, enter: { scale: 1, opacity: 1 } }"
                  class="flex flex-col items-center">
               <button @click="newGame" 
-                      class="bg-nytimes-blue text-white px-6 py-3 rounded-lg text-xl hover:bg-opacity-90">
+                      class="bg-kossabos-blue text-white px-6 py-3 rounded-lg text-xl hover:bg-opacity-90">
                 Start Game
               </button>
             </div>
@@ -116,7 +116,7 @@
                      class="flex justify-center gap-4">
                   <div v-for="card in dealerHand" 
                        class="bg-white p-4 rounded-lg shadow-lg w-24 h-32 flex items-center justify-center text-2xl"
-                       :class="card.suit === '♥' || card.suit === '♦' ? 'text-nytimes-red' : 'text-gray-900'">
+                       :class="card.suit === '♥' || card.suit === '♦' ? 'text-kossabos-red' : 'text-gray-900'">
                     {{ card.value }}{{ card.suit }}
                   </div>
                 </div>
@@ -128,7 +128,7 @@
                      class="flex justify-center gap-4">
                   <div v-for="card in playerHand" 
                        class="bg-white p-4 rounded-lg shadow-lg w-24 h-32 flex items-center justify-center text-2xl"
-                       :class="card.suit === '♥' || card.suit === '♦' ? 'text-nytimes-red' : 'text-gray-900'">
+                       :class="card.suit === '♥' || card.suit === '♦' ? 'text-kossabos-red' : 'text-gray-900'">
                     {{ card.value }}{{ card.suit }}
                   </div>
                 </div>
@@ -140,7 +140,7 @@
                   Fold
                 </button>
                 <button @click="call" 
-                        class="bg-nytimes-green text-white px-6 py-3 rounded-lg hover:bg-opacity-90">
+                        class="bg-kossabos-green text-white px-6 py-3 rounded-lg hover:bg-opacity-90">
                   Call
                 </button>
               </div>
@@ -151,7 +151,7 @@
                  class="text-center">
               <h2 class="text-2xl mb-4">{{ result }}</h2>
               <button @click="newGame" 
-                      class="bg-nytimes-blue text-white px-6 py-3 rounded-lg hover:bg-opacity-90">
+                      class="bg-kossabos-blue text-white px-6 py-3 rounded-lg hover:bg-opacity-90">
                 Play Again
               </button>
             </div>

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kossabos Project</title>
+
+    <script src="https://unpkg.com/rxjs@^7/dist/bundles/rxjs.umd.min.js"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/@vueuse/shared"></script>
+    <script src="https://unpkg.com/@vueuse/core"></script>
+    <script src="https://unpkg.com/@vueuse/rxjs"></script>
+
+    <script lang="text/js" defer>
+      window.__unocss = {
+        theme: {
+          colors: {
+            kossabos: {
+              green: '#6aaa64',
+              yellow: '#c9b458'
+            }
+          }
+        }
+      }
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/@unocss/runtime"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@unocss/reset/tailwind.min.css"
+    />
+  </head>
+
+  <body>
+    <main id="app"></main>
+
+    <script type="module" defer>
+      import { on } from '/src/core/events.ts';
+      import { createChildMessageBus } from '/src/core/message-bus.ts';
+      import { getQueryParam, loadScript } from '/util.js';
+
+      const { BehaviorSubject } = rxjs;
+      const events = new BehaviorSubject();
+      const messageBus = createChildMessageBus((e) => events.next(e));
+
+      window.Kossabos = {
+        on: on(events),
+        emit: messageBus.postMessage,
+      };
+
+      const projectId = getQueryParam('projectId');
+      loadScript(`/src/examples/${projectId}/index.js`, (app) =>
+        {
+          app.mount('#app');
+          messageBus.postMessage('loaded');
+        },
+      );
+    </script>
+  </body>
+</html>

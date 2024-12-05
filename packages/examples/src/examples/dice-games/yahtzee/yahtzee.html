@@ -7,7 +7,7 @@
         window.__unocss = {
             theme: {
                 colors: {
-                    nytimes: {
+                    kossabos: {
                         green: '#6aaa64',
                         yellow: '#c9b458',
                         background: '#ffffff',
@@ -108,8 +108,8 @@
                 };
             },
             template: `
-          <div class="flex flex-col items-center justify-center min-h-screen bg-nytimes-background p-4">
-            <h1 class="text-4xl font-bold mb-8 text-nytimes-text">Yahtzee</h1>
+          <div class="flex flex-col items-center justify-center min-h-screen bg-kossabos-background p-4">
+            <h1 class="text-4xl font-bold mb-8 text-kossabos-text">Yahtzee</h1>
             
             <div class="flex gap-4 mb-8">
               <div
@@ -117,7 +117,7 @@
                 :key="index"
                 @click="toggleHold(index)"
                 class="w-16 h-16 flex items-center justify-center text-2xl font-bold rounded-lg cursor-pointer transition-all duration-200"
-                :class="die.held ? 'bg-nytimes-yellow text-white' : 'bg-white border-2 border-nytimes-border'"
+                :class="die.held ? 'bg-kossabos-yellow text-white' : 'bg-white border-2 border-kossabos-border'"
               >
                 {{ die.value }}
               </div>
@@ -128,7 +128,7 @@
                 @click="rollDice"
                 :disabled="rolls === 0 || gameOver"
                 class="px-6 py-2 rounded-full font-bold transition-all duration-200"
-                :class="rolls > 0 && !gameOver ? 'bg-nytimes-green text-white hover:opacity-90' : 'bg-gray-200 text-gray-500'"
+                :class="rolls > 0 && !gameOver ? 'bg-kossabos-green text-white hover:opacity-90' : 'bg-gray-200 text-gray-500'"
               >
                 Roll ({{ rolls }} left)
               </button>
@@ -136,7 +136,7 @@
               <button
                 @click="scoreHand"
                 :disabled="gameOver"
-                class="px-6 py-2 rounded-full bg-nytimes-yellow text-white font-bold hover:opacity-90 transition-all duration-200"
+                class="px-6 py-2 rounded-full bg-kossabos-yellow text-white font-bold hover:opacity-90 transition-all duration-200"
                 :class="gameOver ? 'opacity-50' : ''"
               >
                 Score Hand
@@ -147,7 +147,7 @@
               <p class="text-2xl font-bold mb-4">Final Score: {{ score }}</p>
               <button
                 @click="resetGame"
-                class="px-6 py-2 rounded-full bg-nytimes-green text-white font-bold hover:opacity-90 transition-all duration-200"
+                class="px-6 py-2 rounded-full bg-kossabos-green text-white font-bold hover:opacity-90 transition-all duration-200"
               >
                 Play Again
               </button>
