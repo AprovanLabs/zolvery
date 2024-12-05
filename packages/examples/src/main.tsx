@@ -1,21 +1,8 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 
-import { KossabosEngine } from './core/server';
+import { createMessageBus } from './core/message-bus';
 import { User } from './core/user';
-import workerUrl from './examples/classics/tic-tac-toe/index?worker&url';
-import { ReactRenderer } from './ui/renderer';
-import { createWorkerBus } from './ui/worker-bus';
-
-const hostUrl = new URL(import.meta.url).origin;
-const worker = new Worker(
-  new URL(`${hostUrl}${workerUrl}`),
-  { type: 'module' },
-);
-const eventBus = createWorkerBus(worker);
-
-const engine = new KossabosEngine();
-const reactRenderer = new ReactRenderer();
 
 const user: User = {
   name: 'Jack Sampson',
@@ -31,19 +18,34 @@ const project = {
   tags: ['game', 'classic'],
 };
 
-const App: React.FC = () => (
-  <div>
-    <header>Kossabos</header>
-    <iframe
-      src={`/sandbox.html?projectId=${projectId}`}
-      sandbox="allow-scripts allow-same-origin"
-      style={{ display: 'none' }}
-    />
+const App: React.FC = () => {
+  const ref = useRef<HTMLIFrameElement>(null);
 
-    {reactRenderer.render(project, user, eventBus.getEventTarget())}
-    <footer>Footer</footer>
-  </div>
-);
+  useEffect(() => {
+    const contentWindow = ref.current?.contentWindow;
+    if (!contentWindow) return;
+    const eventBus = createMessageBus(contentWindow, (e) =>
+      console.log('p', e),
+    );
+    setTimeout(() => eventBus.postMessage('turn', {}), 500);
+  }, [ref]);
+
+  return (
+    <div>
+      <header>Kossabos</header>
+      <iframe
+        ref={ref}
+        src={`/environments/v1.html?projectId=${projectId}`}
+        sandbox="allow-scripts allow-same-origin"
+        style={{
+          border: 'none',
+          width: '100%',
+          height: '100vh',
+        }}
+      />
+    </div>
+  );
+};
 
 const root = createRoot(document.getElementById('root')!);
 root.render(<App />);

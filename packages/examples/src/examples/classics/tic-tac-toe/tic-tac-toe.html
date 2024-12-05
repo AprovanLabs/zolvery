@@ -9,7 +9,7 @@
     window.__unocss = {
       theme: {
         colors: {
-          nytimes: {
+          kossabos: {
             green: '#6aaa64',
             yellow: '#c9b458'
           }
@@ -107,8 +107,8 @@
                 @click="makeMove(index)"
                 class="flex items-center justify-center w-20 h-20 text-4xl font-bold transition-colors duration-200 rounded"
                 :class="[
-                  cell === 'X' ? 'bg-nytimes-green text-white' :
-                  cell === 'O' ? 'bg-nytimes-yellow text-white' :
+                  cell === 'X' ? 'bg-kossabos-green text-white' :
+                  cell === 'O' ? 'bg-kossabos-yellow text-white' :
                   'bg-gray-200 hover:bg-gray-300'
                 ]"
                 v-motion="cellMotion"

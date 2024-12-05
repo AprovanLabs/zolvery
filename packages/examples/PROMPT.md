@@ -18,7 +18,7 @@ Use the below template:
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script lang="text/js" defer>
       window.__unocss = {
-        theme: { colors: { nytimes: { green: '#6aaa64', yellow: '#c9b458' } } }
+        theme: { colors: { kossabos: { green: '#6aaa64', yellow: '#c9b458' } } }
       }
     </script>
     <script src="https://cdn.jsdelivr.net/npm/@unocss/runtime"></script>
@@ -60,7 +60,7 @@ Use the below template:
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script lang="text/js" defer>
       window.__unocss = {
-        theme: { colors: { nytimes: { green: '#6aaa64', yellow: '#c9b458' } } }
+        theme: { colors: { kossabos: { green: '#6aaa64', yellow: '#c9b458' } } }
       }
     </script>
     <script src="https://cdn.jsdelivr.net/npm/@unocss/runtime"></script>
