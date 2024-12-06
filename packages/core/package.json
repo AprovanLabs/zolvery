@@ -7,10 +7,8 @@
         "build": "tsc && vite build"
     },
     "dependencies": {
-        "@kossabos/core": "*"
     },
     "devDependencies": {
-        "@kossabos/ui": "*",
         "vite": "*"
     }
 }

@@ -5,9 +5,7 @@
     },
     "ignorePatterns": [
         "**/*.js",
-        "**/*.d.ts",
-        "packages/template",
-        "packages/create/template-*"
+        "**/*.d.ts"
     ],
     "extends": [
         "eslint:recommended",

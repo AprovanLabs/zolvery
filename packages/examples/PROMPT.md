@@ -1,6 +1,3 @@
-Generate a Buck Euchre card game in the style of NY Times games (a la Wordle,
-Crossword Mini, Connections, and Spelling Bee)
-
 Use the following technologies:
 
 - Vue, without '.vue' files
