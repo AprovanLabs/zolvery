@@ -1,29 +1,34 @@
-const { ref, createApp } = window.Vue
-const { on, emit } = window.Kossabos
+const { Vue: vue, Kossabos: kossabos } = window;
+
+const { ref, createApp } = vue;
+const { on, emit } = kossabos;
 
 export default createApp({
   setup() {
-    const board = ref(Array(9).fill(null))
-    const currentPlayer = ref('X')
-    const winner = ref(null)
-    const gameOver = ref(false)
-
-    on('turn', (e) => console.log('e!', e));
-    emit('final', {value: 2})
+    const board = ref(Array(9).fill(null));
+    const currentPlayer = ref('x');
+    const winner = ref(null);
+    const gameOver = ref(false);
+    const winningCombo = ref(null);
 
     const winningCombos = [
-      [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
-      [0, 3, 6], [1, 4, 7], [2, 5, 8], // Columns
-      [0, 4, 8], [2, 4, 6]             // Diagonals
-    ]
+      [0, 1, 2],
+      [3, 4, 5],
+      [6, 7, 8], // Rows
+      [0, 3, 6],
+      [1, 4, 7],
+      [2, 5, 8], // Columns
+      [0, 4, 8],
+      [2, 4, 6], // Diagonals
+    ];
 
     const makeMove = (index) => {
       if (!board.value[index] && !winner.value) {
-        board.value[index] = currentPlayer.value
-        checkWinner()
-        currentPlayer.value = currentPlayer.value === 'X' ? 'O' : 'X'
+        board.value[index] = currentPlayer.value;
+        checkWinner();
+        currentPlayer.value = currentPlayer.value === 'x' ? 'o' : 'x';
       }
-    }
+    };
 
     const checkWinner = () => {
       for (let combo of winningCombos) {
@@ -32,22 +37,41 @@ export default createApp({
           board.value[combo[0]] === board.value[combo[1]] &&
           board.value[combo[0]] === board.value[combo[2]]
         ) {
-          winner.value = board.value[combo[0]]
-          gameOver.value = true
-          return
+          winner.value = board.value[combo[0]];
+          gameOver.value = true;
+          winningCombo.value = combo;
+
+          emit('final', {
+            label: `${currentPlayer} is the winner!`,
+            standings: [
+              { place: 1, user: currentPlayer },
+              { place: 2, user: currentPlayer === 'x' ? 'o' : 'x' },
+            ],
+          });
+          return;
         }
       }
-      if (board.value.every(cell => cell !== null)) {
-        gameOver.value = true
+      if (board.value.every((cell) => cell !== null)) {
+        gameOver.value = true;
+        emit('final', {
+          label: `It's a draw!`,
+          standings: [
+            { place: 1, user: 'x' },
+            { place: 1, user: 'o' },
+          ],
+        });
       }
-    }
+    };
 
     const resetGame = () => {
-      board.value = Array(9).fill(null)
-      currentPlayer.value = 'X'
-      winner.value = null
-      gameOver.value = false
-    }
+      board.value = Array(9).fill(null);
+      currentPlayer.value = 'x';
+      winner.value = null;
+      gameOver.value = false;
+      winningCombo.value = null;
+    };
+
+    on('reset', () => resetGame());
 
     return {
       board,
@@ -56,47 +80,43 @@ export default createApp({
       gameOver,
       makeMove,
       resetGame,
-    }
+    };
   },
   template: `
-    <div class="flex items-center justify-center min-h-screen bg-gray-100">
-      <div class="w-full max-w-md p-8 bg-white shadow-lg rounded-xl">
-        <h1 class="mb-6 text-3xl font-bold text-center text-gray-800">NY Times Tic Tac Toe</h1>
-        <div class="grid grid-cols-3 gap-2 mb-6">
+    <div class="flex pt-8 justify-center">
+      <div class="w-full max-w-md p-8">
+        <div class="grid grid-cols-3 gap-2 mb-6 justify-items-center">
           <button
+            v-motion
             v-for="(cell, index) in board"
             :key="index"
             @click="makeMove(index)"
             class="flex items-center justify-center w-20 h-20 text-4xl font-bold transition-colors duration-200 rounded"
             :class="[
-              cell === 'X' ? 'bg-kossabos-green text-white' :
-              cell === 'O' ? 'bg-kossabos-yellow text-white' :
-              'bg-gray-200 hover:bg-gray-300'
-            ]"
+                  cell === 'x' ? 'bg-green-500 text-white' :
+                  cell === 'o' ? 'bg-blue-500 text-white' :
+                  'bg-gray-200 hover:bg-gray-300'
+                ]"
+            :initial="{ padding: 0, rotate: 0, scale: 0.8 }"
+            :hovered="{ padding: 10, rotate: Math.random() * 30 - 15, scale: 1 }"
+          ></button>
+        </div>
+        <div class="text-center">
+          <span
+            class="text-md text-gray-500 font-light flex items-center gap-4 justify-center w-full"
           >
-            {{ cell }}
-          </button>
+            Current Player:
+            <span
+              class="flex items-center justify-center w-4 h-4 text-4xl font-bold transition-colors duration-200 rounded"
+              :class="[
+                    currentPlayer === 'x' ? 'bg-green-500 text-white' :
+                    currentPlayer === 'o' ? 'bg-blue-500 text-white' :
+                    'bg-gray-200 hover:bg-gray-300'
+                  ]"
+            ></span>
+          </span>
         </div>
-        <div v-if="gameOver" class="mb-6 text-center">
-          <p v-if="winner" class="text-2xl font-bold text-gray-800">
-            Player {{ winner }} wins!
-          </p>
-          <p v-else class="text-2xl font-bold text-gray-800">
-            It's a draw!
-          </p>
-        </div>
-        <div v-else class="mb-6 text-center">
-          <p class="text-xl text-gray-700">
-            Current player: <span class="font-bold">{{ currentPlayer }}</span>
-          </p>
-        </div>
-        <button
-          @click="resetGame"
-          class="w-full px-4 py-2 font-semibold text-white transition-colors duration-200 bg-blue-600 rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75"
-        >
-          New Game
-        </button>
       </div>
     </div>
-  `
-})
+  `,
+});

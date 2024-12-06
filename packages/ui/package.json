@@ -25,7 +25,6 @@
         "types"
     ],
     "dependencies": {
-        "@kossabos/core": "^0.0.0"
     },
     "devDependencies": {
         "@preact/preset-vite": "^2.5.0",
