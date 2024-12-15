@@ -1,22 +1,26 @@
 import { Observable, filter } from 'rxjs';
 
-export type Event<T extends string, V = unknown> = {
+export type Event_<T extends string, V = unknown>  = {
   type: Readonly<T>;
   timestamp: Readonly<number>;
-  value?: V
+  value?: V,
+  source: 'server' | 'client',
+  sourceId: string,
+  credentials?: string,
+  context: unknown,
 };
 
-export type FinishEvent = Event<'finish'> & unknown;
-export type StartEvent = Event<'start'> & unknown;
+export type FinishEvent = Event_<'finish'> & unknown;
+export type StartEvent = Event_<'start'> & unknown;
 
-export type KossabosEvent =
+export type Event =
   | FinishEvent
   | StartEvent;
 
-export type EventType = KossabosEvent['type'];
+export type EventType = Event['type'];
 
-export const on = <T extends Event<EventType>>(
-  eventStream: Observable<KossabosEvent>
+export const on = <T extends Event_<EventType>>(
+  eventStream: Observable<Event>
 ) => (
   eventType: T['type'],
   action: (event: T) => void,

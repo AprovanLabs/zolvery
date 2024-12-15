@@ -1,0 +1,24 @@
+{
+    "projectId": "black-jack",
+    "version": "0.0.1",
+    "runner": "vue-boardgameio",
+    "author": {
+        "username": "Jacob Sampson",
+        "email": "jacob.samps@gmail.com"
+    },
+    "tags": ["game", "classics"],
+    "features": ["bots"],
+    "settings": [
+        {
+            "id": "num-players",
+            "label": "settings.num-players",
+            "options": [
+                { "value": "1" },
+                { "value": "2" },
+                { "value": "3" },
+                { "value": "4" }
+            ],
+            "default": "1"
+        }
+    ]
+}
