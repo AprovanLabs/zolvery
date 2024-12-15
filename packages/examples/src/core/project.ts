@@ -3,7 +3,6 @@ import { User } from './user';
 export type Project = {
   name: string;
   author: User;
-  description: string;
   tags: string[];
 };
 

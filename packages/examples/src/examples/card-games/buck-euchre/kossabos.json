@@ -1,0 +1,7 @@
+{
+    "id": "card-games/buck-euchre",
+    "name": "Buck Euchre",
+    "description": "A card game",
+    "tags": ["card-game", "classic"],
+    "version": "0.0.1"
+}

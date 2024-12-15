@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Kossabos</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+
+    <!-- Icons -->
+    <script src="https://cdn.jsdelivr.net/npm/heroicons-css@0.1.1/heroicons.min.js"></script>
+    <link
+      href="https://cdn.jsdelivr.net/npm/heroicons-css@0.1.1/heroicons.min.css"
+      rel="stylesheet"
+    />
+
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Modules -->
+    <script async src="https://unpkg.com/es-module-shims"></script>
+    <script type="importmap">
+      {
+        "imports": {
+          "vue": "https://cdn.jsdelivr.net/npm/vue@3.5.13/dist/vue.esm-bundler.js",
+          "@vueuse/motion": "https://cdn.jsdelivr.net/npm/@vueuse/motion@2.2.6/+esm",
+          "@vueuse/rxjs": "https://cdn.jsdelivr.net/npm/@vueuse/rxjs",
+          "@vueuse": "https://cdn.jsdelivr.net/npm/@vueuse/core",
+          "rxjs": "https://cdn.jsdelivr.net/npm/rxjs@^7/dist/bundles/rxjs.umd.min.js",
+          "primevue/config": "https://cdn.jsdelivr.net/npm/primevue/umd/primevue.min.js",
+          "@primevue/themes": "https://cdn.jsdelivr.net/npm/boardgame.io@0.50.2/+esm",
+          "@kossabos/core": "/src/core",
+          "@kossabos/client": "/src/client",
+          "@kossabos/client/util": "/src/client",
+          "@kossabos/vue": "/src/vue"
+        }
+      }
+    </script>
+  </head>
+  <body class="text-black bg-white">
+    <main id="app"></main>
+
+    <script type="module">
+      import {
+        createChildTransport,
+        getQueryParam,
+        loadClient,
+        loadScript,
+      } from '@kossabos/client';
+      import { KossabosPlugin } from '@kossabos/vue';
+
+      const user = { userId: 'jacob.samps@gmail.com' };
+      const transport = createChildTransport();
+      const kossabosClient = loadClient(
+        user,
+        { numberOfPlayers: 2 },
+        transport,
+      );
+
+      console.log('kossabosClient', kossabosClient)
+
+      const projectId = getQueryParam('projectId');
+      loadScript(`/src/examples/${projectId}/client/index.js`, ({ app }) => {
+        app.use(KossabosPlugin, { client: kossabosClient });
+        console.log('mount!')
+        app.mount('#app');
+      });
+    </script>
+  </body>
+</html>

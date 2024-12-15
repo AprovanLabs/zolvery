@@ -1,0 +1,7 @@
+{
+    "title": "Tic Tac Toe",
+    "description": "A simple game of tic tac toe",
+    "settings": {
+        "num-players": "Number of Players"
+    }
+}
