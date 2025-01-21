@@ -1,6 +1,7 @@
 # Kossabos Architecture
 
 ```mermaid
+
 ```
 
 https://studio.boardgamearena.com/welcomestudio
@@ -9,90 +10,60 @@ https://github.com/boardgameio/p2p
 
 https://github.com/lefun-fun
 
-https://github.com/boardzilla
-https://github.com/boardzilla/boardzilla-devtools
+https://github.com/boardzilla https://github.com/boardzilla/boardzilla-devtools
 
 ## boardgame.io
 
 Server
+
 - PubSub
-    - `publish`
-    - `subscribe`
-    - `unsubscribeAll`
+
+  - `publish`
+  - `subscribe`
+  - `unsubscribeAll`
 
 - Storage
-    - FetchFields {
-        state: State;
-        log: LogEntry[];
-        metadata: Server.MatchData;
-        initialState: State;
-    }
-    - SYNC = 0, ASYNC = 1,
-    - type() {}
-    - connect() {}
-    - createMatch(
-        matchID: string,
-        opts: StorageAPI.CreateMatchOpts
-    ): Promise<void> {
-    - async fetch<O extends StorageAPI.FetchOpts>(
-        matchID: string,
-        opts: O
-    ): Promise<StorageAPI.FetchResult<O>> {
-    - async clear() {}
-    - async setState(id: string, state: State, deltalog?: LogEntry[]) {
-    - setMetadata(matchID: string, metadata: Server.MatchData): void;
-    - async wipe(id: string) {}
-    - async listMatches(opts?: StorageAPI.ListMatchesOpts): Promise<string[]> {}
+
+  - FetchFields { state: State; log: LogEntry[]; metadata: Server.MatchData;
+    initialState: State; }
+  - SYNC = 0, ASYNC = 1,
+  - type() {}
+  - connect() {}
+  - createMatch( matchID: string, opts: StorageAPI.CreateMatchOpts ):
+    Promise<void> {
+  - async fetch<O extends StorageAPI.FetchOpts>( matchID: string, opts: O ):
+    Promise<StorageAPI.FetchResult<O>> {
+  - async clear() {}
+  - async setState(id: string, state: State, deltalog?: LogEntry[]) {
+  - setMetadata(matchID: string, metadata: Server.MatchData): void;
+  - async wipe(id: string) {}
+  - async listMatches(opts?: StorageAPI.ListMatchesOpts): Promise<string[]> {}
 
 - Networking (SocketIO)
-    - constructor({ https, socketAdapter, socketOpts, pubSub }: SocketOpts = {}) {
-    - init(
-        app: Server.App & { _io?: IOTypes.Server },
-        games: Game[],
-        origins: CorsOptions['origin'] = []
-    ) {
-    - getMatchQueue(matchID: string): PQueue
-    - deleteMatchQueue(matchID: string): void
+  - constructor({ https, socketAdapter, socketOpts, pubSub }: SocketOpts = {}) {
+  - init( app: Server.App & { \_io?: IOTypes.Server }, games: Game[], origins:
+    CorsOptions['origin'] = [] ) {
+  - getMatchQueue(matchID: string): PQueue
+  - deleteMatchQueue(matchID: string): void
 
 Master
-- game: Game,
-    storageAPI: StorageAPI.Sync | StorageAPI.Async,
-    transportAPI: TransportAPI,
-    auth?: Auth
-- constructor(
-    game: Game,
-    storageAPI: StorageAPI.Sync | StorageAPI.Async,
-    transportAPI: TransportAPI,
-    auth?: Auth
-  ) {
-- async onUpdate(
-    credAction: CredentialedActionShape.Any,
-    stateID: number,
-    matchID: string,
-    playerID: string
-  ): Promise<void | { error: string }> {
-- async onSync(
-    matchID: string,
-    playerID: string | null | undefined,
-    credentials?: string,
-    numPlayers = 2
-  ): Promise<void | { error: string }> {
-- async onConnectionChange(
-    matchID: string,
-    playerID: string | null | undefined,
-    credentials: string | undefined,
-    connected: boolean
-  ): Promise<void | { error: string }> {
-- async onChatMessage(
-    matchID: string,
-    chatMessage: ChatMessage,
-    credentials: string | undefined
-  ): Promise<void | { error: string }> {
 
+- game: Game, storageAPI: StorageAPI.Sync | StorageAPI.Async, transportAPI:
+  TransportAPI, auth?: Auth
+- constructor( game: Game, storageAPI: StorageAPI.Sync | StorageAPI.Async,
+  transportAPI: TransportAPI, auth?: Auth ) {
+- async onUpdate( credAction: CredentialedActionShape.Any, stateID: number,
+  matchID: string, playerID: string ): Promise<void | { error: string }> {
+- async onSync( matchID: string, playerID: string | null | undefined,
+  credentials?: string, numPlayers = 2 ): Promise<void | { error: string }> {
+- async onConnectionChange( matchID: string, playerID: string | null |
+  undefined, credentials: string | undefined, connected: boolean ): Promise<void
+  | { error: string }> {
+- async onChatMessage( matchID: string, chatMessage: ChatMessage, credentials:
+  string | undefined ): Promise<void | { error: string }> {
 
+CLIENT Transport
 
-CLIENT
-Transport
 - sendAction(state: State, action: CredentialedActionShape.Any): void {
 - sendChatMessage(matchID: string, chatMessage: ChatMessage): void {
 - connect(): void
@@ -101,7 +72,6 @@ Transport
 - updateMatchID(id: string): void {
 - updatePlayerID(id: PlayerID): void {
 - updateCredentials(credentials?: string): void {
-
 
 ```js
 // End-of-game
@@ -122,56 +92,36 @@ ai: {
 },
 ```
 
-
 Context
-- Events
-    endGame(gameover?: any): void;
-    endPhase(): void;
-    endStage(): void;
-    endTurn(arg?: {
-        next: PlayerID;
-    }): void;
-    pass(arg?: {
-        remove: true;
-    }): void;
-    setActivePlayers(arg: ActivePlayersArg): void;
-    setPhase(newPhase: string): void;
-    setStage(newStage: string): void;
-- Logs
-    setMetadata(metadata: any): void;
 
-    LogEntry {
-    action: ActionShape.MakeMove | ActionShape.GameEvent | ActionShape.Undo | ActionShape.Redo;
-    _stateID: number;
-    turn: number;
-    phase: string;
-    redact?: boolean;
-    automatic?: boolean;
-    metadata?: any;
-    patch?: Operation[];
-}
-- Random
-    D4(): number;
-    D4(diceCount: number): number[];
-    D6(): number;
-    D6(diceCount: number): number[];
-    D10(): number;
-    D10(diceCount: number): number[];
-    D12(): number;
-    D12(diceCount: number): number[];
-    D20(): number;
-    D20(diceCount: number): number[];
-    Die(spotvalue?: number): number;
-    Die(spotvalue: number, diceCount: number): number[];
-    Number(): number;
-    Shuffle<T>(deck: T[]): T[];
+- Events endGame(gameover?: any): void; endPhase(): void; endStage(): void;
+  endTurn(arg?: { next: PlayerID; }): void; pass(arg?: { remove: true; }): void;
+  setActivePlayers(arg: ActivePlayersArg): void; setPhase(newPhase: string):
+  void; setStage(newStage: string): void;
+- Logs setMetadata(metadata: any): void;
 
+      LogEntry {
+      action: ActionShape.MakeMove | ActionShape.GameEvent | ActionShape.Undo | ActionShape.Redo;
+      _stateID: number;
+      turn: number;
+      phase: string;
+      redact?: boolean;
+      automatic?: boolean;
+      metadata?: any;
+      patch?: Operation[];
+
+  }
+
+- Random D4(): number; D4(diceCount: number): number[]; D6(): number;
+  D6(diceCount: number): number[]; D10(): number; D10(diceCount: number):
+  number[]; D12(): number; D12(diceCount: number): number[]; D20(): number;
+  D20(diceCount: number): number[]; Die(spotvalue?: number): number;
+  Die(spotvalue: number, diceCount: number): number[]; Number(): number;
+  Shuffle<T>(deck: T[]): T[];
 
 Plugins
-- PluginState {
-    data: any;
-    api?: any;
-}
+
+- PluginState { data: any; api?: any; }
 
 https://github.com/boardgameio/boardgame.io/blob/main/scripts/proxy-dirs.js
 https://github.com/boardgameio/p2p/blob/665a1e786d36f84e46a0fcaf9451d5b0a6ca48dc/src/index.ts
@@ -179,6 +129,5 @@ https://github.com/boardgameio/boardgame.io
 https://codesandbox.io/p/sandbox/boardgame-io-p2p-demo-0loyd?file=%2Fsrc%2FBoard.tsx%3A26%2C44-26%2C49
 https://github.com/lefun-fun/lefun/blob/main/packages/game/src/gameDef.ts
 https://github.com/boardzilla/boardzilla-core
-https://github.com/pjohannessen/yatzy
-https://github.com/SaFrMo/vue3-boardgame
+https://github.com/pjohannessen/yatzy https://github.com/SaFrMo/vue3-boardgame
 https://boardgame.io/documentation/#/api/Server

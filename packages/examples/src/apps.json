@@ -1,0 +1,9 @@
+[
+  { "appId": "board-games/connect-4" },
+  { "appId": "card-games/black-jack" },
+  { "appId": "puzzles/lettered" },
+  { "appId": "card-games/buck-euchre" },
+  { "appId": "classics/mancala" },
+  { "appId": "classics/tic-tac-toe" },
+  { "appId": "dice-games/yahtzee" }
+]

@@ -1,7 +1,4 @@
-# Contributing to Motion Canvas
-
-This is an initial version of the Contribution Guide. Feel free to discuss it
-and suggest any changes on [our discord server][discord].
+# Contributing to Kossabos
 
 ## Code of Conduct
 
@@ -40,7 +37,7 @@ you're working on, to let others know.
 
 ## Semantic Versioning
 
-Motion Canvas follows [semantic versioning][semver].
+Kossabos follows [semantic versioning][semver].
 
 ## Making a Pull Request
 
@@ -75,12 +72,13 @@ it. There are a few checks that can fail:
   Message Conventions][commit-format]. You can ignore this check since
   maintainers can modify your commit message before merging, but make sure to
   follow the conventions in the future.
-- `Lint` - ESLint has failed. Run `npm run eslint` locally to list the problems.
-- `Tests` - Unit tests have failed. Run `npm run core:test` to check which tests
-  fail and why.
+- `Lint` - ESLint has failed. Run `npm run eslint` locally to list the
+  problems.
+- `Tests` - Unit tests have failed. Run `npm run core:test` to check which
+  tests fail and why.
 - `Build` - The build process have failed. There are three possible points of
   failure you need to check:
-  - `run: npx lerna run build` - Building all packages.
+  - `run: npx run build` - Building all packages.
   - `run: npm run examples:build` - Building the examples.
   - `run: npm run e2e:test` - Running the end-to-end tests.
 
@@ -99,7 +97,6 @@ This Contribution Guide was partially inspired by [React][react] and
 [Angular][angular].
 
 [semver]: https://semver.org/
-[discord]: https://discord.gg/XnnWTrHYAW
 [semantic-release]:
   https://semantic-release.gitbook.io/semantic-release/support/faq#can-i-set-the-initial-release-version-of-my-package-to-0.0.1
 [main]: https://github.com/JacobSampson/kossabos/tree/main

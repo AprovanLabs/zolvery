@@ -1,0 +1,24 @@
+{
+    "compilerOptions": {
+      "target": "ESNext",
+      "useDefineForClassFields": true,
+      "lib": ["DOM", "DOM.Iterable", "ESNext"],
+      "allowJs": false,
+      "skipLibCheck": true,
+      "esModuleInterop": false,
+      "allowSyntheticDefaultImports": true,
+      "strict": true,
+      "forceConsistentCasingInFileNames": true,
+      "module": "ESNext",
+      "moduleResolution": "Node",
+      "resolveJsonModule": true,
+      "isolatedModules": true,
+      "noEmit": true,
+      "paths": {
+        "@kossabos/core": ["../../core/src"],
+        "@kossabos/vue": ["../../vue/src"],
+      }  
+    },
+    "include": ["src", "index.html", "vite-env.d.ts", "main.ts"]
+  }
+  
