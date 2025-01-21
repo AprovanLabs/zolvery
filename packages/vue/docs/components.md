@@ -16,7 +16,11 @@ Kossabos Vue components. Import from `@kossabos/vue`
 Manage a hand of items, often playing cards.
 
 <div class="flex flex-col items-center justify-center gap-8">
-    <Dropzone component="PlayingCard" label="Flop" :shape="2" :dimensions="['4rem', '6rem']" />
+    <div class="flex gap-4">
+        <Dropzone component="PlayingCard" label="Flop" :shape="3" :dimensions="['4rem', '6rem']" />
+        <Dropzone component="PlayingCard" label="Turn" :shape="1" :dimensions="['4rem', '6rem']" />
+        <Dropzone component="PlayingCard" label="River" :shape="1" :dimensions="['4rem', '6rem']" />
+    </div>
     <Hand
         component="PlayingCard"
         :hand="[
@@ -26,27 +30,7 @@ Manage a hand of items, often playing cards.
             { rank: 'A', suit: 'clubs' },
         ]"
     />
-</div>
 
-### Dropzone
-
-Build customizable zones for dropping items. Often useful for playing cards.
-Will set the
-[DragEvent](https://developer.mozilla.org/en-US/docs/Web/API/HTML_Drag_and_Drop_API/Drag_operations)
-`dropEffect` property to `move` when space exists and `none` otherwise.
-
-<div class="flex flex-col gap-8">
-    <div class="flex justify-center gap-4">
-        <Dropzone component="PlayingCard" label="Flop" :shape="3" :dimensions="['4rem', '6rem']" />
-        <Dropzone component="PlayingCard" label="Turn" :shape="1" :dimensions="['4rem', '6rem']" />
-        <Dropzone component="PlayingCard" label="River" :shape="1" :dimensions="['4rem', '6rem']" />
-    </div>
-    <div class="flex justify-center gap-4">
-        <PlayingCard draggable suit="hearts" rank="9" />
-        <PlayingCard draggable suit="spades" rank="K" />
-        <PlayingCard draggable suit="diamonds" rank="Q" />
-        <PlayingCard draggable suit="clubs" rank="A" />
-    </div>
 </div>
 
 ### Playing Card

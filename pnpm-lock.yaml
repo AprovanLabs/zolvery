@@ -186,9 +186,9 @@ importers:
       vue:
         specifier: ^3.5.13
         version: 3.5.13(typescript@5.7.2)
-      vue-draggable-next:
-        specifier: ^2.2.1
-        version: 2.2.1(sortablejs@1.14.0)(vue@3.5.13(typescript@5.7.2))
+      vue-draggable-plus:
+        specifier: ^0.6.0
+        version: 0.6.0(@types/sortablejs@1.15.8)
     devDependencies:
       '@vitejs/plugin-vue':
         specifier: ^5.2.1
@@ -1027,6 +1027,9 @@ packages:
 
   '@types/serve-static@1.15.7':
     resolution: {integrity: sha512-W8Ym+h8nhuRwaKPaDw34QUkwsGi6Rc4yYqvKFo5rm2FUEhCFbzVWrxXUxuKK8TASjWsysJY0nsmNCGhCOIsrOw==}
+
+  '@types/sortablejs@1.15.8':
+    resolution: {integrity: sha512-b79830lW+RZfwaztgs1aVPgbasJ8e7AXtZYHTELNXZPsERt4ymJdjV4OccDbHQAvHrCcFpbF78jkm0R6h/pZVg==}
 
   '@types/unist@3.0.3':
     resolution: {integrity: sha512-ko/gIFJRv177XgZsZcBwnqJN5x/Gien8qNOn0D5bQU/zAzVf9Zt3BlcUiLqhV9y4ARk0GbT3tnUiPNgnTXzc/Q==}
@@ -3540,11 +3543,14 @@ packages:
       '@vue/composition-api':
         optional: true
 
-  vue-draggable-next@2.2.1:
-    resolution: {integrity: sha512-EAMS1IRHF0kZO0o5PMOinsQsXIqsrKT1hKmbICxG3UEtn7zLFkLxlAtajcCcUTisNvQ6TtCB5COjD9a1raNADw==}
+  vue-draggable-plus@0.6.0:
+    resolution: {integrity: sha512-G5TSfHrt9tX9EjdG49InoFJbt2NYk0h3kgjgKxkFWr3ulIUays0oFObr5KZ8qzD4+QnhtALiRwIqY6qul4egqw==}
     peerDependencies:
-      sortablejs: ^1.14.0
-      vue: ^3.2.2
+      '@types/sortablejs': ^1.15.0
+      '@vue/composition-api': '*'
+    peerDependenciesMeta:
+      '@vue/composition-api':
+        optional: true
 
   vue-tsc@2.2.0:
     resolution: {integrity: sha512-gtmM1sUuJ8aSb0KoAFmK9yMxb8TxjewmxqTJ1aKphD5Cbu0rULFY6+UQT51zW7SpUcenfPUuflKyVwyx9Qdnxg==}
@@ -4574,6 +4580,8 @@ snapshots:
       '@types/http-errors': 2.0.4
       '@types/node': 20.5.1
       '@types/send': 0.17.4
+
+  '@types/sortablejs@1.15.8': {}
 
   '@types/unist@3.0.3': {}
 
@@ -6906,7 +6914,8 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  sortablejs@1.14.0: {}
+  sortablejs@1.14.0:
+    optional: true
 
   source-map-js@1.2.1: {}
 
@@ -7392,10 +7401,9 @@ snapshots:
     dependencies:
       vue: 3.5.13(typescript@5.7.2)
 
-  vue-draggable-next@2.2.1(sortablejs@1.14.0)(vue@3.5.13(typescript@5.7.2)):
+  vue-draggable-plus@0.6.0(@types/sortablejs@1.15.8):
     dependencies:
-      sortablejs: 1.14.0
-      vue: 3.5.13(typescript@5.7.2)
+      '@types/sortablejs': 1.15.8
 
   vue-tsc@2.2.0(typescript@5.7.2):
     dependencies:

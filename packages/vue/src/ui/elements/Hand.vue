@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { defineProps, computed, ref } from 'vue';
-
-import Fanout from '../layouts/Fanout.vue';
+import { VueDraggable } from 'vue-draggable-plus';
+import type { SortableEvent } from 'vue-draggable-plus';
 
 const {
   hand,
@@ -13,32 +13,38 @@ const {
   clickable?: boolean;
 }>();
 
-const currentHand = ref(hand);
-
 const emit = defineEmits<{
   (e: 'play', item: object): void;
 }>();
 
-const play = computed(() => (event: DragEvent, playIndex: number) => {
-  console.log('drop effect', event.dataTransfer?.dropEffect);
-  if (event.dataTransfer?.dropEffect !== 'move') {
-    return;
-  }
-  currentHand.value = currentHand.value.filter(
-    (_, index) => index !== playIndex,
-  );
-  emit('play', event);
-});
+const currentHand = ref(hand);
+
+const play = computed(
+  () => (event: Event | SortableEvent, playIndex: number) => {
+    const element = currentHand.value[playIndex];
+    if (event.type === 'mouseup') {
+      currentHand.value = currentHand.value.filter(
+        (_, index) => index !== playIndex,
+      );
+    }
+    emit('play', element);
+  },
+);
 </script>
 
 <template>
-  <Fanout>
+  <VueDraggable
+    v-model="currentHand"
+    :animation="150"
+    group="items"
+    class="flex flex-row items-center justify-center space-x-2 touch-none"
+    @end="(event$: SortableEvent) => play(event$, event$.oldIndex)"
+  >
     <component
-      v-for="(item, index) in currentHand"
-      v-bind="item"
+      v-for="(element, index) in currentHand"
+      v-bind="element"
       :is="component"
-      @click="(event$: Event) => clickable && play(event$ as DragEvent, index)"
-      @dragend="(event$: DragEvent) => play(event$, index)"
+      @mouseup="(event$: Event) => clickable && play(event$ as DragEvent, index)"
     />
-  </Fanout>
+  </VueDraggable>
 </template>
