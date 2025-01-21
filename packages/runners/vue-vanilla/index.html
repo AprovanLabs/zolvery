@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Kossabos Vue Vanilla Runner</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/heroicons-css@0.1.1/heroicons.min.js"></script>
+    <link
+      href="https://cdn.jsdelivr.net/npm/heroicons-css@0.1.1/heroicons.min.css"
+      rel="stylesheet"
+    />
+
+    <script async src="https://unpkg.com/es-module-shims"></script>
+    <script type="importmap">
+      {
+        "imports": {
+          "vue": "https://cdnjs.cloudflare.com/ajax/libs/vue/3.5.13/vue.esm-browser.prod.js",
+          "vue-draggable-next": "https://cdn.jsdelivr.net/npm/vuedraggable@2.24.3/+esm'",
+          "@vueuse/motion": "https://cdn.jsdelivr.net/npm/@vueuse/motion@2.2.6/+esm",
+          "@vueuse/rxjs": "https://cdn.jsdelivr.net/npm/@vueuse/rxjs",
+          "@vueuse": "https://cdn.jsdelivr.net/npm/@vueuse/core",
+          "rxjs": "https://cdn.jsdelivr.net/npm/rxjs@^7/dist/bundles/rxjs.umd.min.js",
+          "primevue/config": "https://cdn.jsdelivr.net/npm/primevue/umd/primevue.min.js",
+          "@primevue/themes": "https://cdn.jsdelivr.net/npm/boardgame.io@0.50.2/+esm",
+          "@kossabos/core": "/src/core",
+          "@kossabos/client": "/src/client",
+          "@kossabos/client/util": "/src/client",
+          "@kossabos/vue": "/src/vue"
+        }
+      }
+    </script>
+  </head>
+  <body class="text-black bg-white">
+    <main id="app"></main>
+    <script type="module" src="%VITE_HOST%/main.ts"></script>
+  </body>
+</html>

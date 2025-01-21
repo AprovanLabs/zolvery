@@ -1,0 +1,25 @@
+{
+  "appId": "card-games/buck-euchre",
+  "name": "Buck Euchre",
+  "description": "A card game",
+  "tags": ["card-game", "classic"],
+  "version": "0.0.1",
+  "runnerTag": "vue-vanilla",
+  "author": {
+    "username": "Jacob Sampson",
+    "email": "jacob.samps@gmail.com"
+  },
+  "settings": [
+    {
+      "id": "num-players",
+      "label": "settings.num-players",
+      "options": [
+        { "value": "1" },
+        { "value": "2" },
+        { "value": "3" },
+        { "value": "4" }
+      ],
+      "default": "1"
+    }
+  ]
+}

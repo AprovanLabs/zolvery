@@ -35,10 +35,10 @@ jobs:
       - run: git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
       - run: git config --global user.name "github-actions[bot]"
       - run: npm ci
-      - run: npx lerna run build
+      - run: npx nx run build
       - if: ${{ inputs.releaseType == 'release' }}
-        run: npx lerna publish --yes
+        run: npx nx publish --yes
       - if: ${{ inputs.releaseType == 'prerelease' }}
-        run: npx lerna publish --yes --conventional-prerelease --dist-tag alpha
+        run: npx nx publish --yes --conventional-prerelease --dist-tag alpha
       - if: ${{ inputs.releaseType == 'graduate' }}
-        run: npx lerna publish --yes --conventional-graduate
+        run: npx nx publish --yes --conventional-graduate

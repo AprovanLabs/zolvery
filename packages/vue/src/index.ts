@@ -1,0 +1,1 @@
+export { KossabosPlugin } from './plugins';

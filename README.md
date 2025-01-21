@@ -15,33 +15,17 @@ Games! [@AprovanLabs](https://github.com/AprovanLabs)
 
 The project is maintained as one monorepo containing the following packages:
 
-| Name       | Description                                              |
-| ---------- | -------------------------------------------------------- |
-| `core`     | All logic related to running and rendering animations.   |
-| `create`   | A package for bootstrapping new projects.                |
-| `docs`     | [Our documentation website.][docs]                       |
-| `examples` | Animation examples used in documentation.                |
-| `template` | A template project included for developer's convenience. |
-| `ui`       | The user interface used for editing.                     |
+| Name       | Description                                       |
+| ---------- | ------------------------------------------------- |
+| `core`     | All logic related to running clients and servers. |
+| `docs`     | [Our documentation website.][docs]                |
+| `examples` | Examle projects.                                  |
+| `runners`  | Pre-setup client execution environments .         |
+| `vue`      | Vue bindings and components.                      |
 
 After cloning the repo, run `npm install` in the root of the project to install
-all necessary dependencies. Then run `npx lerna run build` to build all the
+all necessary dependencies. Then run `npx nx run build` to build all the
 packages.
-
-### Developing Core & UI
-
-When developing the core, start both `core:watch` and `template:serve`.
-
-This will pick up any changes you make to the core package, automatically
-rebuild the `template` project and refresh the page.
-
-Similarly, when developing the UI package, start `ui:watch` and
-`template:serve`.
-
-### Developing UI
-
-If you want to develop the UI, first build the template project by running:
-`template:build`. Next, start `ui:serve`.
 
 ## Contributing
 
@@ -50,6 +34,4 @@ help make Motion Canvas better.
 
 [authenticate]:
   https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-npm-registry#authenticating-with-a-personal-access-token
-[template]:
-  https://github.com/JacobSampson/kossabos/project-template#using-the-template
 [docs]: https://jacobsampson.github.io/kossabos/docs/quickstart

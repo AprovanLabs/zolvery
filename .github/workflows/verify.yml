@@ -31,7 +31,7 @@ jobs:
           node-version: 18
           cache: npm
       - run: npm ci
-      - run: npx lerna run lint
+      - run: npx nx run lint
   prettier:
     name: Code style
     runs-on: ubuntu-latest
@@ -42,7 +42,7 @@ jobs:
           node-version: 18
           cache: npm
       - run: npm ci
-      - run: npx lerna run prettier
+      - run: npx nx run prettier
   tests:
     name: Tests
     runs-on: ubuntu-latest
@@ -53,7 +53,7 @@ jobs:
           node-version: 18
           cache: npm
       - run: npm ci
-      - run: npx lerna run test
+      - run: npx nx run test
   build:
     name: Build
     runs-on: ubuntu-latest
@@ -65,8 +65,8 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Build
-        run: npx lerna run build
+        run: npx nx run build
       - name: Examples
-        run: npm run examples:build
+        run: npx run examples:build
       - name: E2E
-        run: npm run e2e:test
+        run: npx run e2e:test

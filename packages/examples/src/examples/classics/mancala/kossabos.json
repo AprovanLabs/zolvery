@@ -1,7 +1,0 @@
-{
-    "id": "classics/mancala",
-    "name": "Mancala",
-    "description": "A simple game of Mancala",
-    "tags": ["game", "classic"],
-    "version": "0.0.1"
-}

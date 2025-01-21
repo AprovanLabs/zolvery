@@ -8,3 +8,6 @@ static
 package.json
 package-lock.json
 CHANGELOG.md
+
+/.nx/cache
+/.nx/workspace-data

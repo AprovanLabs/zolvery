@@ -1,0 +1,22 @@
+{
+    "name": "@kossabos/vue-boardgameio-runner",
+    "private": true,
+    "version": "0.0.1",
+    "scripts": {
+        "dev": "VITE_HOST=http://localhost:3711 vite --host 0.0.0.0 --port 3711",
+        "build": "tsc && vite build"
+    },
+    "dependencies": {
+        "@boardgame.io/p2p": "^0.4.4",
+        "@kossabos/core": "workspace:^",
+        "@kossabos/vue": "workspace:^",
+        "boardgame.io": "^0.50.2",
+        "peerjs": "^1.5.4",
+        "tweetnacl": "^1.0.3",
+        "tweetnacl-util": "^0.15.1"
+    },
+    "devDependencies": {
+        "vite": "*",
+        "vue": "^3.5.13"
+    }
+}
