@@ -52,16 +52,16 @@ const tooltip = computed(() => {
 
   const style = {
     top: {
-      borderTopColor: 'var(--p-primary-color)',
+      borderTopColor: 'var(--p-surface-950)',
     },
     right: {
-      borderRightColor: 'var(--p-primary-color)',
+      borderRightColor: 'var(--p-surface-950)',
     },
     bottom: {
-      borderBottomColor: 'var(--p-primary-color)',
+      borderBottomColor: 'var(--p-surface-950)',
     },
     left: {
-      borderLeftColor: 'var(--p-primary-color)',
+      borderLeftColor: 'var(--p-surface-950)',
     },
   }[position];
 
@@ -70,9 +70,10 @@ const tooltip = computed(() => {
     position,
     escape: false,
     fitContent: false,
+    unstyled: false,
     pt: {
       arrow: { style },
-      text: '!bg-primary !text-primary-contrast !font-medium',
+      text: 'bg-surface-0 text-primary-contrast shadow-none border-4 border-surface-950 rounded-md',
     },
   };
 });
@@ -209,4 +210,6 @@ export default {
     PrimeChip,
   },
 };
+
+// x("//*[contains(.,'Bid 1')]")
 </script>

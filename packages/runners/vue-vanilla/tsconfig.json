@@ -16,7 +16,7 @@
       "noEmit": true,
       "paths": {
         "@kossabos/core": ["../../core/src"],
-        "@kossabos/vue": ["../../vue/src"],
+        "@kossabos/vue": ["../../vue/dist/index.mjs"]
       }  
     },
     "include": ["src", "index.html", "vite-env.d.ts", "main.ts"]

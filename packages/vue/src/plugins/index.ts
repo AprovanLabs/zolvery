@@ -1,13 +1,22 @@
 import { MotionPlugin } from '@vueuse/motion';
+import {
+  Avatar,
+  Button,
+  Dropzone,
+  Hand,
+  PlayingCard,
+  Slider,
+} from '@kossabos/vue'
 import Config from 'primevue/config';
-import { Button, Avatar, OverlayBadge, DatePicker } from 'primevue';
-import { defineComponent } from 'vue';
+import Tooltip from 'primevue/tooltip';
+import Ripple from 'primevue/ripple';
 import type { Plugin } from 'vue';
 
 import { styleConfig } from '../ui/style';
 
+export { styleConfig };
 export const KossabosPlugin: Plugin = {
-  install(app, { client }) {
+  install(app, { client }: { client: any }) {
     if (!client) {
       console.warn('Client not created.');
       return;
@@ -17,10 +26,13 @@ export const KossabosPlugin: Plugin = {
     app.use(MotionPlugin);
     app.use(Config, styleConfig);
 
-    app.component('p-button', Button);
-    app.component('p-avatar', Avatar);
-    app.component('p-datepicker', defineComponent(DatePicker as unknown));
-    console.log('date', DatePicker)
-    app.component('p-overlay-badge', OverlayBadge);
+    app.directive('tooltip', Tooltip);
+    app.directive('ripple', Ripple);
+    app.component('Avatar', Avatar);
+    app.component('Button', Button);
+    app.component('Dropzone', Dropzone);
+    app.component('Hand', Hand);
+    app.component('PlayingCard', PlayingCard);
+    app.component('Slider', Slider);
   },
 };

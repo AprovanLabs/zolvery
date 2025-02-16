@@ -217,7 +217,10 @@ export const app = createApp({
 
     const date = ref();
 
+    const bid = ref(0);
+
     return {
+      bid,
       playerHands,
       trumpSuit,
       currentPlayer,
@@ -240,6 +243,19 @@ export const app = createApp({
         <!-- <p-overlay-badge value="4" severity="danger" class="inline-flex">
           <p-avatar label="U" size="xlarge"></p-avatar>
         </p-overlay-badge> -->
+        <Slider v-model="bid" :step="10" class="w-56" />
+        <div class="p-accordionpanel">
+          BID: <Button :label="bid" />
+        </div>
+
+        <!-- <PlayingCard suit="hearts" rank="K" /> -->
+        <Avatar
+          size="xlarge"
+          image="https://avatars.githubusercontent.com/u/98067664?s=200&v=4"
+          :countdown="10"
+          :primary="{ value: 1, severity: 'danger'}"
+          :secondary="{ value: 2, severity: 'info' }"
+      />
 
         <!-- Player Hands -->
         <div class="flex flex-col space-y-4">

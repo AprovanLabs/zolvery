@@ -2,8 +2,15 @@
 import { computed, defineProps, ref } from 'vue';
 
 export type Pattern = 'striped' | 'bordered' | 'solid';
-export type Suit = 'hearts' | 'diamonds' | 'clubs' | 'spades';
-export type Rank =
+export type Suit =
+  | 'hearts'
+  | 'diamonds'
+  | 'clubs'
+  | 'spades'
+  // Jokers
+  | 'big'
+  | 'little';
+export type Name =
   | '2'
   | '3'
   | '4'
@@ -16,11 +23,12 @@ export type Rank =
   | 'J'
   | 'Q'
   | 'K'
-  | 'A';
+  | 'A'
+  | 'Joker';
 
 export type Card = {
-  suit: Suit;
-  rank: Rank;
+  suit?: Suit;
+  name: Name;
 };
 
 const styles: Record<Pattern, Record<string, string>> = {
@@ -37,13 +45,15 @@ const styles: Record<Pattern, Record<string, string>> = {
 
 const {
   suit,
-  rank,
+  name,
+  disabled = false,
   draggable = false,
   pattern = 'solid',
   hidden = false,
 } = defineProps<{
   suit?: Suit;
-  rank?: Rank;
+  name?: Name;
+  disabled?: boolean;
   draggable?: boolean;
   pattern?: Pattern;
   hidden?: boolean;
@@ -54,11 +64,21 @@ const suitSymbols: Record<Suit, string> = {
   hearts: '♥',
   diamonds: '♦',
   clubs: '♣',
+  big: '',
+  little: '',
 };
 const suitSymbol = computed(() => suitSymbols[suit]);
 const suitColor = computed(() =>
-  suit === 'hearts' || suit === 'diamonds' ? 'red' : 'black',
+  suit === 'hearts' || suit === 'diamonds' || suit === 'big' ? 'red' : 'black',
 );
+const nameSymbol = computed(() => {
+  // Joker
+  if (suit === 'big' || suit === 'little') {
+    // 🃏
+    return '🃟';
+  }
+  return name;
+});
 
 const componentRef = ref(null);
 
@@ -80,24 +100,22 @@ const dragEnd = computed(() => () => {
   <div
     ref="componentRef"
     :draggable="draggable"
-    @dragstart="($event) => startDrag($event, { suit, rank })"
+    @dragstart="($event) => startDrag($event, { suit, name })"
     @dragend="() => dragEnd()"
+    disabled="disabled"
     class="flex flex-col items-center justify-center w-16 h-24 border-4 border-black rounded-lg select-none hover:cursor-pointer"
     :style="[
       { backgroundColor: hidden ? 'currentColor' : 'white' },
       hidden && pattern === 'striped' && styles.striped,
       hidden && pattern === 'bordered' && styles.bordered,
+      disabled && { filter: 'brightness(0.6)', borderColor: 'gray' },
     ]"
     v-motion
     :initial="{
-      scale: 0.5,
-      rotate: 0,
       opacity: 0,
       y: 0,
     }"
     :enter="{
-      scale: 1,
-      rotate: 0,
       opacity: 1,
       transition: {
         type: 'spring',
@@ -106,22 +124,26 @@ const dragEnd = computed(() => () => {
       },
       y: 0,
     }"
-    :hovered="{
-      // rotate:
-      //   Math.sign(Math.random() - 0.5) * 10 * Math.min(1, Math.random() + 0.25),
-      y: -5,
-    }"
+    :hovered="{ y: -7 }"
   >
-    <span
-      class="font-bold"
+    <!-- Top Left -->
+    <div
+      class="absolute top-0 flex flex-col items-center font-bold leading-5 left-1"
       :class="[suitColor === 'red' ? 'text-red-500' : 'text-black']"
       v-if="!hidden"
-      >{{ rank }}</span
     >
-    <span
+      <span class="font-bold">{{ nameSymbol }}</span>
+      <span>{{ suitSymbol }}</span>
+    </div>
+
+    <!-- Bottom Right -->
+    <!-- <div
+      class="absolute bottom-0 flex flex-col items-center font-bold leading-5 rotate-180 right-1"
       :class="[suitColor === 'red' ? 'text-red-500' : 'text-black']"
       v-if="!hidden"
-      >{{ suitSymbol }}</span
     >
+      <span class="font-bold">{{ name }}</span>
+      <span>{{ suitSymbol }}</span>
+    </div> -->
   </div>
 </template>

@@ -6,7 +6,6 @@
   - https://stackoverflow.com/questions/78111581/how-to-precompile-vue-3-components-using-vite-and-use-them-as-js-module-in-stati
     - UI
       - Die
-      - Playing card
       - Timer
       - Button
     - Layout
