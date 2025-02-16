@@ -1,8 +1,10 @@
 <script setup>
 import Avatar from '../src/ui/elements/Avatar.vue';
+import Button from '../src/ui/elements/Button.vue';
 import Dropzone from '../src/ui/elements/Dropzone.vue';
 import Hand from '../src/ui/elements/Hand.vue';
 import PlayingCard from '../src/ui/elements/PlayingCard.vue';
+import Slider from '../src/ui/elements/Slider.vue';
 </script>
 
 # Components
@@ -10,6 +12,23 @@ import PlayingCard from '../src/ui/elements/PlayingCard.vue';
 Kossabos Vue components. Import from `@kossabos/vue`
 
 ## Misc
+
+### Button
+
+Simple buttons
+
+<div class="flex gap-4">
+    <Button icon="icon-house" label="Home" />
+    <Button icon="pi pi-replay" label="Restart" />
+    <Button icon="pi pi-check" badge="2" />
+    <Button icon="pi pi-check" badge="2" variant="outlined" />
+</div>
+
+### Slider
+
+Simple slider
+
+<Slider :step="10" class="w-56" />
 
 ### Hand
 
@@ -24,10 +43,36 @@ Manage a hand of items, often playing cards.
     <Hand
         component="PlayingCard"
         :hand="[
-            { rank: '9', suit: 'hearts' },
-            { rank: 'K', suit: 'spades' },
-            { rank: 'Q', suit: 'diamonds' },
-            { rank: 'A', suit: 'clubs' },
+            { name: '9', suit: 'hearts' },
+            { name: 'K', suit: 'spades' },
+            { name: 'Q', suit: 'diamonds' },
+            { name: 'A', suit: 'clubs' },
+        ]"
+    />
+</div>
+
+Can handle larger hands
+
+<div class="flex flex-col items-center justify-center gap-8">
+    <Hand
+        component="PlayingCard"
+        :hand="[
+            { name: '9', suit: 'hearts' },
+            { name: 'K', suit: 'spades' },
+            { name: 'Q', suit: 'diamonds' },
+            { name: 'A', suit: 'clubs' },
+            { name: '2', suit: 'clubs' },
+            { name: '3', suit: 'clubs' },
+            { name: '4', suit: 'clubs' },
+            { name: '5', suit: 'clubs' },
+            { name: '6', suit: 'clubs' },
+            { name: '7', suit: 'clubs' },
+            { name: '8', suit: 'clubs' },
+            { name: '9', suit: 'clubs' },
+            { name: '10', suit: 'clubs' },
+            { name: 'J', suit: 'clubs' },
+            { name: 'Q', suit: 'clubs' },
+            { name: 'K', suit: 'clubs' },
         ]"
     />
 
@@ -38,10 +83,10 @@ Manage a hand of items, often playing cards.
 Typical playing cards.
 
 <div class="flex gap-2">
-    <PlayingCard suit="hearts" rank="9" />
-    <PlayingCard suit="spades" rank="K" />
-    <PlayingCard suit="clubs" rank="A" />
-    <PlayingCard suit="diamonds" rank="Q" />
+    <PlayingCard suit="hearts" name="9" />
+    <PlayingCard suit="spades" name="K" />
+    <PlayingCard suit="clubs" name="A" />
+    <PlayingCard suit="diamonds" name="Q" disabled />
 </div>
 
 Blank cards showing back. Color can be controlled via `currentColor`.

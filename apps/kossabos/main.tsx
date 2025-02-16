@@ -46,15 +46,15 @@ const Match: React.FC<{ app: KossabosApp }> = ({ app }) => {
 
   return (
     <div>
-      <header className="flex px-8 py-4 justify-between items-center border-b-1 border-slate-200">
+      <header className="flex items-center justify-between px-8 py-4 border-b-1 border-slate-200">
         <div>
           <p>{app.name}</p>
           <span className="text-xs">{app.author.username}</span>
         </div>
         <div className="flex items-center gap-6">
-          <AdjustmentsHorizontalIcon className="size-6 text-gray-900" />
-          <ChartBarIcon className="size-6 text-gray-900" />
-          <QuestionMarkCircleIcon className="size-6 text-gray-900" />
+          <AdjustmentsHorizontalIcon className="text-gray-900 size-6" />
+          <ChartBarIcon className="text-gray-900 size-6" />
+          <QuestionMarkCircleIcon className="text-gray-900 size-6" />
         </div>
       </header>
 
@@ -62,12 +62,12 @@ const Match: React.FC<{ app: KossabosApp }> = ({ app }) => {
         ref={ref}
         src={`/runners/${app.runnerTag}?appId=${app.appId}`}
         sandbox="allow-scripts allow-same-origin"
-        className="b-none w-full h-screen"
+        className="w-full h-screen b-none"
       />
 
-      <footer className="flex px-8 py-4 justify-between items-center border-b-1 border-slate-200 fixed w-full bottom-0">
+      <footer className="fixed bottom-0 flex items-center justify-between w-full px-8 py-4 border-b-1 border-slate-200">
         <div>
-          <ArrowLeftIcon className="size-6 text-gray-900" />
+          <ArrowLeftIcon className="text-gray-900 size-6" />
         </div>
         <div className="flex items-center gap-6">
           <button onClick={() => emit(new CustomEvent('emit'))}>Reset</button>
@@ -79,7 +79,7 @@ const Match: React.FC<{ app: KossabosApp }> = ({ app }) => {
 
 const App: React.FC = () => {
   const [apps, setApps] = useState([]);
-  const [appId, setAppId] = useState<string | null>('card-games/buck-euchre');
+  const [appId, setAppId] = useState<string | null>('card-games/black-jack');
   const [app, setApp] = useState();
 
   useEffect(() => {
@@ -98,8 +98,8 @@ const App: React.FC = () => {
   return (
     <PrimeReactProvider>
       <div>
-        <div className="flex flex-row gap-2 items-center pl-2 pt-2">
-          <img src="/logo.svg" alt="logo" className="h-10 w-10">
+        <div className="flex flex-row items-center gap-2 pt-2 pl-2">
+          <img src="/logo.svg" alt="logo" className="w-10 h-10">
 
           </img>
           <Dropdown

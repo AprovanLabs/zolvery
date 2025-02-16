@@ -1,6 +1,5 @@
 {
   "name": "kossabos",
-  "private": true,
   "packageManager": "pnpm@9.14.4",
   "scripts": {
     "prepare": "husky install",
@@ -14,7 +13,9 @@
     "docs:build": "pnpx turbo run build --filter=@kossabos/docs",
     "e2e:test": "pnpx turbo run test --filter=@kossabos/e2e",
     "eslint": "eslint --fix \"**/*.ts?(x)\"",
-    "prettier": "prettier --write ."
+    "prettier": "prettier --write .",
+    "release": "pnpx run vue:build && pnpx recursive publish --filter './packages/*' --no-git-checks --report-summary && pnpx @changesets/cli publish",
+    "changesets": "pnpx @changesets/cli"
   },
   "devDependencies": {
     "@commitlint/cli": "^17.0.3",

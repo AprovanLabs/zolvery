@@ -35,16 +35,25 @@ const play = computed(
 <template>
   <VueDraggable
     v-model="currentHand"
-    :animation="150"
     group="items"
-    class="flex flex-row items-center justify-center space-x-2 touch-none"
+    class="relative flex flex-row items-center justify-center flex-nowrap touch-none"
+    :sort="false"
+    :animation="150"
     @end="(event$: SortableEvent) => play(event$, event$.oldIndex)"
   >
-    <component
+    <div
       v-for="(element, index) in currentHand"
-      v-bind="element"
-      :is="component"
-      @mouseup="(event$: Event) => clickable && play(event$ as DragEvent, index)"
-    />
+      class="relative top-0 left-0"
+      :style="{
+        marginLeft: '-4%',
+      }"
+    >
+      <component
+        v-bind="element"
+        :is="component"
+        :style="{}"
+        @mouseup="(event$: Event) => clickable && play(event$ as DragEvent, index)"
+      />
+    </div>
   </VueDraggable>
 </template>

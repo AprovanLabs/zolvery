@@ -55,42 +55,57 @@ const onTouchMove = computed(() => (event: TouchEvent) => {
   }
 });
 
+// Reset hover state on element change
+// Required for touch handling
 watch(elements, () => {
   dragHovered.value = false;
 });
 </script>
 
 <template>
-  <VueDraggable
-    ref="draggable"
-    v-model="elements"
-    ghost-class="hidden"
-    group="items"
-    class="grid gap-2 select-none"
-    :animation="150"
-    :delay="250"
-    :class="[
-      full && 'pointer-events-none select-none hover:cursor-not-allowed',
-    ]"
-    :style="`grid-template-columns: repeat(${m}, ${width}); grid-template-rows: repeat(${height}, ${n})`"
-    @dragover="onDragOver"
-    @touchmove="onTouchMove"
-    @dragleave="dragHovered = false"
-    @dragover.prevent
-    @dragenter.prevent
-  >
+  <div class="relative">
     <div
-      v-for="element in elements.sort().slice(0, n * m)"
-      class="relative transition-all ease-in-out rounded-md bg-slate-200"
-      :class="[!full && dragHovered ? 'bg-slate-300' : 'bg-slate-200']"
-      :style="`width: ${width}; height: ${height}`"
+      v-if="label"
+      class="h-2 mt-2 -translate-y-2 border-t-2 border-l-2 border-r-2 rounded-tl-sm rounded-tr-sm border-t-black border-r-black border-l-black"
     >
-      <component
-        class="absolute top-0 left-0 pointer-events-none"
-        v-if="element"
-        :is="component"
-        v-bind="element"
-      />
+      <div
+        class="absolute px-2 text-xs font-bold -translate-x-1/2 bg-white left-1/2 -top-2"
+      >
+        {{ label }}
+      </div>
     </div>
-  </VueDraggable>
+
+    <VueDraggable
+      ref="draggable"
+      v-model="elements"
+      ghost-class="hidden"
+      group="items"
+      class="grid gap-2 select-none"
+      :animation="150"
+      :delay="250"
+      :class="[
+        full && 'pointer-events-none select-none hover:cursor-not-allowed',
+      ]"
+      :style="`grid-template-columns: repeat(${m}, ${width}); grid-template-rows: repeat(${height}, ${n})`"
+      @dragover="onDragOver"
+      @touchmove="onTouchMove"
+      @dragleave="dragHovered = false"
+      @dragover.prevent
+      @dragenter.prevent
+    >
+      <div
+        v-for="element in elements.sort().slice(0, n * m)"
+        class="relative transition-all ease-in-out rounded-md bg-slate-200"
+        :class="[!full && dragHovered ? 'bg-slate-300' : 'bg-slate-200']"
+        :style="`width: ${width}; height: ${height}`"
+      >
+        <component
+          class="absolute top-0 left-0 pointer-events-none"
+          v-if="element"
+          :is="component"
+          v-bind="element"
+        />
+      </div>
+    </VueDraggable>
+  </div>
 </template>

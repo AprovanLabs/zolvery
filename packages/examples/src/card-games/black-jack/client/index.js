@@ -1,15 +1,45 @@
-import { computed, createApp, toRef, ref, getCurrentInstance, provide, reactive,isRef, inject, watchEffect, isReactive } from 'vue';
+import { computed, createApp, ref, inject } from 'vue';
+
+const CARD_RANK = {
+  2: 2,
+  3: 3,
+  4: 4,
+  5: 5,
+  6: 6,
+  7: 7,
+  8: 8,
+  9: 9,
+  10: 10,
+  J: 10,
+  Q: 10,
+  K: 10,
+  A: 11,
+};
+
+const createDeckOfCards = (
+  suits = ['hearts', 'diamonds', 'spades', 'clubs'],
+  names = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'],
+) => {
+  const deck = [];
+  for (const suit of suits) {
+    for (const name of names) {
+      deck.push({ name, suit });
+    }
+  }
+  return deck;
+};
 
 const calculateScore = (hand) => {
+  const cards = hand.length > 0 ? hand : [];
   let score = 0;
   let aces = 0;
 
-  for (const card of hand) {
-    if (card === 1) {
+  for (const card of cards) {
+    if (card.name === 'A') {
       aces++;
       score += 11;
     } else {
-      score += Math.min(10, card);
+      score += Math.min(10, CARD_RANK[card.name]);
     }
   }
 
@@ -23,205 +53,349 @@ const calculateScore = (hand) => {
 
 const dealerShouldHit = (score) => score < 17;
 
-export const game = {
-  setup: () => ({
-    deck: Array.from({ length: 52 }, (_, i) => (i % 13) + 1),
-    playerHand: [],
-    dealerHand: [],
-    playerScore: 0,
-    dealerScore: 0,
-    gameOver: false,
-  }),
+const updateHandStatus = ({ G, ctx, random }) => {
+  Object.values(G.players).forEach((player) => {
+    if (player.score > 21) {
+      player.isWinner = false;
+    } else if (player.score === 21) {
+      player.isWinner = true;
+    } else if (G.dealerScore === 21) {
+      player.isWinner = false;
+    }
+  });
+};
 
-  turn: {
-    minMoves: 1,
-    maxMoves: 1,
+const BET_INCREMENT = 10;
+const INITIAL_CHIPS = 100;
+
+const resetGame = (G) => {
+  G.deck = [];
+  G.dealerHand = [];
+  G.players = G.players.map((player) => ({
+    ...player,
+    hand: [],
+    score: 0,
+    isWinner: undefined,
+  }));
+};
+
+export const game = {
+  setup: ({ ctx }) => {
+    const deck = createDeckOfCards();
+
+    const players = ctx.playOrder.map((playerId) => ({
+      playerId,
+      hand: [],
+      score: [],
+      chips: INITIAL_CHIPS,
+      bet: 0,
+      isWinner: undefined,
+    }));
+
+    return {
+      deck,
+      players,
+      dealerHand: [],
+      dealerScore: 0,
+    };
   },
 
-  moves: {
-    deal: ({ G, random }) => {
-      G.deck = random.Shuffle(G.deck);
-      G.playerHand = [G.deck.pop(), G.deck.pop()];
-      G.dealerHand = [G.deck.pop(), G.deck.pop()];
-      G.playerScore = calculateScore(G.playerHand);
-      G.dealerScore = calculateScore(G.dealerHand);
-
-      if (G.playerScore === 21) {
-        G.gameOver = true;
+  turn: {
+    onBegin: ({ ctx, events }) => {
+      if (ctx.phase !== 'betting') {
+        return;
       }
+      events.setActivePlayers({ all: 'decidingBet' });
+    },
+    stages: {
+      decidingBet: {
+        start: true,
+        moves: {
+          bet: ({ G, playerID }, value) => {
+            const player = G.players[playerID];
+            if (value > player.chips) {
+              return;
+            }
+
+            player.chips -= value;
+            player.bet += value;
+          },
+          lockInBet: ({ ctx, events }) => {
+            events.endStage();
+            if (Object.keys(ctx.activePlayers).length === 1) {
+              events.setActivePlayers({ currentPlayer: '0' });
+              events.endPhase();
+            }
+          },
+        },
+      },
+    },
+  },
+
+  phases: {
+    betting: {
+      start: true,
+      next: 'dealing',
+      onBegin: ({ G }) => resetGame(G),
     },
 
-    hit: ({ G }) => {
-      G.playerHand.push(G.deck.pop());
-      G.playerScore = calculateScore(G.playerHand);
+    dealing: {
+      next: 'post',
+      onBegin: ({ G, events, random }) => {
+        G.deck = random.Shuffle(createDeckOfCards());
 
-      if (G.playerScore > 21) {
-        G.gameOver = true;
-      }
-    },
+        const players = G.players.map((player) => {
+          const hand = [G.deck.pop(), G.deck.pop()];
+          const score = calculateScore(hand);
+          return { ...player, hand, score };
+        });
+        G.players = players;
+        G.dealerHand = [G.deck.pop(), G.deck.pop()];
 
-    stand: ({ G }) => {
-      while (dealerShouldHit(G.dealerScore)) {
-        G.dealerHand.push(G.deck.pop());
+        updateHandStatus({ G, events, random });
+
         G.dealerScore = calculateScore(G.dealerHand);
-      }
-      G.gameOver = true;
+      },
+
+      moves: {
+        hit: ({ G, random, events, playerID }) => {
+          const player = G.players[playerID];
+
+          player.hand = [...player.hand, G.deck.pop()];
+          player.score = calculateScore(player.hand);
+
+          updateHandStatus({ G, random });
+          if (G.players[playerID].score > 21) {
+            events.endTurn();
+          }
+        },
+        stand: ({ G, events, playerID }) => {
+          const player = G.players[playerID];
+          player.isWinner = false;
+          events.endTurn();
+        },
+        double: ({ G, events, playerID }) => {
+          const player = G.players[playerID];
+          const bet = player.bet;
+          if (bet > player.chips) {
+            return;
+          }
+          player.hit = true;
+          player.chips -= bet;
+          player.bet += bet;
+          events.endTurn();
+        },
+      },
+
+      endIf: ({ G }) =>
+        Object.values(G.players).every(
+          (player) => player.isWinner !== undefined,
+        ),
+
+      onEnd: ({ G, random }) => {
+        while (G.deck.length > 0 && dealerShouldHit(G.dealerScore)) {
+          G.dealerHand.push(G.deck.pop());
+          G.dealerScore = calculateScore(G.dealerHand);
+        }
+
+        updateHandStatus({ G, random });
+        Object.values(G.players).forEach((player) => {
+          if (G.dealerScore > 21) {
+            player.isWinner = true;
+          } else if (player.score > G.dealerScore) {
+            player.isWinner = true;
+          } else if (G.dealerScore > player.score) {
+            player.isWinner = false;
+          }
+        });
+
+        Object.values(G.players).forEach((player) => {
+          if (player.isWinner === true) {
+            player.chips += player.bet * 2;
+          }
+          player.score = 0;
+          player.bet = 0;
+        });
+      },
+    },
+
+    post: {
+      next: 'betting',
+      moves: { nextRound: ({ events }) => events.endPhase() },
     },
   },
 
   ai: {
-    enumerate: ({ G }) => {
-      if (G.gameOver) return [];
+    enumerate: (G, ctx) => {
+      const player = G.players[ctx.currentPlayer];
+      const maxBet = player.chips;
+
+      // Get list of all possible bets
+      const bets = Array.from(
+        { length: maxBet / BET_INCREMENT },
+        (_, i) => (i + 1) * 10,
+      );
 
       const moves = [];
-      if (G.playerHand.length === 0) {
-        moves.push({ move: 'deal' });
+      if (ctx.phase === 'betting') {
+        bets.forEach((bet) => moves.push({ move: 'bet', args: [bet] }));
+        moves.push({ move: 'lockInBet' });
       } else {
         moves.push({ move: 'hit' });
         moves.push({ move: 'stand' });
       }
+
       return moves;
     },
+    iterations: 1,
+    playoutDepth: 1,
   },
 
-  endIf: ({ G }) => {
-    if (!G.gameOver) return false;
+  endIf: ({ G, ctx }) => {
+    if (ctx.phase !== 'post') return false;
 
-    if (G.playerScore > 21) return { winner: 'dealer' };
-    if (G.dealerScore > 21) return { winner: 'player' };
-    if (G.playerScore > G.dealerScore) return { winner: 'player' };
-    if (G.dealerScore > G.playerScore) return { winner: 'dealer' };
-    return { winner: 'draw' };
+    let numPlayersInGame = G.players.length;
+    for (const player of G.players) {
+      if (player.chips === 0) {
+        numPlayersInGame--;
+      }
+      if (player.chips >= 500) return { winner: playerID };
+    }
+
+    if (numPlayersInGame === 0) {
+      return { winner: 'dealer' };
+    }
+
+    return false;
   },
 };
 
 export const app = createApp({
   setup() {
-    console.log('app setup');
-
     const G = inject('G');
     const moves = inject('moves');
+    const ctx = inject('ctx');
 
-    const playerHand = computed(() => G.value.playerHand);
+    const phase = computed(() => ctx.value.phase);
     const dealerHand = computed(() => G.value.dealerHand);
-    const playerScore = computed(() => G.value.playerScore);
     const dealerScore = computed(() => G.value.dealerScore);
-    const gameOver = computed(() => G.value.gameOver);
 
-    const getCardDisplay = (card) => {
-      const suits = ['♠', '♥', '♦', '♣'];
-      const values = [
-        'A',
-        '2',
-        '3',
-        '4',
-        '5',
-        '6',
-        '7',
-        '8',
-        '9',
-        '10',
-        'J',
-        'Q',
-        'K',
-      ];
-      return `${values[card % 13]}${suits[Math.floor(card / 13)]}`;
+    const players = computed(() => G.value.players);
+
+    const player = computed(() => players.value[ctx.value.currentPlayer]);
+    const isWinner = computed(() => player.value.isWinner);
+    const hand = computed(() => player.value.hand);
+    const score = computed(() => player.value.score);
+    const chips = computed(() => player.value.chips);
+    const bet = computed(() => player.value.bet);
+
+    const currentBet = ref(BET_INCREMENT);
+
+    const placeBet = () => {
+      moves.bet(currentBet.value);
     };
 
     return {
-      playerHand,
+      players,
+      phase,
+      hand,
       dealerHand,
-      playerScore,
+      score,
       dealerScore,
-      gameOver,
+      isWinner,
+      chips,
+      bet,
+      currentBet,
       moves,
-      getCardDisplay, 
+      betIncrement: BET_INCREMENT,
+      placeBet,
     };
   },
   template: `
-    <div class="min-h-screen bg-green-800 flex items-center justify-center">
-    dealerScore: {{ dealerScore }}
-      <div class="w-full max-w-2xl p-8 space-y-8">
+    <div class="flex items-center justify-center flex-col gap-4">
         <!-- Dealer's Hand -->
-        <div class="space-y-2">
-          <h2 class="text-white text-xl">Dealer's Hand ({{ dealerScore }})</h2>
-          <div class="flex gap-2">
-            <div
-              v-for="(card, index) in dealerHand"
-              :key="index"
-              v-motion
-              :initial="{ x: -100, opacity: 0 }"
-              :enter="{ x: 0, opacity: 1, transition: { delay: index * 100 } }"
-              class="bg-white rounded-lg w-24 h-36 flex items-center justify-center text-2xl font-bold"
-              :class="{'text-red-600': Math.floor(card / 13) === 1 || Math.floor(card / 13) === 2}"
-            >
-              {{ getCardDisplay(card) }}
-            </div>
-          </div>
+        <div class="flex gap-2 h-32 mt-4">
+          <PlayingCard
+            v-for="(card, index) in dealerHand"
+            :hidden="phase === 'dealing' && index === (dealerHand.length - 1)"
+            pattern="striped"
+            v-motion
+            :suit="card.suit"
+            :name="card.name"
+            :key="index"
+            class="bg-white text-green-500 rounded-lg w-24 h-36 flex items-center justify-center text-2xl font-bold"
+          />
         </div>
 
+        <span class="text-xs mt-8 mb-6">
+          Dealer must draw to 16 and stand on all 17's
+          <br />
+          Insurance Pays 2:1
+        </span>
+
         <!-- Player's Hand -->
-        <div class="space-y-2">
-          <h2 class="text-white text-xl">Your Hand ({{ playerScore }})</h2>
-          <div class="flex gap-2">
-            <div
-              v-for="(card, index) in playerHand"
-              :key="index"
-              v-motion
-              :initial="{ y: 100, opacity: 0 }"
-              :enter="{ y: 0, opacity: 1, transition: { delay: index * 100 } }"
-              class="bg-white rounded-lg w-24 h-36 flex items-center justify-center text-2xl font-bold"
-              :class="{'text-red-600': Math.floor(card / 13) === 1 || Math.floor(card / 13) === 2}"
-            >
-              {{ getCardDisplay(card) }}
-            </div>
-          </div>
+        <div class="flex gap-2 h-32">
+          <PlayingCard
+            v-for="(card, index) in hand"
+            v-motion
+            :suit="card.suit"
+            :name="card.name"
+            :key="index"
+            class="bg-white rounded-lg w-24 h-36 flex items-center justify-center text-2xl font-bold"
+          />
         </div>
 
         <!-- Game Controls -->
-        <div class="flex gap-4 justify-center">
-          <button
-            @click="moves.deal"
+        <div class="flex gap-4 items-center mt-8">
+          <Slider
+            v-model="currentBet"
+            :disabled="phase !== 'betting' || chips === 0"
+            :step="betIncrement"
+            :min="betIncrement"
+            :max="chips"
+            class="w-56"
+          />
+
+          <span class="ml-2 w-12 text-xs inline-flex items-center justify-apart gap-1">
+            <div class="w-6">{{ chips > currentBet ? currentBet : chips }}</div>
+            /
+            <div class="w-6">{{ chips }}</div>
+          </span>
+
+          <Button
             v-motion
-            :initial="{ scale: 0.8, opacity: 0 }"
-            :enter="{ scale: 1, opacity: 1 }"
-            class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-6 rounded-lg transition-colors"
-          >
-            Deal
-          </button>
-          <button
-            @click="moves.hit"
-            v-motion
-            :initial="{ scale: 0.8, opacity: 0 }"
-            :enter="{ scale: 1, opacity: 1 }"
-            class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-lg transition-colors"
-            :disabled="gameOver"
-          >
-            Hit
-          </button>
-          <button
-            @click="moves.stand"
-            v-motion
-            :initial="{ scale: 0.8, opacity: 0 }"
-            :enter="{ scale: 1, opacity: 1 }"
-            class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-6 rounded-lg transition-colors"
-            :disabled="gameOver"
-          >
-            Stand
-          </button>
+            label="Bet"
+            :disabled="currentBet === 0 || phase !== 'betting'"
+            @click="placeBet"
+          />
         </div>
 
-        <!-- Current Player Indicator -->
-        <div class="text-center">
-          <span class="text-md text-white font-light flex items-center gap-4 justify-center">
-            Current Turn
-            <span
-              class="w-4 h-4 rounded-full"
-              :class="[gameOver ? 'bg-gray-400' : 'bg-blue-500']"
-            ></span>
-          </span>
+        <div class="flex gap-4 justify-center">
+          <Button
+            v-motion
+            :label="phase === 'post' ? 'Next Round' : 'Deal'"
+            :disabled="phase !== 'post' && (bet === 0 || phase !== 'betting')"
+            @click="phase !== 'post' ? moves.lockInBet() : moves.nextRound()"
+          />
+          <Button
+            v-motion
+            label="Hit"
+            :disabled="phase !== 'dealing'"
+            @click="moves.hit"
+          />
+          <Button
+            v-motion
+            label="Stand"
+            :disabled="phase !== 'dealing'"
+            @click="moves.stand"
+          />
+          <Button
+            v-motion
+            label="Double"
+            :disabled="phase !== 'dealing'"
+            @click="moves.double"
+          />
         </div>
-      </div>
     </div>
   `,
 });
