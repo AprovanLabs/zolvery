@@ -1,3 +1,15 @@
+export const ColorPalette = {
+  players: [
+    '#E3655B', // Bittersweet (red)
+    '#48A8FF', // Argentinian Blue (blue)
+    '#2DD881', // Emerald (green)
+    '#FFE74C', // Maize (yellow)
+    
+    // '#FF8C42', // Pumpkin (orange)
+    // '#1E293B', // Prussian Blue (dark blue)
+  ],
+};
+
 export const styleConfig = {
   ripple: true,
   theme: {
@@ -310,19 +322,25 @@ export const styleConfig = {
         disabledOpacity: '0.6',
         iconSize: '1rem',
         anchorGutter: '2px',
-        primary: {
-          50: '{emerald.50}',
-          100: '{emerald.100}',
-          200: '{emerald.200}',
-          300: '{emerald.300}',
-          400: '{emerald.400}',
-          500: '{emerald.500}',
-          600: '{emerald.600}',
-          700: '{emerald.700}',
-          800: '{emerald.800}',
-          900: '{emerald.900}',
-          950: '{emerald.950}',
-        },
+        /**
+         * @deprecated Use `-p-primary-` instead
+         * 
+         * ```ts
+         * primary: {
+         *   50: '{emerald.50}',
+         *   100: '{emerald.100}',
+         *   200: '{emerald.200}',
+         *   300: '{emerald.300}',
+         *   400: '{emerald.400}',
+         *   500: '{emerald.500}',
+         *   600: '{emerald.600}',
+         *   700: '{emerald.700}',
+         *   800: '{emerald.800}',
+         *   900: '{emerald.900}',
+         *   950: '{emerald.950}',
+         * }
+         * ```
+         */
         formField: {
           paddingX: '0.75rem',
           paddingY: '0.5rem',

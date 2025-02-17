@@ -52,6 +52,10 @@ export default defineConfig({
         replacement,
       })),
       '@kossabos/vue': path.resolve(__dirname, 'src'),
+      '~lucide-static': path.resolve(
+        __dirname,
+        'node_modules/lucide-static',
+      ),
     },
   },
 });

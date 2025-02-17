@@ -150,7 +150,10 @@ export const game = {
           return { ...player, hand, score };
         });
         G.players = players;
-        G.dealerHand = [G.deck.pop(), G.deck.pop()];
+        G.dealerHand = [
+          G.deck.pop(),
+          { ...G.deck.pop(), hidden: true, pattern: 'striped' },
+        ];
 
         updateHandStatus({ G, events, random });
 
@@ -193,6 +196,7 @@ export const game = {
         ),
 
       onEnd: ({ G, random }) => {
+        G.dealerHand[1].hidden = false;
         while (G.deck.length > 0 && dealerShouldHit(G.dealerScore)) {
           G.dealerHand.push(G.deck.pop());
           G.dealerScore = calculateScore(G.dealerHand);
@@ -312,41 +316,63 @@ export const app = createApp({
     };
   },
   template: `
-    <div class="flex items-center justify-center flex-col gap-4">
+    <div class="flex items-center justify-center flex-col">
         <!-- Dealer's Hand -->
-        <div class="flex gap-2 h-32 mt-4">
-          <PlayingCard
-            v-for="(card, index) in dealerHand"
-            :hidden="phase === 'dealing' && index === (dealerHand.length - 1)"
-            pattern="striped"
-            v-motion
-            :suit="card.suit"
-            :name="card.name"
-            :key="index"
-            class="bg-white text-green-500 rounded-lg w-24 h-36 flex items-center justify-center text-2xl font-bold"
+        <div class="flex gap-2 h-32 mt-4 flex-col items-center mb-4" style="color: var(--k-player-1-500)">
+          <Dropzone
+            v-model="dealerHand"
+            component="PlayingCard"
+            label="Dealer"
+            :shape="2"
+            :dimensions="['4rem', '6rem']"
+          />
+
+          <Badge
+            class="px-2"
+            :class="[(!dealerScore || isWinner === undefined) && 'opacity-0']"
+            :value="dealerScore"
           />
         </div>
 
-        <span class="text-xs mt-8 mb-6">
-          Dealer must draw to 16 and stand on all 17's
-          <br />
-          Insurance Pays 2:1
-        </span>
+        <div class="w-full h-24 mb-8 mt-[-5%]">
+          <svg viewBox="0 0 500 100">
+            <path id="curve" d="M0,30 C220,60 220,60 500,30" fill="white" />
+            <text class="text-xs">
+              <textPath xlink:href="#curve" startOffset="125">
+                Dealer must draw to 16 and stand on all 17's
+              </textPath>
+            </text>
+            <text class="text-xs translate-y-4">
+              <textPath xlink:href="#curve" startOffset="195">
+                • Insurance Pays 2:1 •
+              </textPath>
+            </text>
+          </svg>
+        </div>
 
         <!-- Player's Hand -->
-        <div class="flex gap-2 h-32">
-          <PlayingCard
-            v-for="(card, index) in hand"
-            v-motion
-            :suit="card.suit"
-            :name="card.name"
-            :key="index"
-            class="bg-white rounded-lg w-24 h-36 flex items-center justify-center text-2xl font-bold"
+        <div class="flex gap-2 h-32 flex-col items-center">
+          <Dropzone
+            v-model="hand"
+            component="PlayingCard"
+            :shape="hand?.length || 2"
+            :dimensions="['4rem', '6rem']"
+          />
+
+          <Badge
+            v-if="isWinner === undefined"
+            :class="[!score && 'opacity-0']"
+            :value="score"
+          />
+          <Badge
+            v-if="isWinner !== undefined"
+            :value="isWinner ? 'Win' : 'Lose'"
+            :severity="isWinner ? 'success' : 'danger'"
           />
         </div>
 
         <!-- Game Controls -->
-        <div class="flex gap-4 items-center mt-8">
+        <div class="flex gap-4 items-center mt-4 gap-4">
           <Slider
             v-model="currentBet"
             :disabled="phase !== 'betting' || chips === 0"
@@ -363,8 +389,9 @@ export const app = createApp({
           </span>
 
           <Button
-            v-motion
+            class="text-xs"
             label="Bet"
+            variant="outlined"
             :disabled="currentBet === 0 || phase !== 'betting'"
             @click="placeBet"
           />
@@ -372,29 +399,28 @@ export const app = createApp({
 
         <div class="flex gap-4 justify-center">
           <Button
-            v-motion
             :label="phase === 'post' ? 'Next Round' : 'Deal'"
             :disabled="phase !== 'post' && (bet === 0 || phase !== 'betting')"
             @click="phase !== 'post' ? moves.lockInBet() : moves.nextRound()"
           />
-          <Button
-            v-motion
-            label="Hit"
-            :disabled="phase !== 'dealing'"
-            @click="moves.hit"
-          />
-          <Button
-            v-motion
-            label="Stand"
-            :disabled="phase !== 'dealing'"
-            @click="moves.stand"
-          />
-          <Button
-            v-motion
-            label="Double"
-            :disabled="phase !== 'dealing'"
-            @click="moves.double"
-          />
+
+          <InputGroup>
+            <Button
+              label="Hit"
+              :disabled="phase !== 'dealing'"
+              @click="moves.hit"
+            />
+            <Button
+              label="Stand"
+              :disabled="phase !== 'dealing'"
+              @click="moves.stand"
+            />
+            <Button
+              label="Double"
+              :disabled="phase !== 'dealing' || chips < bet"
+              @click="moves.double"
+            />
+          </InputGroup>
         </div>
     </div>
   `,

@@ -12,22 +12,6 @@ import { Dropdown } from 'primereact/dropdown';
 
 import './style.css';
 
-const COLOR_PALETTE = {
-  players: [
-    '#1E293B', // Prussian Blue (dark blue)
-    '#FF8C42', // Pumpkin (orange)
-    '#D5B942', // Old Gold (yellow)
-    '#E3655B', // Bittersweet (red)
-    '#48A8FF', // Argentinian Blue (blue)
-    '#2DD881', // Emerald (green)
-  ],
-}
-
-// const user: User = {
-//   userId: 'xxx',
-//   username: 'JacobSampson',
-// };
-
 const Match: React.FC<{ app: KossabosApp }> = ({ app }) => {
   const ref = useRef<HTMLIFrameElement>(null);
 
@@ -99,9 +83,11 @@ const App: React.FC = () => {
     <PrimeReactProvider>
       <div>
         <div className="flex flex-row items-center gap-2 pt-2 pl-2">
-          <img src="/logo.svg" alt="logo" className="w-10 h-10">
-
-          </img>
+          <img
+            src="/logo.svg"
+            alt="logo"
+            className="w-10 h-10"
+          ></img>
           <Dropdown
             value={appId}
             onChange={(e) => setAppId(e.value)}
@@ -109,7 +95,7 @@ const App: React.FC = () => {
             optionLabel="name"
             placeholder="Select an App"
           />
-                    </div>
+        </div>
         {app && <Match app={app} />}
       </div>
     </PrimeReactProvider>

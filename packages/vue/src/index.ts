@@ -1,7 +1,6 @@
 export { KossabosPlugin, styleConfig } from './plugins';
 export {
     Avatar,
-    Button,
     Dropzone,
     Hand,
     PlayingCard,

@@ -4,7 +4,7 @@
   "scripts": {
     "prepare": "husky install",
     "check-types": "tsc --noEmit", 
-    "dev": "pnpx turbo watch dev --filter=@kossabos/app --filter=@kossabos/examples --filter=./packages/runners/*",
+    "dev": "pnpx turbo watch dev --filter=@kossabos/app --filter=@kossabos/examples --filter=./packages/vue --filter=./packages/runners/*",
     "app:build": "pnpx turbo run build --filter=@kossabos/app",
     "core:build": "pnpx turbo run build --filter=@kossabos/core",
     "core:test": "pnpx turbo run test --filter=@kossabos/core",
