@@ -1,25 +1,73 @@
-@import 'primevue/tailwind.css';
-@import 'primeicons/primeicons.css';
+@import 'assets/primevue/tailwind.css';
+@import 'primeicons/primeicons.css'; /* https://tailwind.primevue.org/vite/ */ 
+@import '~lucide-static/font/lucide.css';
 
-@font-face {
-  font-family: 'LucideIcons';
-  src: url(https://unpkg.com/lucide-static@0.436.0/font/lucide.ttf)
-    format('truetype');
-}
 
 /* Primary and Surface Palettes */
 :root {
-  --p-primary-50: #f0fdf4;
-  --p-primary-100: #dcfce7;
-  --p-primary-200: #bbf7d0;
-  --p-primary-300: #86efac;
-  --p-primary-400: #4ade80;
-  --p-primary-500: #22c55e;
-  --p-primary-600: #16a34a;
-  --p-primary-700: #15803d;
-  --p-primary-800: #166534;
-  --p-primary-900: #14532d;
-  --p-primary-950: #052e16;
+  /* Argentinian Blue (blue) */
+  --k-player-1-50: #eef7ff;
+  --k-player-1-100: #daedff;
+  --k-player-1-200: #bde0ff;
+  --k-player-1-300: #90cdff;
+  --k-player-1-400: #48a8ff;
+  --k-player-1-500: #3590fc;
+  --k-player-1-600: #1f71f1;
+  --k-player-1-700: #175ade;
+  --k-player-1-800: #194ab4;
+  --k-player-1-900: #1a418e;
+  --k-player-1-950: #152956;
+
+  /* Emerald (green) */
+  --k-player-2-50: #f0fdf6;
+  --k-player-2-100: #dcfceb;
+  --k-player-2-200: #bcf6d7;
+  --k-player-2-300: #87eeb9;
+  --k-player-2-400: #4cdc93;
+  --k-player-2-500: #2dd881;
+  --k-player-2-600: #18a15b;
+  --k-player-2-700: #167f4a;
+  --k-player-2-800: #17643d;
+  --k-player-2-900: #155235;
+  --k-player-2-950: #062d1b;
+
+  /* Bittersweet (red) */
+  --k-player-3-50: #fdf4f3;
+  --k-player-3-100: #fce6e4;
+  --k-player-3-200: #fad1ce;
+  --k-player-3-300: #f5b1ac;
+  --k-player-3-400: #ed847c;
+  --k-player-3-500: #e3655b;
+  --k-player-3-600: #ce3f34;
+  --k-player-3-700: #ad3228;
+  --k-player-3-800: #8f2d25;
+  --k-player-3-900: #772b25;
+  --k-player-3-950: #40130f;
+
+  /* Maize (yellow) */
+  --k-player-4-50: #fefde8;
+  --k-player-4-100: #fffcc2;
+  --k-player-4-200: #fff489;
+  --k-player-4-300: #ffe74c;
+  --k-player-4-400: #fdd412;
+  --k-player-4-500: #ecba06;
+  --k-player-4-600: #cc9002;
+  --k-player-4-700: #a36605;
+  --k-player-4-800: #86500d;
+  --k-player-4-900: #724111;
+  --k-player-4-950: #432205;
+
+  --p-primary-50: var(--k-player-1-50);
+  --p-primary-100: var(--k-player-1-100);
+  --p-primary-200: var(--k-player-1-200);
+  --p-primary-300: var(--k-player-1-300);
+  --p-primary-400: var(--k-player-1-400);
+  --p-primary-500: var(--k-player-1-500);
+  --p-primary-600: var(--k-player-1-600);
+  --p-primary-700: var(--k-player-1-700);
+  --p-primary-800: var(--k-player-1-800);
+  --p-primary-900: var(--k-player-1-900);
+  --p-primary-950: var(--k-player-1-950);
   --p-surface-0: #ffffff;
   --p-surface-50: #fafafa;
   --p-surface-100: #f4f4f5;
@@ -33,11 +81,6 @@
   --p-surface-900: #18181b;
   --p-surface-950: #09090b;
   --p-content-border-radius: 6px;
-
-  --vp-c-brand-1: #646cff;
-  --vp-c-brand-2: #747bff;
-  --vp-font-family-base: font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-  --vp-font-family-mono: font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
 
 /* Light */
@@ -57,11 +100,6 @@
   --p-text-hover-color: var(--p-surface-800);
   --p-text-muted-color: var(--p-surface-500);
   --p-text-hover-muted-color: var(--p-surface-600);
-
-  --vp-c-bg: #ffffff;
-  --vp-c-bg-alt: #f6f6f7;
-  --vp-c-bg-elv: #ffffff;
-  --vp-c-bg-soft: #f6f6f7;
 }
 
 /* 
@@ -98,11 +136,4 @@
     --p-text-muted-color: var(--p-surface-400);
     --p-text-hover-muted-color: var(--p-surface-300);
   }
-}
-
-.dark {
-  --vp-c-bg: #1b1b1f;
-  --vp-c-bg-alt: #161618;
-  --vp-c-bg-elv: #202127;
-  --vp-c-bg-soft: #202127;
 }

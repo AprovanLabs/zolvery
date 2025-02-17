@@ -10,9 +10,9 @@
   ],
   "scripts": {
     "build": "vite build",
-    "dev": "vite",
-    "publish": "npm publish --access public",
-    "docs:dev": "vitepress dev docs --host",
+    "dev": "pnpx run build && pnpx run docs:dev",
+    "publish": "pnpx publish --access public",
+    "docs:dev": "vitepress dev docs --host --port 3702",
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs"
   },

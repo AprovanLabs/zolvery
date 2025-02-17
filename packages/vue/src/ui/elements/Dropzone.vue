@@ -1,5 +1,4 @@
 <script lang="ts" setup>
-import { Ref } from 'vue';
 import { computed, watch, defineProps, ref } from 'vue';
 import { VueDraggable } from 'vue-draggable-plus';
 import { useElementBounding } from '@vueuse/core';
@@ -10,10 +9,28 @@ const { shape, dimensions, component, label } = defineProps<{
   component: string;
   label?: string;
 }>();
+const items = defineModel<object[]>();
 
 // Default to x by 1 grid
 const n = computed(() => (Array.isArray(shape) ? shape[1] : 1));
 const m = computed(() => (Array.isArray(shape) ? shape[0] : shape));
+
+const filled = computed(() => {
+  const currentElements = items.value ?? [];
+  const emptyElements = Array.from({
+    length: n.value * m.value - currentElements.length,
+  }).map(() => null as unknown);
+  console.log('c', currentElements, emptyElements);
+  return [...currentElements, ...emptyElements];
+});
+
+watch(
+  filled,
+  () => {
+    console.log('filled', filled.value);
+  },
+  { deep: true },
+);
 
 const width = computed(() =>
   typeof dimensions[0] === 'number' ? `${dimensions[0]}px` : dimensions[0],
@@ -28,11 +45,7 @@ const onDragOver = computed(() => (event: DragEvent) => {
   dragHovered.value = true;
 });
 
-const elements = ref(
-  Array.from({ length: n.value * m.value }).map(() => null as unknown),
-) as Ref<object[]>;
-
-const full = computed(() => elements.value.length >= n.value * m.value * 2);
+const full = computed(() => items.value?.length >= n.value * m.value * 2);
 
 const draggable = ref(null);
 const { top, right, bottom, left } = useElementBounding(draggable);
@@ -57,7 +70,7 @@ const onTouchMove = computed(() => (event: TouchEvent) => {
 
 // Reset hover state on element change
 // Required for touch handling
-watch(elements, () => {
+watch(items, () => {
   dragHovered.value = false;
 });
 </script>
@@ -77,7 +90,7 @@ watch(elements, () => {
 
     <VueDraggable
       ref="draggable"
-      v-model="elements"
+      v-model="items"
       ghost-class="hidden"
       group="items"
       class="grid gap-2 select-none"
@@ -94,7 +107,7 @@ watch(elements, () => {
       @dragenter.prevent
     >
       <div
-        v-for="element in elements.sort().slice(0, n * m)"
+        v-for="element in filled.sort().slice(0, n * m)"
         class="relative transition-all ease-in-out rounded-md bg-slate-200"
         :class="[!full && dragHovered ? 'bg-slate-300' : 'bg-slate-200']"
         :style="`width: ${width}; height: ${height}`"

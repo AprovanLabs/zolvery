@@ -4,7 +4,7 @@
     "type": "module",
     "version": "0.0.1",
     "scripts": {
-        "dev": "vite --port 3700",
+        "dev": "vite --port 3700 --open",
         "build": "tsc && vite build"
     },
     "dependencies": {

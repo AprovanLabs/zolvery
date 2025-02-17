@@ -11,13 +11,9 @@
       rel="stylesheet"
     />
 
-    <!-- "primevue/config": "https://cdn.jsdelivr.net/npm/primevue/umd/primevue.min.js",
-    "@primevue/themes": "https://cdn.jsdelivr.net/npm/primevue/umd/primevue.min.js", -->
-
     <script type="importmap">
       {
         "imports": {
-          "@kossabosvue": "https://unpkg.com/@kossabos/vue@0.0.4/dist/index.mjs",
           "vue": "https://unpkg.com/vue@3/dist/vue.esm-browser.js",
           "@vueuse/motion": "https://cdn.jsdelivr.net/npm/@vueuse/motion@2.2.6/+esm",
           "@vueuse/rxjs": "https://cdn.jsdelivr.net/npm/@vueuse/rxjs",
@@ -32,15 +28,20 @@
           "@boardgame.io/p2p": "/src/plugins/boardgameio",
           "tweetnacl": "https://cdn.jsdelivr.net/npm/tweetnacl@1.0.3/nacl-fast.min.js",
           "tweetnacl-util": "https://cdn.jsdelivr.net/npm/tweetnacl-util@0.15.1/nacl-util.min.js",
-          "peerjs": "https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js",
-          "@kossabos/core": "/src/core",
-          "@kossabos/client": "/src/client",
-          "@kossabos/client/util": "/src/client",
-          "@kossabos/vue": "/src/vue",
-          "@kossabos/vue/plugins/boardgameio": "/src/vue/plugins/boardgameio"
+          "peerjs": "https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"
         }
       }
     </script>
+    <!--
+    "primevue/config": "https://cdn.jsdelivr.net/npm/primevue/umd/primevue.min.js",
+    "@primevue/themes": "https://cdn.jsdelivr.net/npm/primevue/umd/primevue.min.js",
+    "@kossabos/core": "/src/core",
+    "@kossabos/client": "/src/client",
+    "@kossabos/client/util": "/src/client",
+    "@kossabos/vue": "/src/vue",
+    "@kossabos/vue/plugins/boardgameio": "/src/vue/plugins/boardgameio",
+    "@kossabos/vue": "https://unpkg.com/@kossabos/vue@0.0.4/dist/index.mjs"
+    -->
   </head>
   <body class="text-black bg-white">
     <main id="app"></main>
