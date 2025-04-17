@@ -2,7 +2,7 @@
   "appId": "dice-games/yatzy",
   "description": "Yatzy is a dice game where the object of the game is to score points by rolling five dice to make certain combinations.",
   "links": {
-    "homepage": "https://en.wikipedia.org/wiki/Yatzy",
+    "homepage": "https://en.wikipedia.org/wiki/Yatzy"
   },
   "version": "0.0.1",
   "runnerTag": "vue-boardgameio",

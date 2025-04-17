@@ -5,5 +5,5 @@
   { "appId": "card-games/buck-euchre" },
   { "appId": "classics/mancala" },
   { "appId": "classics/tic-tac-toe" },
-  { "appId": "dice-games/yahtzee" }
+  { "appId": "dice-games/yatzy" }
 ]

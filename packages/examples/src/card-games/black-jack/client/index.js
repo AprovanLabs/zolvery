@@ -324,7 +324,7 @@ export const app = createApp({
             component="PlayingCard"
             label="Dealer"
             :shape="2"
-            :dimensions="['4rem', '6rem']"
+            :dimensions="['5rem', '7rem']"
           />
 
           <Badge
@@ -334,7 +334,7 @@ export const app = createApp({
           />
         </div>
 
-        <div class="w-full h-24 mb-8 mt-[-5%]">
+        <div class="w-full h-24 mb-8 mt-[-5%] max-w-[32rem] ">
           <svg viewBox="0 0 500 100">
             <path id="curve" d="M0,30 C220,60 220,60 500,30" fill="white" />
             <text class="text-xs">
@@ -356,7 +356,7 @@ export const app = createApp({
             v-model="hand"
             component="PlayingCard"
             :shape="hand?.length || 2"
-            :dimensions="['4rem', '6rem']"
+            :dimensions="['5rem', '7rem']"
           />
 
           <Badge

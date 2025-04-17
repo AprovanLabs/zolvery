@@ -25,13 +25,11 @@ export default defineConfig({
           });
         },
       },
-      '/runners/vue-vanilla': {
+      '^/runners/vue-vanilla': {
         target: 'http://localhost:3710/',
-        rewrite: (path) => path.replace(/^\/runners\/vue-vanilla/, ''),
       },
-      '/runners/vue-boardgameio': {
+      '^/runners/vue-boardgameio': {
         target: 'http://localhost:3711',
-        rewrite: (path) => path.replace(/^\/runners\/vue-boardgamio/, ''),
       },
     },
   },
