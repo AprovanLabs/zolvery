@@ -23,7 +23,7 @@ const kossabosClient = loadClient(
   transport,
 );
 
-loadScript(`http://localhost:3701/${appId}/client/index.js`, (exports: any) => {
+loadScript(`/apps/${appId}/client/index.js`, (exports: any) => {
   const { app } = exports;
   app.use(KossabosPlugin, { client: kossabosClient });
   console.log('mount!');

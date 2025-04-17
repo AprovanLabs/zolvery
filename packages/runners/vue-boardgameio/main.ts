@@ -53,7 +53,7 @@ const gameWithSetupData = (
   setup: (ctx: unknown) => game.setup(ctx, setupData),
 });
 
-loadScript(`http://localhost:3701/${appId}/client/index.js`, (exports: any) => {
+loadScript(`/apps/${appId}/client/index.js`, (exports: any) => {
   const { app, game } = exports;
 
   const multiplayer = getMultiplayerFromConfig(config, appId);
