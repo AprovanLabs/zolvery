@@ -1,12 +1,3 @@
-<script setup>
-import Avatar from '../src/ui/elements/Avatar.vue';
-import Button from '../src/ui/elements/Button.vue';
-import Dropzone from '../src/ui/elements/Dropzone.vue';
-import Hand from '../src/ui/elements/Hand.vue';
-import PlayingCard from '../src/ui/elements/PlayingCard.vue';
-import Slider from '../src/ui/elements/Slider.vue';
-</script>
-
 # Components
 
 Kossabos Vue components. Import from `@kossabos/vue`
@@ -17,11 +8,18 @@ Kossabos Vue components. Import from `@kossabos/vue`
 
 Simple buttons
 
-<div class="flex gap-4">
-    <Button icon="icon-house" label="Home" />
-    <Button icon="pi pi-replay" label="Restart" />
-    <Button icon="pi pi-check" badge="2" />
-    <Button icon="pi pi-check" badge="2" variant="outlined" />
+<div class="flex flex-col gap-4">
+    <div class="flex gap-4">
+        <Button icon="icon-house" label="Home" />
+        <Button icon="pi pi-replay" label="Restart" />
+        <Button icon="pi pi-check" badge="2" variant="outlined" />
+    </div>
+    <div>
+        <Button size="small" icon="pi pi-check" badge="2" label="Small" />
+    </div>
+    <div>
+        <Button size="large" icon="pi pi-ban" label="Large" />
+    </div>
 </div>
 
 ### Slider

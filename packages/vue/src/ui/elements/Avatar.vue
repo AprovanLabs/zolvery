@@ -112,7 +112,7 @@ watchEffect(() => {
 
 <template>
   <div
-    class="relative m-2 transition-all ease-in-out hover:scale-110 hover:cursor-pointer"
+    class="relative m-2 transition-all ease-in-out hover:cursor-pointer"
     v-bind="ptmi('root')"
     :class="cx('root')"
   >

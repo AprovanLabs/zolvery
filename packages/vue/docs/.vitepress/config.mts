@@ -4,6 +4,10 @@ import { defineConfig } from 'vitepress'
 export default defineConfig({
   title: "Kossabos Vue",
   description: "Components and plugins",
+
+  // Set to light mode
+  appearance: false,
+
   themeConfig: {
     nav: [
       { text: 'Home', link: '/' },
@@ -26,6 +30,9 @@ export default defineConfig({
           '../../node_modules/lucide-static',
         ),
       }
-    }
+    },
+
+    // Load docs on mobile via Tailscale
+    server: { allowedHosts: true },
   }
 })

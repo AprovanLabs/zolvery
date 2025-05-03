@@ -4,8 +4,9 @@
   "scripts": {
     "prepare": "husky install",
     "check-types": "tsc --noEmit", 
-    "expose": "tailscale serve --http=3700",
-    "dev": "pnpx turbo watch dev --filter=@kossabos/app --filter=@kossabos/examples --filter=./packages/vue --filter=./packages/runners/*",
+    "expose": "tailscale serve --http 3700 localhost:3700",
+    "watch": "pnpx turbo watch dev --filter=@kossabos/app --filter=@kossabos/examples --filter=./packages/vue --filter=./packages/runners/*",
+    "dev": "$_ npm run expose & $_ npm run watch",
     "app:build": "pnpx turbo run build --filter=@kossabos/app",
     "core:build": "pnpx turbo run build --filter=@kossabos/core",
     "core:test": "pnpx turbo run test --filter=@kossabos/core",

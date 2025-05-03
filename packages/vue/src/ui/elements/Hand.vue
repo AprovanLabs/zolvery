@@ -22,7 +22,7 @@ const currentHand = ref(hand);
 const play = computed(
   () => (event: Event | SortableEvent, playIndex: number) => {
     const element = currentHand.value[playIndex];
-    if (event.type === 'mouseup') {
+    if (event.type === 'mouseup' || event.type === 'touchend') {
       currentHand.value = currentHand.value.filter(
         (_, index) => index !== playIndex,
       );
@@ -41,18 +41,18 @@ const play = computed(
     :animation="150"
     @end="(event$: SortableEvent) => play(event$, event$.oldIndex)"
   >
+    <!-- Allow touch pass-through on drag -->
     <div
+      @touchstart="(event: Event) => event.preventDefault()"
       v-for="(element, index) in currentHand"
-      class="relative top-0 left-0"
-      :style="{
-        marginLeft: '-4%',
-      }"
+      class="relative top-0 left-0 ml-[-4%]"
     >
       <component
+        @touchstart="(event: Event) => console.log('touchstart', event.target)"
         v-bind="element"
         :is="component"
-        :style="{}"
         @mouseup="(event$: Event) => clickable && play(event$ as DragEvent, index)"
+        @touchend="(event$: Event) => clickable && play(event$ as DragEvent, index)"
       />
     </div>
   </VueDraggable>
