@@ -18,6 +18,5 @@ onMounted(() => {
     href="https://cdn.jsdelivr.net/npm/heroicons-css@0.1.1/heroicons.min.css"
     rel="stylesheet"
   />
-
   <DefaultTheme.Layout />
 </template>

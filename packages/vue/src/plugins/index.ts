@@ -1,9 +1,10 @@
 import { MotionPlugin } from '@vueuse/motion';
 import Badge from 'primevue/badge';
-import Button from 'primevue/button';
 import InputGroup from 'primevue/inputgroup';
 import {
   Avatar,
+  Button,
+  Icon,
   Dropzone,
   Hand,
   PlayingCard,
@@ -32,6 +33,8 @@ export const KossabosPlugin: Plugin = {
     app.directive('ripple', Ripple);
     app.component('Avatar', Avatar);
     app.component('Badge', Badge);
+    app.component('Button', Badge);
+    app.component('Icon', Icon);
     app.component('InputGroup', InputGroup);
     app.component('Button', Button);
     app.component('Dropzone', Dropzone);
