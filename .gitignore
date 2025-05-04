@@ -4,3 +4,4 @@ dist
 test
 .idea
 .turbo
+.DS_Store

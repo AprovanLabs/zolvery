@@ -29,8 +29,11 @@ const Match: React.FC<{ app: KossabosApp }> = ({ app }) => {
   );
 
   return (
-    <div>
-      <header className="flex items-center justify-between px-8 py-4 border-b-1 border-slate-200">
+    <div className="absolute top-0 left-0 w-full h-full bg-white">
+      <header
+        className="flex items-center justify-between px-8 py-4 border-b-1 border-slate-200"
+        style={{ height: '4rem' }}
+      >
         <div>
           <p>{app.name}</p>
           <span className="text-xs">{app.author.username}</span>
@@ -46,7 +49,8 @@ const Match: React.FC<{ app: KossabosApp }> = ({ app }) => {
         ref={ref}
         src={`/runners/${app.runnerTag}?appId=${app.appId}`}
         sandbox="allow-scripts allow-same-origin"
-        className="w-full h-screen b-none"
+        className="w-full h-max b-none"
+        style={{ height: 'calc(100vh - 4rem)' }}
       />
 
       <footer className="fixed bottom-0 flex items-center justify-between w-full px-8 py-4 border-b-1 border-slate-200">
@@ -82,7 +86,8 @@ const App: React.FC = () => {
   return (
     <PrimeReactProvider>
       <div>
-        <div className="flex flex-row items-center gap-2 pt-2 pl-2">
+        {app && <Match app={app} />}
+        <div className="fixed top-0 flex items-center gap-2 pt-2 pl-2 bg-white">
           <img
             src="/logo.svg"
             alt="logo"
@@ -96,7 +101,6 @@ const App: React.FC = () => {
             placeholder="Select an App"
           />
         </div>
-        {app && <Match app={app} />}
       </div>
     </PrimeReactProvider>
   );

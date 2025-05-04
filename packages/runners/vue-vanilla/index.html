@@ -3,7 +3,10 @@
   <head>
     <title>Kossabos Vue Vanilla Runner</title>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width" />
+    <meta
+      name="viewport"
+      content="width=device-width"
+    />
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/heroicons-css@0.1.1/heroicons.min.js"></script>
     <link
@@ -11,7 +14,10 @@
       rel="stylesheet"
     />
 
-    <script async src="https://unpkg.com/es-module-shims"></script>
+    <script
+      async
+      src="https://unpkg.com/es-module-shims"
+    ></script>
     <script type="importmap">
       {
         "imports": {
@@ -30,8 +36,15 @@
       }
     </script>
   </head>
-  <body class="text-black bg-white">
-    <main id="app"></main>
-    <script type="module" src="/main.ts"></script>
+  <body>
+    <main
+      id="app"
+      class="absolute w-full text-black bg-white"
+      style="height: calc(100% - 6rem); padding-bottom: 6rem"
+    ></main>
+    <script
+      type="module"
+      src="/main.ts"
+    ></script>
   </body>
 </html>

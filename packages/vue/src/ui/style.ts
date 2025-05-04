@@ -1023,7 +1023,7 @@ export const styleConfig = {
               paddingY: '{form.field.sm.padding.y}',
             },
             lg: {
-              fontSize: '{form.field.lg.font.size}',
+              fontSize: '{form.field.md.font.size}',
               paddingX: '{form.field.lg.padding.x}',
               paddingY: '{form.field.lg.padding.y}',
             },
