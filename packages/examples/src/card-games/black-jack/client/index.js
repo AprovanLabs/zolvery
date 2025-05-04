@@ -1,4 +1,4 @@
-import { computed, createApp, ref, inject } from 'vue';
+import { computed, createApp, ref, inject, watch } from 'vue';
 
 const CARD_RANK = {
   2: 2,
@@ -15,6 +15,8 @@ const CARD_RANK = {
   K: 10,
   A: 11,
 };
+const BET_INCREMENT = 10;
+const INITIAL_CHIPS = 100;
 
 const createDeckOfCards = (
   suits = ['hearts', 'diamonds', 'spades', 'clubs'],
@@ -53,7 +55,7 @@ const calculateScore = (hand) => {
 
 const dealerShouldHit = (score) => score < 17;
 
-const updateHandStatus = ({ G, ctx, random }) => {
+const updateHandStatus = ({ G }) => {
   Object.values(G.players).forEach((player) => {
     if (player.score > 21) {
       player.isWinner = false;
@@ -64,9 +66,6 @@ const updateHandStatus = ({ G, ctx, random }) => {
     }
   });
 };
-
-const BET_INCREMENT = 10;
-const INITIAL_CHIPS = 100;
 
 const resetGame = (G) => {
   G.deck = [];
@@ -195,7 +194,7 @@ export const game = {
           (player) => player.isWinner !== undefined,
         ),
 
-      onEnd: ({ G, random }) => {
+      onEnd: ({ G, random, kossabos }) => {
         G.dealerHand[1].hidden = false;
         while (G.deck.length > 0 && dealerShouldHit(G.dealerScore)) {
           G.dealerHand.push(G.deck.pop());
@@ -204,7 +203,9 @@ export const game = {
 
         updateHandStatus({ G, random });
         Object.values(G.players).forEach((player) => {
-          if (G.dealerScore > 21) {
+          if (player.isWinner === false) {
+            // Player busted
+          } else if (G.dealerScore > 21) {
             player.isWinner = true;
           } else if (player.score > G.dealerScore) {
             player.isWinner = true;
@@ -220,6 +221,8 @@ export const game = {
           player.score = 0;
           player.bet = 0;
         });
+
+        // kossabos.emit('final', { score: rounds, winner: isWinner });
       },
     },
 
@@ -285,8 +288,8 @@ export const app = createApp({
     const dealerScore = computed(() => G.value.dealerScore);
 
     const players = computed(() => G.value.players);
-
     const player = computed(() => players.value[ctx.value.currentPlayer]);
+
     const isWinner = computed(() => player.value.isWinner);
     const hand = computed(() => player.value.hand);
     const score = computed(() => player.value.score);
@@ -295,11 +298,13 @@ export const app = createApp({
 
     const currentBet = ref(BET_INCREMENT);
 
-    const placeBet = () => {
-      moves.bet(currentBet.value);
-    };
+    const placeBet = () => moves.bet(currentBet.value);
+
+    // Reset the bet when the player wins or loses
+    watch(isWinner, () => currentBet.value = BET_INCREMENT);
 
     return {
+      bet,
       players,
       phase,
       hand,
@@ -308,7 +313,6 @@ export const app = createApp({
       dealerScore,
       isWinner,
       chips,
-      bet,
       currentBet,
       moves,
       betIncrement: BET_INCREMENT,
@@ -316,112 +320,139 @@ export const app = createApp({
     };
   },
   template: `
-    <div class="flex items-center justify-center flex-col">
-        <!-- Dealer's Hand -->
-        <div class="flex gap-2 h-32 mt-4 flex-col items-center mb-4" style="color: var(--k-player-1-500)">
-          <Dropzone
-            v-model="dealerHand"
-            component="PlayingCard"
-            label="Dealer"
-            :shape="2"
-            :dimensions="['5rem', '7rem']"
-          />
+  <div class="absolute h-full w-full flex items-center flex-col pt-16">
+    <!-- Dealer's Hand -->
+    <div
+      class="flex gap-2 h-32 flex-col items-center mb-4"
+      style="color: var(--k-player-1-500)"
+    >
+      <Dropzone
+        v-model="dealerHand"
+        component="PlayingCard"
+        label="Dealer"
+        :shape="dealerHand?.length || 2"
+        :dimensions="['4rem', '6rem']"
+      />
 
-          <Badge
-            class="px-2"
-            :class="[(!dealerScore || isWinner === undefined) && 'opacity-0']"
-            :value="dealerScore"
-          />
-        </div>
+      <Badge
+        class="px-2"
+        :class="[(!dealerScore || isWinner === undefined) && 'opacity-0']"
+        :value="dealerScore"
+      />
+      <Badge
+        class="px-2"
+        v-if="bet"
+        :class="[isWinner !== undefined && 'opacity-0']"
+        :value="'+' + bet"
+      />
+    </div>
 
-        <div class="w-full h-24 mb-8 mt-[-5%] max-w-[32rem] ">
-          <svg viewBox="0 0 500 100">
-            <path id="curve" d="M0,30 C220,60 220,60 500,30" fill="white" />
-            <text class="text-xs">
-              <textPath xlink:href="#curve" startOffset="125">
-                Dealer must draw to 16 and stand on all 17's
-              </textPath>
-            </text>
-            <text class="text-xs translate-y-4">
-              <textPath xlink:href="#curve" startOffset="195">
-                • Insurance Pays 2:1 •
-              </textPath>
-            </text>
-          </svg>
-        </div>
+    <div class="relative w-full h-24 mb-8 max-w-[32rem]">
+      <svg viewBox="0 0 500 100">
+        <path id="curve" d="M0,30 C220,60 220,60 500,30" fill="white" />
+        <text class="text-sm">
+          <textPath xlink:href="#curve" startOffset="110">
+            Dealer must draw to 16 and stand on all 17's
+          </textPath>
+        </text>
+        <text class="text-sm translate-y-6">
+          <textPath xlink:href="#curve" startOffset="175">
+            • Insurance Pays 2:1 •
+          </textPath>
+        </text>
+      </svg>
+    </div>
 
-        <!-- Player's Hand -->
-        <div class="flex gap-2 h-32 flex-col items-center">
-          <Dropzone
-            v-model="hand"
-            component="PlayingCard"
-            :shape="hand?.length || 2"
-            :dimensions="['5rem', '7rem']"
-          />
+    <!-- Player's Hand -->
+    <div
+      v-motion
+      v-if="phase !== 'betting'"
+      class="flex gap-2 h-32 flex-col items-center"
+      :initial="{ scale: 0, opacity: 0 }"
+      :enter="{ scale: 1, opacity: 1 }"
+    >
+      <Dropzone
+        v-model="hand"
+        component="PlayingCard"
+        :shape="hand?.length || 2"
+        :dimensions="['4rem', '6rem']"
+      />
 
-          <Badge
-            v-if="isWinner === undefined"
-            :class="[!score && 'opacity-0']"
-            :value="score"
-          />
-          <Badge
-            v-if="isWinner !== undefined"
-            :value="isWinner ? 'Win' : 'Lose'"
-            :severity="isWinner ? 'success' : 'danger'"
-          />
-        </div>
+      <Badge
+        v-if="isWinner === undefined"
+        :class="[!score && 'opacity-0']"
+        :value="score"
+      />
+      <Badge
+        v-if="isWinner !== undefined"
+        :value="isWinner ? 'Win' : 'Lose'"
+        :severity="isWinner ? 'success' : 'danger'"
+      />
+    </div>
 
-        <!-- Game Controls -->
-        <div class="flex gap-4 items-center mt-4 gap-4">
-          <Slider
-            v-model="currentBet"
-            :disabled="phase !== 'betting' || chips === 0"
-            :step="betIncrement"
-            :min="betIncrement"
-            :max="chips"
-            class="w-56"
-          />
-
-          <span class="ml-2 w-12 text-xs inline-flex items-center justify-apart gap-1">
-            <div class="w-6">{{ chips > currentBet ? currentBet : chips }}</div>
-            /
-            <div class="w-6">{{ chips }}</div>
-          </span>
-
+    <!-- Game Controls -->
+    <div class="flex flex-col gap-4 w-full items-center mt-auto pb-12">
+      <div class="flex flex-col gap-2">
+        <InputGroup>
           <Button
-            class="text-xs"
+            label="Hit"
+            size="large"
+            icon="pi pi-plus"
+            :disabled="phase !== 'dealing'"
+            @click="moves.hit"
+          />
+          <Button
+            label="Stand"
+            size="large"
+            icon="pi pi-minus"
+            :disabled="phase !== 'dealing'"
+            @click="moves.stand"
+          />
+          <Button
+            label="Double"
+            size="large"
+            icon="pi pi-angle-double-up"
+            :disabled="phase !== 'dealing' || chips < bet"
+            @click="moves.double"
+          />
+        </InputGroup>
+
+        <div class="grid grid-cols-2 gap-2">
+          <Button
             label="Bet"
+            icon="pi pi-dollar"
             variant="outlined"
             :disabled="currentBet === 0 || phase !== 'betting'"
             @click="placeBet"
           />
-        </div>
-
-        <div class="flex gap-4 justify-center">
           <Button
+            icon="pi pi-check"
+            variant="outlined"
             :label="phase === 'post' ? 'Next Round' : 'Deal'"
             :disabled="phase !== 'post' && (bet === 0 || phase !== 'betting')"
             @click="phase !== 'post' ? moves.lockInBet() : moves.nextRound()"
           />
-
-          <InputGroup>
-            <Button
-              label="Hit"
-              :disabled="phase !== 'dealing'"
-              @click="moves.hit"
-            />
-            <Button
-              label="Stand"
-              :disabled="phase !== 'dealing'"
-              @click="moves.stand"
-            />
-            <Button
-              label="Double"
-              :disabled="phase !== 'dealing' || chips < bet"
-              @click="moves.double"
-            />
-          </InputGroup>
         </div>
+      </div>
+
+      <div class="flex gap-4 items-center gap-2">
+        <Slider
+          v-model="currentBet"
+          :disabled="phase !== 'betting' || chips === 0"
+          :step="betIncrement"
+          :min="betIncrement"
+          :max="chips"
+          class="w-56"
+        />
+
+        <span class="w-12 text-xs inline-flex items-center justify-apart gap-1">
+          <span class="pi pi-dollar"></span>
+          <div class="w-6">{{ chips > currentBet ? currentBet : chips }}</div>
+          /
+          <div class="w-6">{{ chips }}</div>
+        </span>
+      </div>
     </div>
+  </div>
   `,
 });

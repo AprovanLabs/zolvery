@@ -59,7 +59,12 @@ const onTouchMove = computed(() => (event: TouchEvent) => {
   }
 });
 
-const empty = computed(() => n.value * m.value - (items.value?.length || 0));
+const empty = computed(() => {
+  console.log('items.value', items.value, n.value, m.value);
+
+  return Math.max(n.value * m.value - (items.value?.length || 0), 0),
+}
+);
 
 // Reset hover state on element change
 // Required for touch handling
@@ -112,6 +117,7 @@ watch(items, () => {
         />
       </div>
       <div
+        v-if="!!empty"
         v-for="_ in empty"
         class="relative transition-all ease-in-out rounded-md bg-slate-200"
         :class="[!full && dragHovered ? 'bg-slate-300' : 'bg-slate-200']"
