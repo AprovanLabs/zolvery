@@ -66,11 +66,6 @@ loadScript(`/apps/${appId}/client/index.js`, (exports: any) => {
   });
 
   app.use(KossabosPlugin, { client: kossabosClient });
-  console.log('starting...', '0');
-
-  boardgameClient.subscribe((...rest) => {
-    console.log('boardgameClient.subscribe', ...rest);
-  });
   boardgameClient.start();
 
   console.log('started!', game, multiplayer);

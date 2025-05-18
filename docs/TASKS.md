@@ -2,6 +2,8 @@
 
 ## Needed for V1
 
+MUST BE EMBEDDABLE, PRIVATEABLE, AND INTERNALLY CONFIGURABLE!
+
 - Create set of re-usable components
   - https://stackoverflow.com/questions/78111581/how-to-precompile-vue-3-components-using-vite-and-use-them-as-js-module-in-stati
     - UI
