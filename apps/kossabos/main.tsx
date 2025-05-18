@@ -65,9 +65,12 @@ const Match: React.FC<{ app: KossabosApp }> = ({ app }) => {
   );
 };
 
+const DEFAULT_APP_ID = 'card-games/black-jack';
+// const DEFAULT_APP_ID = 'card-games/buck-euchre';
+
 const App: React.FC = () => {
   const [apps, setApps] = useState([]);
-  const [appId, setAppId] = useState<string | null>('card-games/black-jack');
+  const [appId, setAppId] = useState<string | null>(DEFAULT_APP_ID);
   const [app, setApp] = useState();
 
   useEffect(() => {

@@ -59,11 +59,8 @@ const onTouchMove = computed(() => (event: TouchEvent) => {
   }
 });
 
-const empty = computed(() => {
-  console.log('items.value', items.value, n.value, m.value);
-
-  return Math.max(n.value * m.value - (items.value?.length || 0), 0),
-}
+const empty = computed(() =>
+  Math.max(n.value * m.value - (items.value?.length || 0), 0),
 );
 
 // Reset hover state on element change

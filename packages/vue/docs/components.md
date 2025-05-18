@@ -1,10 +1,10 @@
-# Components
+## Elements
 
 Kossabos Vue components. Import from `@kossabos/vue`
 
-## Misc
+### Misc
 
-### Button
+#### Button
 
 Simple buttons
 
@@ -22,13 +22,13 @@ Simple buttons
     </div>
 </div>
 
-### Slider
+#### Slider
 
 Simple slider
 
 <Slider :step="10" class="w-56" />
 
-### Hand
+#### Hand
 
 Manage a hand of items, often playing cards.
 
@@ -76,7 +76,7 @@ Can handle larger hands
 
 </div>
 
-### Playing Card
+#### Playing Card
 
 Typical playing cards.
 
@@ -94,7 +94,7 @@ Blank cards showing back. Color can be controlled via `currentColor`.
     <PlayingCard pattern="bordered" hidden />
 </div>
 
-### Avatar
+#### Avatar
 
 Track multiple metrics and display a countdown timer.
 
@@ -143,7 +143,3 @@ Display actions taken by avatars
         :action="{ value: '<span class=\'flex heroicon heroicon-star\'></span>', position: 'right' }"
     />
 </div>
-
-## Layout
-
-### Huddle

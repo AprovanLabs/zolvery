@@ -380,7 +380,7 @@ export const styleConfig = {
           },
         },
         content: {
-          borderRadius: '{border.radius.md}',
+          borderRadius: '99999px',
         },
         mask: {
           transitionDuration: '0.15s',
