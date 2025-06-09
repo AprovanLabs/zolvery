@@ -68,9 +68,13 @@ const Match: React.FC<{ app: KossabosApp }> = ({ app }) => {
 const DEFAULT_APP_ID = 'card-games/black-jack';
 // const DEFAULT_APP_ID = 'card-games/buck-euchre';
 
+const LOCAL_STORAGE_KOSSABOS_APP_ID = 'kossabos-app-id';
+
 const App: React.FC = () => {
   const [apps, setApps] = useState([]);
-  const [appId, setAppId] = useState<string | null>(DEFAULT_APP_ID);
+  const [appId, setAppId] = useState<string | null>(
+    localStorage.getItem(LOCAL_STORAGE_KOSSABOS_APP_ID) || DEFAULT_APP_ID
+  );
   const [app, setApp] = useState();
 
   useEffect(() => {
@@ -86,6 +90,11 @@ const App: React.FC = () => {
       .then((data) => setApp(data));
   }, [appId]);
 
+  const updateAppId = useCallback((appId: string) => {
+    setAppId(appId);
+    localStorage.setItem(LOCAL_STORAGE_KOSSABOS_APP_ID, appId);
+  }, []);
+
   return (
     <PrimeReactProvider>
       <div>
@@ -98,7 +107,7 @@ const App: React.FC = () => {
           ></img>
           <Dropdown
             value={appId}
-            onChange={(e) => setAppId(e.value)}
+            onChange={(e) => updateAppId(e.value)}
             options={apps.map(({ appId }) => appId)}
             optionLabel="name"
             placeholder="Select an App"
