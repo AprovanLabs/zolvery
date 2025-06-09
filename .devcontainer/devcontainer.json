@@ -1,0 +1,69 @@
+{
+    "name": "kossabos",
+    "image": "mcr.microsoft.com/devcontainers/typescript-node:20-bookworm",
+    "features": {
+        "ghcr.io/devcontainers/features/aws-cli:1": {},
+        "ghcr.io/devcontainers/features/pnpm:1": {
+            "version": "9.14.4"
+        },
+        "ghcr.io/devcontainers/features/tailscale:1": {},
+        "ghcr.io/eitsupi/devcontainer-features/jq-likes:1": {},
+        "ghcr.io/jungaretti/features/make:1": {}
+    },
+    "postCreateCommand": "pnpm install && pnpm prepare",
+    "customizations": {
+        "vscode": {
+            "settings": {
+                "eslint.validate": [
+                    "typescript",
+                    "typescriptreact"
+                ],
+                "editor.formatOnSave": true,
+                "prettier.enable": true,
+                "files.insertFinalNewline": true,
+                "[makefile]": {
+                    "editor.insertSpaces": false,
+                    "editor.detectIndentation": false
+                }
+            },
+            "extensions": [
+                "amazonwebservices.aws-toolkit-vscode",
+                "dbaeumer.vscode-eslint",
+                "esbenp.prettier-vscode",
+                "austenc.tailwind-docs",
+                "bradlc.vscode-tailwindcss",
+                "yoavbls.pretty-ts-errors"
+            ]
+        }
+    },
+    "forwardPorts": [
+        3700,
+        3701,
+        3702,
+        3710,
+        3711
+    ],
+    "portsAttributes": {
+        "3700": {
+            "label": "App",
+            "onAutoForward": "notify"
+        },
+        "3701": {
+            "label": "Examples",
+            "onAutoForward": "notify"
+        },
+        "3702": {
+            "label": "Vue (Docs)",
+            "onAutoForward": "notify"
+        },
+        "3710": {
+            "label": "Vue Runner (Vanilla)",
+            "onAutoForward": "notify"
+        },
+        "3711": {
+            "label": "Vue Runner (Boardgame.io)",
+            "onAutoForward": "notify"
+        }
+    },
+    "remoteUser": "node"
+}
