@@ -2,7 +2,7 @@ import { createApp, computed, inject, ref } from 'vue';
 
 const NUM_VOTES = 3;
 
-const syllableCount = (word) => {
+const getSyllableCount = (word) => {
   word = word.toLowerCase();
   const tSome = 0;
   if (word.length > 3) {
@@ -22,15 +22,17 @@ const syllableCount = (word) => {
   }
 };
 
-const toLine = (syllableCounts, numSyllables) => {
+const toLine = (syllableCounts, offset, numSyllables) => {
+  let line = undefined;
+  let wordCount = 0;
+  let currSyllableCount = 0;
+  
   try {
-    if (!syllableCounts.length) {
-      throw new Error('No syllable counts provided for line construction');
+    const counts = syllableCounts.slice(offset);
+    if (!counts.length) {
+      return { line: '', wordCount: 0, syllableCount: 0 };
     }
 
-    const counts = [...syllableCounts];
-    let currSyllableCount = 0;
-    let line;
     do {
       console.log('Current syllable counts:', counts);
       const { word, count } = counts.shift();
@@ -41,20 +43,21 @@ const toLine = (syllableCounts, numSyllables) => {
         'for word:',
         word,
       );
-      if (currSyllableCount > 5) {
-        throw new Error(`Exceeded 5 syllables in line: ${line} + ${word}`);
-      }
 
+      // if (currSyllableCount > numSyllables) {
+      //   throw new Error(`Exceeded ${numSyllables} syllables in line: ${line} + ${word}`);
+      // }
+
+      wordCount += 1;
       if (line === undefined) {
         line = word;
       } else {
         line += ' ' + word;
       }
     } while (currSyllableCount < numSyllables);
-    return line;
-  } catch (e) {
-    console.error('Error creating line:', e);
-    return '';
+    return { line, wordCount, syllableCount: currSyllableCount };
+  } catch {
+    return { line, wordCount, syllableCount: currSyllableCount };
   }
 };
 
@@ -68,6 +71,8 @@ export const app = createApp({
     const phase = ref('creating'); // 'creating', 'voting'
     const voteNum = ref(1);
     const currentVote = ref(5);
+    const isComplete = ref(false);
+    const invalidLines = ref(new Set());
 
     const nextPoem = () => {
       poem.value = poems.value.pop();
@@ -89,12 +94,20 @@ export const app = createApp({
       nextPoem();
     };
 
-    const haiki = computed(() => {
+    const setIsComplete = (value) => {
+      isComplete.value = value;
+    }
+
+    const setInvalidLines = (invalidLines) => {
+      invalidLines.value = invalidLines;
+    }
+
+    const haiku = computed(() => {
       const syllableCounts = poem.value
-        .split(' ')
+        .split(/[ \n]/)
         .filter((word) => word.trim() !== '')
         .map((word) => {
-          const count = syllableCount(word);
+          const count = getSyllableCount(word);
           console.log('Counting syllables for word:', { word, count });
           if (count === undefined) {
             console.warn(`Could not count syllables for word: ${word}`);
@@ -107,14 +120,42 @@ export const app = createApp({
         const lines = [];
 
         console.log('Syllable counts:', [...syllableCounts]);
+        debugger;
 
-        lines.push(toLine([...syllableCounts], 5));
-        lines.push(toLine([...syllableCounts], 7));
-        lines.push(toLine([...syllableCounts], 5));
+        const invalidLines = new Set();
+        let numWords = 0;
+        let { line, wordCount, syllableCount } = toLine(syllableCounts, 0, 5);
+        numWords += wordCount;
+        console.log('First line:', line, syllableCount);
+        if (syllableCount !== 5) {
+          invalidLines.add(0);
+        }
+        lines.push(line);
+
+        ({ line, wordCount, syllableCount } = toLine(syllableCounts, numWords, 7));
+        numWords += wordCount;
+        if (syllableCount !== 7) {
+          invalidLines.add(1);
+        }
+        lines.push(line);
+
+        ({ line, wordCount, syllableCount } = toLine(syllableCounts, numWords, 5));
+        if (syllableCount !== 5) {
+          invalidLines.add(1);
+        }
+        lines.push(line);
 
         console.log('Haiku syllable counts:', lines);
 
-        return lines.join('\n');
+        const content = lines.filter((x) => !!x).join('\n');
+        const isComplete = syllableCount === 5;
+
+        console.log('content', content, isComplete);
+
+        setIsComplete(isComplete);
+        setInvalidLines(invalidLines);
+
+        return content;
       } catch (e) {
         console.error('Error creating haiku:', e);
         return '';
@@ -122,12 +163,17 @@ export const app = createApp({
     });
 
     const updatePoem = (value) => {
-      console.log('Updating poem:', value);
+      console.log('Updating poem:', haiku.value, value);
+      if (haiku.value.isComplete && value.length > poem.value.length) {
+        return;
+      }
       poem.value = value;
     };
 
     return {
-      haiki,
+      haiku,
+      isComplete,
+      invalidLines,
       prompt,
       currentVote,
       phase,
@@ -143,14 +189,24 @@ export const app = createApp({
 
       <div v-if="phase === 'creating'">
         <textarea
-          v-model="haiki"
+          v-model="haiku"
           @input="updatePoem($event.target.value)"
-          class="w-full max-w-sm h-32 px-16 py-8 bg-white my-4 mx-auto"
+          class="w-full max-w-md h-32 px-8 py-4 bg-white my-4 mx-auto"
           placeholder="Write your poem here..."
         ></textarea>
+        {{invalidLines}}
+
+        <!-- Display invalid lines warning -->
+        <div v-if="!isComplete" class="text-red-500">
+          <p v-if="invalidLines.has(0)">Line 1 must have 5 syllables.</p>
+          <p v-if="invalidLines.has(1)">Line 2 must have 7 syllables.</p>
+          <p v-if="invalidLines.has(2)">Line 3 must have 5 syllables.</p>
+        </div>
 
         <button
           class="btn btn-primary mt-2"
+          :disabled="!isComplete"
+          :class="[haiku.isComplete ? '' : 'opacity-50']"
           @click="submit"
         >
           {{ t('submit', 'Submit') }}
