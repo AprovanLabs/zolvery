@@ -7,10 +7,9 @@ import {
   User,
 } from '@kossabos/core';
 
+import '@kossabos/vue/index.css';
+
 const appId = getQueryParam('appId');
-
-if (!appId) throw Error('Missing app ID');
-
 const numberOfPlayers = getQueryParam('numberOfPlayers');
 const isMultiplayer = getQueryParam('isMultiplayer');
 
@@ -26,6 +25,6 @@ const kossabosClient = loadClient(
 loadScript(`/apps/${appId}/client/index.js`, (exports: any) => {
   const { app } = exports;
   app.use(KossabosPlugin, { client: kossabosClient });
-  console.log('mount!');
+
   app.mount('#app');
 });

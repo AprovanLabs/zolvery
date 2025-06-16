@@ -17,6 +17,19 @@ export class Client {
     });
   }
 
+  public env = (key: string) => {
+    if (key === 'ENVIRONMENT') {
+      return 'dev';
+    }
+    return null;
+  }
+
+  public get = (key: string) => {
+    return null;
+  }
+
+  public set = (key: string, value: unknown) => {};
+
   public on = (
     eventType: Readonly<string>,
     action: (event: Event) => void,
@@ -28,5 +41,5 @@ export class Client {
     this.transport.dispatchEvent(event as any);
   };
 
-  public t = (key: string) => this.localization.t(key);
+  public t = (key: string, defaultValue: string) => this.localization.t(key) ?? defaultValue;
 }
