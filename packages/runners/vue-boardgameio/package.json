@@ -16,7 +16,7 @@
         "tweetnacl-util": "^0.15.1"
     },
     "devDependencies": {
-        "vite": "*",
-        "vue": "^3.5.13"
+        "@vitejs/plugin-vue": "^5.2.1",
+        "vite": "*"
     }
 }

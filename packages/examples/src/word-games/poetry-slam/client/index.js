@@ -1,26 +1,413 @@
 import { createApp, computed, inject, ref } from 'vue';
 
-const NUM_VOTES = 3;
+/** @see https://github.com/words/syllable */
 
-const getSyllableCount = (word) => {
-  word = word.toLowerCase();
-  const tSome = 0;
-  if (word.length > 3) {
-    if (word.substring(0, 4) == 'some') {
-      word = word.replace('some', '');
-      tSome++;
+const problematic = {
+  abalone: 4,
+  abare: 3,
+  abbruzzese: 4,
+  abed: 2,
+  aborigine: 5,
+  abruzzese: 4,
+  acreage: 3,
+  adame: 3,
+  adieu: 2,
+  adobe: 3,
+  anemone: 4,
+  anyone: 3,
+  apache: 3,
+  aphrodite: 4,
+  apostrophe: 4,
+  ariadne: 4,
+  cafe: 2,
+  calliope: 4,
+  catastrophe: 4,
+  chile: 2,
+  chloe: 2,
+  circe: 2,
+  coyote: 3,
+  daphne: 2,
+  epitome: 4,
+  eurydice: 4,
+  euterpe: 3,
+  every: 2,
+  everywhere: 3,
+  forever: 3,
+  gethsemane: 4,
+  guacamole: 4,
+  hermione: 4,
+  hyperbole: 4,
+  jesse: 2,
+  jukebox: 2,
+  karate: 3,
+  machete: 3,
+  maybe: 2,
+  naive: 2,
+  newlywed: 3,
+  penelope: 4,
+  people: 2,
+  persephone: 4,
+  phoebe: 2,
+  pulse: 1,
+  queue: 1,
+  recipe: 3,
+  riverbed: 3,
+  sesame: 3,
+  shoreline: 2,
+  simile: 3,
+  snuffleupagus: 5,
+  sometimes: 2,
+  syncope: 3,
+  tamale: 3,
+  waterbed: 3,
+  wednesday: 2,
+  yosemite: 4,
+  zoe: 2
+};
+
+const own = {}.hasOwnProperty
+
+// Two expressions of occurrences which normally would be counted as two
+// syllables, but should be counted as one.
+const EXPRESSION_MONOSYLLABIC_ONE = new RegExp(
+  [
+    'awe($|d|so)',
+    'cia(?:l|$)',
+    'tia',
+    'cius',
+    'cious',
+    '[^aeiou]giu',
+    '[aeiouy][^aeiouy]ion',
+    'iou',
+    'sia$',
+    'eous$',
+    '[oa]gue$',
+    '.[^aeiuoycgltdb]{2,}ed$',
+    '.ely$',
+    '^jua',
+    'uai',
+    'eau',
+    '^busi$',
+    '(?:[aeiouy](?:' +
+      [
+        '[bcfgklmnprsvwxyz]',
+        'ch',
+        'dg',
+        'g[hn]',
+        'lch',
+        'l[lv]',
+        'mm',
+        'nch',
+        'n[cgn]',
+        'r[bcnsv]',
+        'squ',
+        's[chkls]',
+        'th'
+      ].join('|') +
+      ')ed$)',
+    '(?:[aeiouy](?:' +
+      [
+        '[bdfklmnprstvy]',
+        'ch',
+        'g[hn]',
+        'lch',
+        'l[lv]',
+        'mm',
+        'nch',
+        'nn',
+        'r[nsv]',
+        'squ',
+        's[cklst]',
+        'th'
+      ].join('|') +
+      ')es$)'
+  ].join('|'),
+  'g'
+)
+
+const EXPRESSION_MONOSYLLABIC_TWO = new RegExp(
+  '[aeiouy](?:' +
+    [
+      '[bcdfgklmnprstvyz]',
+      'ch',
+      'dg',
+      'g[hn]',
+      'l[lv]',
+      'mm',
+      'n[cgns]',
+      'r[cnsv]',
+      'squ',
+      's[cklst]',
+      'th'
+    ].join('|') +
+    ')e$',
+  'g'
+)
+
+// Four expression of occurrences which normally would be counted as one
+// syllable, but should be counted as two.
+const EXPRESSION_DOUBLE_SYLLABIC_ONE = new RegExp(
+  '(?:' +
+    [
+      '([^aeiouy])\\1l',
+      '[^aeiouy]ie(?:r|s?t)',
+      '[aeiouym]bl',
+      'eo',
+      'ism',
+      'asm',
+      'thm',
+      'dnt',
+      'snt',
+      'uity',
+      'dea',
+      'gean',
+      'oa',
+      'ua',
+      'react?',
+      'orbed', // Cancel `'.[^aeiuoycgltdb]{2,}ed$',`
+      'shred', // Cancel `'.[^aeiuoycgltdb]{2,}ed$',`
+      'eings?',
+      '[aeiouy]sh?e[rs]'
+    ].join('|') +
+    ')$',
+  'g'
+)
+
+const EXPRESSION_DOUBLE_SYLLABIC_TWO = new RegExp(
+  [
+    'creat(?!u)',
+    '[^gq]ua[^auieo]',
+    '[aeiou]{3}',
+    '^(?:ia|mc|coa[dglx].)',
+    '^re(app|es|im|us)',
+    '(th|d)eist'
+  ].join('|'),
+  'g'
+)
+
+const EXPRESSION_DOUBLE_SYLLABIC_THREE = new RegExp(
+  [
+    '[^aeiou]y[ae]',
+    '[^l]lien',
+    'riet',
+    'dien',
+    'iu',
+    'io',
+    'ii',
+    'uen',
+    '[aeilotu]real',
+    'real[aeilotu]',
+    'iell',
+    'eo[^aeiou]',
+    '[aeiou]y[aeiou]'
+  ].join('|'),
+  'g'
+)
+
+const EXPRESSION_DOUBLE_SYLLABIC_FOUR = /[^s]ia/
+
+// Expression to match single syllable pre- and suffixes.
+const EXPRESSION_SINGLE = new RegExp(
+  [
+    '^(?:' +
+      [
+        'un',
+        'fore',
+        'ware',
+        'none?',
+        'out',
+        'post',
+        'sub',
+        'pre',
+        'pro',
+        'dis',
+        'side',
+        'some'
+      ].join('|') +
+      ')',
+    '(?:' +
+      [
+        'ly',
+        'less',
+        'some',
+        'ful',
+        'ers?',
+        'ness',
+        'cians?',
+        'ments?',
+        'ettes?',
+        'villes?',
+        'ships?',
+        'sides?',
+        'ports?',
+        'shires?',
+        '[gnst]ion(?:ed|s)?'
+      ].join('|') +
+      ')$'
+  ].join('|'),
+  'g'
+)
+
+// Expression to match double syllable pre- and suffixes.
+const EXPRESSION_DOUBLE = new RegExp(
+  [
+    '^' +
+      '(?:' +
+      [
+        'above',
+        'anti',
+        'ante',
+        'counter',
+        'hyper',
+        'afore',
+        'agri',
+        'infra',
+        'intra',
+        'inter',
+        'over',
+        'semi',
+        'ultra',
+        'under',
+        'extra',
+        'dia',
+        'micro',
+        'mega',
+        'kilo',
+        'pico',
+        'nano',
+        'macro',
+        'somer'
+      ].join('|') +
+      ')',
+    '(?:fully|berry|woman|women|edly|union|((?:[bcdfghjklmnpqrstvwxz])|[aeiou])ye?ing)$'
+  ].join('|'),
+  'g'
+)
+
+// Expression to match triple syllable suffixes.
+const EXPRESSION_TRIPLE = /(creations?|ology|ologist|onomy|onomist)$/g
+
+/**
+ * Count syllables in `value`.
+ *
+ * @param {string} value
+ *   Value to check.
+ * @returns {number}
+ *   Syllables in `value`.
+ */
+function getSyllableCount(value) {
+  const values = String(value)
+    .toLowerCase()
+    // Remove apostrophes.
+    .replace(/['’]/g, '')
+    // Split on word boundaries.
+    .split(/\b/g)
+  let index = -1
+  let sum = 0
+
+  while (++index < values.length) {
+    // Remove non-alphabetic characters from a given value.
+    sum += one(values[index].replace(/[^a-z]/g, ''))
+  }
+
+  return sum
+}
+
+/**
+ * Get syllables in a word.
+ *
+ * @param {string} value
+ * @returns {number}
+ */
+function one(value) {
+  let count = 0
+
+  if (value.length === 0) {
+    return count
+  }
+
+  // Return early when possible.
+  if (value.length < 3) {
+    return 1
+  }
+
+  // If `value` is a hard to count, it might be in `problematic`.
+  if (own.call(problematic, value)) {
+    return problematic[value]
+  }
+
+  const addOne = returnFactory(1)
+  const subtractOne = returnFactory(-1)
+
+  // Count some prefixes and suffixes, and remove their matched ranges.
+  value = value
+    .replace(EXPRESSION_TRIPLE, countFactory(3))
+    .replace(EXPRESSION_DOUBLE, countFactory(2))
+    .replace(EXPRESSION_SINGLE, countFactory(1))
+
+  // Count multiple consonants.
+  const parts = value.split(/[^aeiouy]+/)
+  let index = -1
+
+  while (++index < parts.length) {
+    if (parts[index] !== '') {
+      count++
     }
   }
 
-  word = word.replace(/(?:[^laeiouy]|ed|[^laeiouy]e)$/, '');
-  word = word.replace(/^y/, '');
+  // Subtract one for occurrences which should be counted as one (but are
+  // counted as two).
+  value
+    .replace(EXPRESSION_MONOSYLLABIC_ONE, subtractOne)
+    .replace(EXPRESSION_MONOSYLLABIC_TWO, subtractOne)
 
-  const syl = word.match(/[aeiouy]{1,2}/g);
-  console.log(syl);
-  if (syl) {
-    return syl.length + tSome;
+  // Add one for occurrences which should be counted as two (but are counted as
+  // one).
+  value
+    .replace(EXPRESSION_DOUBLE_SYLLABIC_ONE, addOne)
+    .replace(EXPRESSION_DOUBLE_SYLLABIC_TWO, addOne)
+    .replace(EXPRESSION_DOUBLE_SYLLABIC_THREE, addOne)
+    .replace(EXPRESSION_DOUBLE_SYLLABIC_FOUR, addOne)
+
+  // Make sure at least on is returned.
+  return count || 1
+
+  /**
+   * Define scoped counters, to be used in `String#replace()` calls.
+   * The scoped counter removes the matched value from the input.
+   *
+   * @param {number} addition
+   */
+  function countFactory(addition) {
+    return counter
+    /**
+     * @returns {string}
+     */
+    function counter() {
+      count += addition
+      return ''
+    }
   }
-};
+
+  /**
+   * This scoped counter does not remove the matched value from the input.
+   *
+   * @param {number} addition
+   */
+  function returnFactory(addition) {
+    return returner
+    /**
+     * @param {string} $0
+     * @returns {string}
+     */
+    function returner($0) {
+      count += addition
+      return $0
+    }
+  }
+}
+
+const NUM_VOTES = 3;
 
 const toLine = (syllableCounts, offset, numSyllables) => {
   let line = undefined;
@@ -34,20 +421,8 @@ const toLine = (syllableCounts, offset, numSyllables) => {
     }
 
     do {
-      console.log('Current syllable counts:', counts);
       const { word, count } = counts.shift();
       currSyllableCount += count;
-      console.log(
-        'Current syllable count:',
-        currSyllableCount,
-        'for word:',
-        word,
-      );
-
-      // if (currSyllableCount > numSyllables) {
-      //   throw new Error(`Exceeded ${numSyllables} syllables in line: ${line} + ${word}`);
-      // }
-
       wordCount += 1;
       if (line === undefined) {
         line = word;
@@ -61,18 +436,29 @@ const toLine = (syllableCounts, offset, numSyllables) => {
   }
 };
 
+const SAMPLE_POEM = 'The sun is shining\nBirds are singing in the trees\nNature wakes from sleep';
+const SAMPLE_POEMS = [
+  SAMPLE_POEM,
+  'A gentle breeze blows\nWhispers through the tall green grass\nNature’s lullaby',
+  'Mountains touch the sky\nClouds drift lazily above\nNature’s majesty',
+];
+
 export const app = createApp({
   setup() {
-    const { on, store, emit, t } = inject('kossabos');
+    const { get, env, emit, t } = inject('kossabos');
 
-    const poem = ref('');
-    const prompt = computed(() => store?.get('prompt') || 'Write a haiku.');
-    const poems = computed(() => store?.get('poems') || []);
+    const poem = ref(env('ENVIRONMENT') === 'dev' ? SAMPLE_POEM : '');
+    const prompt = computed(() => get('prompt') || 'Write a haiku.');
+    const poems = computed(() => env('ENVIRONMENT') === 'dev' ? SAMPLE_POEMS : get('poems'));
     const phase = ref('creating'); // 'creating', 'voting'
     const voteNum = ref(1);
     const currentVote = ref(5);
     const isComplete = ref(false);
-    const invalidLines = ref(new Set());
+    const lineCounts = ref({
+      0: 0, // 5 syllables
+      1: 0, // 7 syllables
+      2: 0, // 5 syllables
+    });
 
     const nextPoem = () => {
       poem.value = poems.value.pop();
@@ -98,9 +484,9 @@ export const app = createApp({
       isComplete.value = value;
     }
 
-    const setInvalidLines = (invalidLines) => {
-      invalidLines.value = invalidLines;
-    }
+    const setLineCount = (lineNum, count) => {
+      lineCounts.value[lineNum] = count;
+    };
 
     const haiku = computed(() => {
       const syllableCounts = poem.value
@@ -108,9 +494,7 @@ export const app = createApp({
         .filter((word) => word.trim() !== '')
         .map((word) => {
           const count = getSyllableCount(word);
-          console.log('Counting syllables for word:', { word, count });
           if (count === undefined) {
-            console.warn(`Could not count syllables for word: ${word}`);
             return { word, count: 1 }; // Default to 1 syllable if counting fails
           }
           return { word, count };
@@ -119,41 +503,26 @@ export const app = createApp({
       try {
         const lines = [];
 
-        console.log('Syllable counts:', [...syllableCounts]);
         debugger;
 
-        const invalidLines = new Set();
         let numWords = 0;
         let { line, wordCount, syllableCount } = toLine(syllableCounts, 0, 5);
         numWords += wordCount;
-        console.log('First line:', line, syllableCount);
-        if (syllableCount !== 5) {
-          invalidLines.add(0);
-        }
+        setLineCount(0, syllableCount);
         lines.push(line);
 
         ({ line, wordCount, syllableCount } = toLine(syllableCounts, numWords, 7));
         numWords += wordCount;
-        if (syllableCount !== 7) {
-          invalidLines.add(1);
-        }
+        setLineCount(1, syllableCount);
         lines.push(line);
 
         ({ line, wordCount, syllableCount } = toLine(syllableCounts, numWords, 5));
-        if (syllableCount !== 5) {
-          invalidLines.add(1);
-        }
+        setLineCount(2, syllableCount);
         lines.push(line);
 
-        console.log('Haiku syllable counts:', lines);
-
         const content = lines.filter((x) => !!x).join('\n');
-        const isComplete = syllableCount === 5;
-
-        console.log('content', content, isComplete);
-
+        const isComplete = syllableCount === 5 && lines.length === 3;
         setIsComplete(isComplete);
-        setInvalidLines(invalidLines);
 
         return content;
       } catch (e) {
@@ -163,7 +532,6 @@ export const app = createApp({
     });
 
     const updatePoem = (value) => {
-      console.log('Updating poem:', haiku.value, value);
       if (haiku.value.isComplete && value.length > poem.value.length) {
         return;
       }
@@ -172,11 +540,14 @@ export const app = createApp({
 
     return {
       haiku,
+      voteNum,
       isComplete,
-      invalidLines,
+      lineCounts,
       prompt,
       currentVote,
       phase,
+      totalNumVotes: NUM_VOTES,
+      nextPoem,
       updatePoem,
       submit,
       vote,
@@ -184,36 +555,51 @@ export const app = createApp({
     };
   },
   template: `
-    <div class="flex flex-col items-center">
-      <pre>{{ prompt }}</pre>
+    <div class="flex flex-col items-center pt-8">      
+      <div v-if="phase === 'creating'" class="flex flex-col items-center">
+        <pre>{{ prompt }}</pre>
 
-      <div v-if="phase === 'creating'">
-        <textarea
-          v-model="haiku"
-          @input="updatePoem($event.target.value)"
-          class="w-full max-w-md h-32 px-8 py-4 bg-white my-4 mx-auto"
-          placeholder="Write your poem here..."
-        ></textarea>
-        {{invalidLines}}
-
-        <!-- Display invalid lines warning -->
-        <div v-if="!isComplete" class="text-red-500">
-          <p v-if="invalidLines.has(0)">Line 1 must have 5 syllables.</p>
-          <p v-if="invalidLines.has(1)">Line 2 must have 7 syllables.</p>
-          <p v-if="invalidLines.has(2)">Line 3 must have 5 syllables.</p>
+        <div class="flex flex-row">
+          <div class="flex flex-col pt-8 pr-4 opacity-25">
+            <span
+              v-for="lineCount in lineCounts"
+              class="border-r-2 pr-2"
+            >
+              {{ lineCount }}
+            </span>
+          </div>
+          <textarea
+            v-model="haiku"
+            @input="updatePoem($event.target.value)"
+            class="resize-none w-full max-w-md h-[8rem] pr-8 py-4 bg-white my-4 mx-auto"
+            placeholder="Roses are red..."
+          ></textarea>
         </div>
 
-        <button
-          class="btn btn-primary mt-2"
+        <!-- Display invalid lines warning -->
+        <div class="text-red-500">
+          <p v-if="lineCounts[0] > 5">Line 1 must have 5 syllables.</p>
+          <p v-if="lineCounts[1] > 7">Line 2 must have 7 syllables.</p>
+          <p v-if="lineCounts[2] > 5">Line 3 must have 5 syllables.</p>
+        </div>
+
+        <Button
+          class="mt-4"
+          size="small"
+          icon="pi pi-send"
+          :label="t('submit', 'Submit')"
           :disabled="!isComplete"
-          :class="[haiku.isComplete ? '' : 'opacity-50']"
           @click="submit"
-        >
-          {{ t('submit', 'Submit') }}
-        </button>
+        />
       </div>
 
-      <div v-else-if="phase === 'voting'">
+      <div v-else-if="phase === 'voting'" class="flex flex-col items-center">
+        <pre
+          v-model="haiku"
+          class="resize-none w-full max-w-md h-[8rem] pr-8 py-4 bg-white my-4 mx-auto"
+        >
+          {{ haiku }}
+        </pre>
 
         <Slider
           v-model="currentVote"
@@ -224,10 +610,10 @@ export const app = createApp({
         />
 
         <Badge
-          :value="voteNum + '/' + NUM_VOTES"
+          :value="voteNum + ' / ' + totalNumVotes"
           @click="submit"
         />
       </div>
-    <div>
+    </div>
   `,
 });
