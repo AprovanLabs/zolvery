@@ -1,7 +1,6 @@
 node_modules
 lib
 dist
-test
 .idea
 .turbo
 .DS_Store

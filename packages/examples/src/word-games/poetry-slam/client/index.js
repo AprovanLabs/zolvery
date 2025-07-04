@@ -447,11 +447,36 @@ export const app = createApp({
   setup() {
     const { get, env, emit, t } = inject('kossabos');
 
-    const poem = ref(env('ENVIRONMENT') === 'dev' ? SAMPLE_POEM : '');
-    const prompt = computed(() => get('prompt') || 'Write a haiku.');
-    const poems = computed(() => env('ENVIRONMENT') === 'dev' ? SAMPLE_POEMS : get('poems'));
+    const isDev = computed(() => env('ENVIRONMENT') === 'dev');
+    const context = computed(() => get('context') || {});
+    const data = computed(() => get('data') || {});
+    const users = computed(() => get('users') || []);
+
+    const poem = ref(isDev ? SAMPLE_POEM : '');
+    const prompt = computed(() => data?.prompt || 'Write a haiku.');
+    const poems = computed(() => {
+      if (isDev.value) {
+        return SAMPLE_POEMS;
+      }
+
+      // Use user-provided poems if available
+      const userProvidedPoems = [];
+      users.value.map((user) => user?.data?.poem).forEach((userPoem) => {
+        if (userPoem && userPoem.trim() !== '') {
+          userProvidedPoems.push(userPoem);
+        }
+      });
+
+      // Add system-generated poems as backup
+      const systemGeneratedPoems = data.value?.examples || [];
+
+      // Fallback to sample poems
+      return [...userProvidedPoems, ...systemGeneratedPoems, ...SAMPLE_POEMS].slice(0, NUM_VOTES);
+  });
+
     const phase = ref('creating'); // 'creating', 'voting'
     const voteNum = ref(1);
+    const votes = ref([]); // { userId: value }
     const currentVote = ref(5);
     const isComplete = ref(false);
     const lineCounts = ref({
@@ -464,16 +489,27 @@ export const app = createApp({
       poem.value = poems.value.pop();
     };
 
-    const vote = (userId, value) => {
-      emit('score', { userId, value });
+    const submitVotes = () => {
+      const sortedVotes = votes.value.sort((a, b) => b.score - a.score);
+      const votes = sortedVotes.map((vote, index) => ({
+        place: index + 1,
+        userId: vote.userId,
+        score: vote.score,
+      }));
+      const data = { poem: poem.value };
+      emit('end', { votes, data });
+    }
+
+    const vote = (userId, score) => {
+      votes.value.push({ userId, score });
       voteNum.value += 1;
       if (voteNum.value >= NUM_VOTES) {
-        emit('end');
-      } else {
-        nextPoem();
+        submitVotes();
+        return;
       }
-    };
 
+      nextPoem();
+    };
     const submit = () => {
       emit('submit', { value: poem.value });
       phase.value = 'voting';
@@ -571,7 +607,7 @@ export const app = createApp({
           <textarea
             v-model="haiku"
             @input="updatePoem($event.target.value)"
-            class="resize-none w-full max-w-md h-[8rem] pr-8 py-4 bg-white my-4 mx-auto"
+            class="resize-none w-full max-w-md inline-table min-h-[6.5rem] pl-2 pr-8 py-4 bg-white my-4 mx-auto"
             placeholder="Roses are red..."
           ></textarea>
         </div>

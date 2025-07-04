@@ -1,16 +1,15 @@
 import vue from '@vitejs/plugin-vue';
 import { defineConfig } from 'vite';
-import path from 'path';
+
+const importMap = { vue: 'https://unpkg.com/vue@3/dist/vue.esm-browser.js' };
 
 export default defineConfig({
   base: '/runners/vue-vanilla',
   plugins: [vue()],
   resolve: {
-    alias: {
-      vue: path.resolve(
-        __dirname,
-        './node_modules/vue/dist/vue.esm-browser.js',
-      ),
-    },
+    alias: Object.entries(importMap).map(([packageName, replacement]) => ({
+      find: new RegExp(`^${packageName}$`),
+      replacement,
+    })),
   },
 });

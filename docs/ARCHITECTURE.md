@@ -131,3 +131,156 @@ https://github.com/lefun-fun/lefun/blob/main/packages/game/src/gameDef.ts
 https://github.com/boardzilla/boardzilla-core
 https://github.com/pjohannessen/yatzy https://github.com/SaFrMo/vue3-boardgame
 https://boardgame.io/documentation/#/api/Server
+
+## Modules
+
+### `get`
+
+Get a stored value. May be used for dynamic game configuration, including daily puzzles.
+
+#### `context`
+
+Game metadata and user information.
+
+```ts
+type KossabosContext = {
+  metadata: {
+    appId: string,
+    name: string,
+    description: string,
+    tags: string[],
+    leaderboard?: {
+      // 'friends' Internal friends leaderboard
+      // 'global' Aggregate votes for all users
+      type: 'friends' | 'global',
+      // Maximum number of users to vote for
+      maximumNumberOfVotes?: number,
+      // Maximum number of votes per user
+      maximumVotesPerUser?: number,
+    },
+    version: string,
+    // 'vue-vanilla' | 'vue-boardgameio'
+    runnerTag: string,
+    author: {
+      id: string,
+      username: string,
+    },
+    settings: [
+      {
+        id: string
+        label: string,
+        options: { value: string, label?: string }[],
+        defaultValue?: string,
+      }
+    ]
+  },
+  user: {
+    id: string,
+    username: string,
+  },
+  settings: [
+    { id: string, value: number },
+  ],
+}
+```
+
+#### `data`
+
+Free-form data storage for game state. Initially populated by dynamic game configuration
+
+```ts
+type KossabosData = {
+  [key: string]: any
+}
+```
+
+#### `users`
+
+Get a list of users in the game. This is used for multiplayer games to retrieve player information and user-provided data.
+
+```ts
+type KossabosUser = {
+  id: string,
+  username: string,
+  // User-provided data, e.g. votes
+  data?: {
+    [key: string]: any
+  }
+}
+```
+
+### `emit`
+
+Emit an event with a key and optional payload. Custom events are prepended with `custom:`. The latest event is stored and may be retrieved with `get('event:<event>')`.
+
+```ts
+type KossabosEmit = (
+  key: string,
+  payload?: any,
+) => void
+```
+
+```ts
+#### `ready`
+
+Emit when user is ready to play.
+
+```ts
+type KossabosReadyEvent = {};
+```
+
+#### `start`
+
+Emit when the game starts.
+
+```ts
+type KossabosStartEvent = {}
+```
+
+#### `end`
+
+Final output with optional score.
+
+```ts
+type KossabosEndEvent = {
+  winner?: boolean,
+  score?: number,
+  // 'You win!'
+  label?: string,
+
+  // Content-based games
+  data?: unknown,
+  votes?: {
+    place: number,
+    userId: string,
+    score: number
+  }[],
+}
+```
+
+### `on`
+
+Listen for events. Send 
+
+### `env`
+
+Get environment variables
+
+#### `ENVIRONMENT`
+
+One of `dev`, `stg`, and `prd`. Defaults to `dev` for local
+
+- `dev`: Local development environment
+- `stg`: Staging environment, for automatic testing and previewing
+- `prd`: Production environment
+
+### `t`
+
+Translate a string. Defaults to string itself if no translation is found.
+
+```ts
+type KossabosTranslate = (
+  key: string,
+  defaultValue?: string,
+) => string
+```

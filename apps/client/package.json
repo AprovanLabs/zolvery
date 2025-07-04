@@ -1,5 +1,5 @@
 {
-    "name": "@kossabos/app",
+    "name": "@kossabos/client",
     "private": true,
     "type": "module",
     "version": "0.0.1",
