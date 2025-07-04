@@ -14,37 +14,37 @@
       rel="stylesheet"
     />
 
-    <script
+    <!-- <script  
       async
       src="https://unpkg.com/es-module-shims"
-    ></script>
+    ></script> -->
     <script type="importmap">
       {
         "imports": {
-          "vue": "https://cdnjs.cloudflare.com/ajax/libs/vue/3.5.13/vue.esm-browser.prod.js",
+          "vue": "https://unpkg.com/vue@3/dist/vue.esm-browser.js",
           "@vueuse/motion": "https://cdn.jsdelivr.net/npm/@vueuse/motion@2.2.6/+esm",
           "@vueuse/rxjs": "https://cdn.jsdelivr.net/npm/@vueuse/rxjs",
           "@vueuse": "https://cdn.jsdelivr.net/npm/@vueuse/core",
           "rxjs": "https://cdn.jsdelivr.net/npm/rxjs@^7/dist/bundles/rxjs.umd.min.js",
-          "primevue/config": "https://cdn.jsdelivr.net/npm/primevue/umd/primevue.min.js",
-          "@primevue/themes": "https://cdn.jsdelivr.net/npm/boardgame.io@0.50.2/+esm",
-          "@kossabos/core": "/src/core",
-          "@kossabos/client": "/src/client",
-          "@kossabos/client/util": "/src/client",
-          "@kossabos/vue": "/src/vue"
+          "primevue": "https://cdn.jsdelivr.net/npm/primevue@4.2.5/+esm",
+          "@primevue/aura": "https://unpkg.com/@primevue/themes/umd/aura.min.js",
+          "@primevue/themes": "https://cdn.jsdelivr.net/npm/@primevue/themes@4.2.5/+esm",
+          "boardgame.io/core": "https://cdn.jsdelivr.net/npm/boardgame.io@0.50.2/+esm",
+          "boardgame.io/client": "https://cdn.jsdelivr.net/npm/boardgame.io@0.50.2/+esm",
+          "boardgame.io/ai": "https://cdn.jsdelivr.net/npm/boardgame.io@0.50.2/+esm",
+          "@boardgame.io/p2p": "/src/plugins/boardgameio",
+          "tweetnacl": "https://cdn.jsdelivr.net/npm/tweetnacl@1.0.3/nacl-fast.min.js",
+          "tweetnacl-util": "https://cdn.jsdelivr.net/npm/tweetnacl-util@0.15.1/nacl-util.min.js",
+          "peerjs": "https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"
         }
       }
     </script>
   </head>
-  <body>
+  <body class="absolute w-full h-full">
     <main
       id="app"
-      class="absolute w-full text-black bg-white"
-      style="height: calc(100% - 6rem); padding-bottom: 6rem"
+      class="absolute w-full h-full text-black bg-white"
     ></main>
-    <script
-      type="module"
-      src="/main.ts"
-    ></script>
+    <script type="module" src="/main.ts"></script>
   </body>
 </html>

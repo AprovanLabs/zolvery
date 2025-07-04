@@ -12,7 +12,7 @@ const importMap = {
 export default defineConfig({
   plugins: [vue()],
   // https://stackoverflow.com/questions/77686901/why-is-process-env-node-env-in-my-vuejs-custom-element
-  define: { 'process.env.NODE_ENV': '"production"' },
+  define: { 'process.env.NODE_ENV': '"prd"' },
   // See: https://vitejs.dev/guide/build.html#library-mode
   build: {
     lib: {
