@@ -2,4 +2,6 @@
 
 set -e
 
-(cd .. && docker-compose up -d)
+root_dir=`git rev-parse --show-toplevel`
+
+(cd $root_dir && docker-compose up -d)

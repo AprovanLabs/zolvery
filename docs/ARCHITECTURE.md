@@ -101,7 +101,7 @@ Context
 - Logs setMetadata(metadata: any): void;
 
       LogEntry {
-      action: ActionShape.MakeMove | ActionShape.GameEvent | ActionShape.Undo | ActionShape.Redo;
+      action: ActionShape.MakeMove | ActionShape.AppEvent | ActionShape.Undo | ActionShape.Redo;
       _stateID: number;
       turn: number;
       phase: string;

@@ -2,49 +2,53 @@ import Router from '@koa/router';
 import { format } from 'date-fns';
 import { EventService } from '@/services/event-service';
 import { CreateEventRequest } from '@/models/event';
-import { ApiResponse } from '@/models';
 import { eventLogger, logError, logSuccess } from '@/config/logger';
-import { AuthContext } from '@/middleware/auth';
 import { LogContext } from '@/middleware/logger';
+import { sendErrorResponse, sendSuccessResponse, validateAuth } from '@/utils/api';
+import { validateWithJoi, gameSchemas } from '@/utils/validation';
 
 const router = new Router();
 const eventService = new EventService();
 
-// POST /events - Store new event
-router.post('/', async (ctx: LogContext) => {
+// POST /events/:appId - Store new event
+router.post('/:appId', async (ctx: LogContext) => {
   const requestId = ctx.requestId;
-  const authCtx = ctx as AuthContext;
   
   try {
-    const eventData = ctx.request.body as CreateEventRequest;
+    const { appId } = ctx.params;
+    const eventData = ctx.request.body as any;
+
+    const user = validateAuth(ctx);
+    if (!user) return;
 
     eventLogger.info({
       requestId,
       eventData: {
-        appId: eventData?.appId,
-        userId: authCtx.user?.userId,
+        appId,
+        userId: user.userId,
         eventKey: eventData?.eventKey,
       },
     }, 'Creating new event');
 
-    if (!eventData || !eventData.appId || !eventData.eventKey || !authCtx.user) {
+    // Validate request body with Joi
+    const validation = validateWithJoi(
+      { ...eventData, appId },
+      gameSchemas.createEvent
+    );
+
+    if (!validation.success) {
       eventLogger.warn({
         requestId,
         receivedData: eventData,
-        hasUser: !!authCtx.user,
+        validationError: validation.error,
+        details: validation.details,
       }, 'Invalid event data received');
       
-      ctx.status = 400;
-      ctx.body = {
-        success: false,
-        error: 'Missing required fields: appId, eventKey, or user not authenticated',
-        timestamp: new Date().toISOString(),
-        requestId,
-      };
+      sendErrorResponse(ctx, 400, `Validation error: ${validation.error}`);
       return;
     }
 
-    const event = await eventService.createEvent(authCtx.user.userId, eventData);
+    const event = await eventService.createEvent(user.userId, validation.data as CreateEventRequest);
     
     logSuccess(eventLogger, 'Event created successfully', {
       requestId,
@@ -55,52 +59,28 @@ router.post('/', async (ctx: LogContext) => {
       eventKey: event.eventKey,
     });
     
-    const response: ApiResponse = {
-      success: true,
-      data: event,
-      message: 'Event stored successfully',
-      timestamp: new Date().toISOString(),
-    };
-    
-    ctx.status = 201;
-    ctx.body = response;
+    sendSuccessResponse(ctx, 201, event, 'Event stored successfully');
   } catch (error) {
-    eventLogger.error
     logError(eventLogger, error as Error, {
       requestId,
       eventData: ctx.request.body,
     });
     
-    ctx.status = 500;
-    ctx.body = {
-      success: false,
-      error: 'Failed to store event',
-      timestamp: new Date().toISOString(),
-      requestId,
-    };
+    sendErrorResponse(ctx, 500, 'Failed to store event');
   }
 });
 
 // GET /events/:appId/:day - Get all events for authenticated user/app/day
 router.get('/:appId/:day', async (ctx: LogContext) => {
   const requestId = ctx.requestId;
-  const authCtx = ctx as AuthContext;
   
   try {
     const { appId, day } = ctx.params;
     
-    if (!authCtx.user) {
-      ctx.status = 401;
-      ctx.body = {
-        success: false,
-        error: 'User not authenticated',
-        timestamp: new Date().toISOString(),
-        requestId,
-      };
-      return;
-    }
+    const user = validateAuth(ctx);
+    if (!user) return;
 
-    const userId = authCtx.user.sub;
+    const userId = user.userId;
     
     eventLogger.info({
       requestId,
@@ -115,13 +95,7 @@ router.get('/:appId/:day', async (ctx: LogContext) => {
         params: { appId, day },
       }, 'Missing required parameters');
       
-      ctx.status = 400;
-      ctx.body = {
-        success: false,
-        error: 'Missing required parameters: appId, day',
-        timestamp: new Date().toISOString(),
-        requestId,
-      };
+      sendErrorResponse(ctx, 400, 'Missing required parameters: appId, day');
       return;
     }
     
@@ -135,49 +109,28 @@ router.get('/:appId/:day', async (ctx: LogContext) => {
       eventCount: events.length,
     });
     
-    const response: ApiResponse = {
-      success: true,
-      data: events,
-      timestamp: new Date().toISOString(),
-    };
-    
-    ctx.body = response;
+    sendSuccessResponse(ctx, 200, events);
   } catch (error) {
     logError(eventLogger, error as Error, {
       requestId,
       params: ctx.params,
     });
     
-    ctx.status = 500;
-    ctx.body = {
-      success: false,
-      error: 'Failed to fetch events',
-      timestamp: new Date().toISOString(),
-      requestId,
-    };
+    sendErrorResponse(ctx, 500, 'Failed to fetch events');
   }
 });
 
 // GET /events/:appId/:day/:eventKey - Get specific event for authenticated user
 router.get('/:appId/:day/:eventKey', async (ctx: LogContext) => {
   const requestId = ctx.requestId;
-  const authCtx = ctx as AuthContext;
   
   try {
     const { appId, day, eventKey } = ctx.params;
     
-    if (!authCtx.user) {
-      ctx.status = 401;
-      ctx.body = {
-        success: false,
-        error: 'User not authenticated',
-        timestamp: new Date().toISOString(),
-        requestId,
-      };
-      return;
-    }
+    const user = validateAuth(ctx);
+    if (!user) return;
 
-    const userId = authCtx.user.sub;
+    const userId = user.userId;
     
     eventLogger.info({
       requestId,
@@ -193,13 +146,7 @@ router.get('/:appId/:day/:eventKey', async (ctx: LogContext) => {
         params: { appId, day, eventKey },
       }, 'Missing required parameters for specific event');
       
-      ctx.status = 400;
-      ctx.body = {
-        success: false,
-        error: 'Missing required parameters: appId, day, eventKey',
-        timestamp: new Date().toISOString(),
-        requestId,
-      };
+      sendErrorResponse(ctx, 400, 'Missing required parameters: appId, day, eventKey');
       return;
     }
     
@@ -214,13 +161,7 @@ router.get('/:appId/:day/:eventKey', async (ctx: LogContext) => {
         eventKey,
       }, 'Event not found');
       
-      ctx.status = 404;
-      ctx.body = {
-        success: false,
-        error: 'Event not found',
-        timestamp: new Date().toISOString(),
-        requestId,
-      };
+      sendErrorResponse(ctx, 404, 'Event not found');
       return;
     }
     
@@ -232,48 +173,27 @@ router.get('/:appId/:day/:eventKey', async (ctx: LogContext) => {
       eventKey,
     });
     
-    const response: ApiResponse = {
-      success: true,
-      data: event,
-      timestamp: new Date().toISOString(),
-    };
-    
-    ctx.body = response;
+    sendSuccessResponse(ctx, 200, event);
   } catch (error) {
     logError(eventLogger, error as Error, {
       requestId,
       params: ctx.params,
     });
-    ctx.status = 500;
-    ctx.body = {
-      success: false,
-      error: 'Failed to fetch event',
-      timestamp: new Date().toISOString(),
-      requestId,
-    };
+    sendErrorResponse(ctx, 500, 'Failed to fetch event');
   }
 });
 
 // GET /events/:appId - Get events for today (convenience endpoint) for authenticated user
 router.get('/:appId', async (ctx: LogContext) => {
   const requestId = ctx.requestId;
-  const authCtx = ctx as AuthContext;
   
   try {
     const { appId } = ctx.params;
     
-    if (!authCtx.user) {
-      ctx.status = 401;
-      ctx.body = {
-        success: false,
-        error: 'User not authenticated',
-        timestamp: new Date().toISOString(),
-        requestId,
-      };
-      return;
-    }
+    const user = validateAuth(ctx);
+    if (!user) return;
 
-    const userId = authCtx.user.sub;
+    const userId = user.userId;
     
     eventLogger.info({
       requestId,
@@ -287,13 +207,7 @@ router.get('/:appId', async (ctx: LogContext) => {
         params: { appId },
       }, 'Missing required parameters for today\'s events');
       
-      ctx.status = 400;
-      ctx.body = {
-        success: false,
-        error: 'Missing required parameters: appId',
-        timestamp: new Date().toISOString(),
-        requestId,
-      };
+      sendErrorResponse(ctx, 400, 'Missing required parameters: appId');
       return;
     }
     
@@ -308,26 +222,14 @@ router.get('/:appId', async (ctx: LogContext) => {
       eventCount: events.length,
     });
     
-    const response: ApiResponse = {
-      success: true,
-      data: events,
-      timestamp: new Date().toISOString(),
-    };
-    
-    ctx.body = response;
+    sendSuccessResponse(ctx, 200, events);
   } catch (error) {
     logError(eventLogger, error as Error, {
       requestId,
       params: ctx.params,
     });
     
-    ctx.status = 500;
-    ctx.body = {
-      success: false,
-      error: 'Failed to fetch events',
-      timestamp: new Date().toISOString(),
-      requestId,
-    };
+    sendErrorResponse(ctx, 500, 'Failed to fetch events');
   }
 });
 

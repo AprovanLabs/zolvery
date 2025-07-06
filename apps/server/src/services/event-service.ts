@@ -1,24 +1,34 @@
 import { DynamoDBDocumentClient, PutCommand, QueryCommand, GetCommand } from '@aws-sdk/lib-dynamodb';
 import { appConfig } from '@/config';
 import { getDynamoDBDocumentClient } from '@/aws';
-import { dbLogger, logError } from '@/config/logger';
+import { getLogger, logError } from '@/config/logger';
 import { AppEvent, CreateEventRequest } from '@/models/event';
 import { getCurrentDay, getTTL } from '@/utils/date';
-import { generatePartitionKey } from '@/utils/dynamodb';
+import { eventKeys, generatePartitionKey } from '@/utils/dynamo';
+import { AppEventBusIntegration, AppEventType } from '@/utils/events/integration';
+import { InMemoryEventBus } from '@/utils/events';
+
+const logger = getLogger();
 
 export class EventService {
+  private readonly eventBus: AppEventBusIntegration;
+
   constructor(
     private readonly docClient: DynamoDBDocumentClient = getDynamoDBDocumentClient(),
-    private readonly tableName: string = appConfig.dynamodb.tableName
-  ) {}
+    private readonly tableName: string = appConfig.dynamodb.tableName,
+    eventBus?: AppEventBusIntegration
+  ) {
+    // Use provided event bus or create a new one with in-memory implementation
+    this.eventBus = eventBus || new AppEventBusIntegration(new InMemoryEventBus());
+  }
 
   async createEvent(userId: string, request: CreateEventRequest): Promise<AppEvent> {
-    const day = getCurrentDay();
+    const day = request.day || getCurrentDay();
     const timestamp = new Date().toISOString();
 
     const event: AppEvent = {
-      PK: generatePartitionKey('DAY', day, 'APP', request.appId, 'USER', userId),
-      SK: `EVENT#${request.eventKey}`,
+      PK: eventKeys.partitionKey(day, request.appId, userId),
+      SK: eventKeys.sortKey(request.eventKey),
       eventKey: request.eventKey,
       value: request.value,
       timestamp,
@@ -29,7 +39,7 @@ export class EventService {
       ttl: getTTL(30),
     };
 
-    dbLogger.info({
+    logger.info({
       operation: 'createEvent',
       PK: event.PK,
       SK: event.SK,
@@ -47,15 +57,51 @@ export class EventService {
 
       await this.docClient.send(command);
       
-      dbLogger.info({
+      logger.info({
         operation: 'createEvent',
         PK: event.PK,
         SK: event.SK,
       }, 'Event created successfully in DynamoDB');
+
+      // Publish event to event bus
+      try {
+        const appEvent = {
+          id: `${event.PK}#${event.SK}`,
+          eventKey: event.eventKey,
+          value: event.value,
+          appId: event.appId,
+          userId: event.userId,
+          day: event.day,
+          timestamp: event.timestamp,
+          ...(event.ttl !== undefined && { ttl: event.ttl }),
+          createdAt: event.timestamp,
+          updatedAt: event.timestamp,
+          version: 'v1',
+        };
+
+        await this.eventBus.publishAppEventCreated(appEvent);
+        
+        logger.debug({
+          operation: 'createEvent',
+          eventType: AppEventType.APP_EVENT_CREATED,
+          appId: event.appId,
+          userId: event.userId,
+          eventKey: event.eventKey,
+        }, 'Event published to event bus');
+      } catch (busError) {
+        // Log but don't throw - event bus failures shouldn't fail the main operation
+        logger.error({
+          operation: 'createEvent',
+          error: busError,
+          appId: event.appId,
+          userId: event.userId,
+          eventKey: event.eventKey,
+        }, 'Failed to publish event to event bus');
+      }
       
       return event;
     } catch (error) {
-      logError(dbLogger, error as Error, {
+      logError(logger, error as Error, {
         operation: 'createEvent',
         PK: event.PK,
         SK: event.SK,
@@ -66,10 +112,10 @@ export class EventService {
   }
 
   async getEvent(appId: string, userId: string, day: string, eventKey: string): Promise<AppEvent | null> {
-    const PK = generatePartitionKey('DAY', day, 'APP', appId, 'USER', userId);
-    const SK = `EVENT#${eventKey}`;
+    const PK = eventKeys.partitionKey(day, appId, userId);
+    const SK = eventKeys.sortKey(eventKey);
     
-    dbLogger.debug({
+    logger.debug({
       operation: 'getEvent',
       PK,
       SK,
@@ -88,7 +134,7 @@ export class EventService {
       const result = await this.docClient.send(command);
       const event = result.Item as AppEvent || null;
       
-      dbLogger.debug({
+      logger.debug({
         operation: 'getEvent',
         PK,
         SK,
@@ -97,7 +143,7 @@ export class EventService {
       
       return event;
     } catch (error) {
-      logError(dbLogger, error as Error, {
+      logError(logger, error as Error, {
         operation: 'getEvent',
         PK,
         SK,
@@ -108,9 +154,9 @@ export class EventService {
   }
 
   async getUserEvents(appId: string, userId: string, day: string): Promise<AppEvent[]> {
-    const PK = generatePartitionKey('DAY', day, 'APP', appId, 'USER', userId);
+    const PK = eventKeys.partitionKey(day, appId, userId);
     
-    dbLogger.debug({
+    logger.debug({
       operation: 'getUserEvents',
       PK,
       appId,
@@ -131,7 +177,7 @@ export class EventService {
       const result = await this.docClient.send(command);
       const events = result.Items as AppEvent[] || [];
       
-      dbLogger.info({
+      logger.info({
         operation: 'getUserEvents',
         PK,
         eventCount: events.length,
@@ -139,7 +185,7 @@ export class EventService {
       
       return events;
     } catch (error) {
-      logError(dbLogger, error as Error, {
+      logError(logger, error as Error, {
         operation: 'getUserEvents',
         PK,
         tableName: this.tableName,
