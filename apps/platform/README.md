@@ -11,14 +11,9 @@ Store user and game-level data in DynamoDB. Run serverless functions in response
 This CDK app defines the AWS infrastructure for the Kossabos backend platform, including:
 
 - DynamoDB table for storing user game events and scores (with 3-month TTL)
+- S3 buckets for data lake storage and static web assets
 - Lambda functions for event storage, leaderboard, and user status
-- API Gateway endpoints for each Lambda
-
-## Directory Structure
-
-- `src/kossabos-platform-stack.ts` — Main CDK stack
-- `src/app.ts` — CDK app entrypoint
-- `src/handlers/` — Lambda function handlers
+- API Gateway for the Koa backend API
 
 ## Usage
 

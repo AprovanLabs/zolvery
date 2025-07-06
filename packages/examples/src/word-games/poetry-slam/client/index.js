@@ -607,7 +607,8 @@ export const app = createApp({
           <textarea
             v-model="haiku"
             @input="updatePoem($event.target.value)"
-            class="resize-none w-full max-w-md inline-table min-h-[6.5rem] pl-2 pr-8 py-4 bg-white my-4 mx-auto"
+            class="resize-none w-full max-w-md min-h-[6.5rem] pl-2 pr-8 pt-4 pb-5 bg-white my-4 mx-auto"
+            style="field-sizing: content"
             placeholder="Roses are red..."
           ></textarea>
         </div>

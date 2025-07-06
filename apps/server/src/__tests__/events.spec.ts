@@ -14,7 +14,7 @@ describe('Events API Integration Tests', () => {
     MockedEventService.mockClear();
   });
 
-  describe('POST /api/events', () => {
+  describe('POST /events', () => {
     it('should create a new event successfully', async () => {
       const eventData = {
         appId: 'poetry-slam',
@@ -35,7 +35,7 @@ describe('Events API Integration Tests', () => {
       mockEventService.createEvent.mockResolvedValueOnce(mockEvent);
 
       const response = await request(app.callback())
-        .post('/api/events')
+        .post('/events')
         .send(eventData)
         .expect(201);
 
@@ -56,7 +56,7 @@ describe('Events API Integration Tests', () => {
       };
 
       const response = await request(app.callback())
-        .post('/api/events')
+        .post('/events')
         .send(invalidData)
         .expect(400);
 
@@ -77,7 +77,7 @@ describe('Events API Integration Tests', () => {
       mockEventService.createEvent.mockRejectedValueOnce(new Error('Database error'));
 
       const response = await request(app.callback())
-        .post('/api/events')
+        .post('/events')
         .send(eventData)
         .expect(500);
 
@@ -88,7 +88,7 @@ describe('Events API Integration Tests', () => {
     });
   });
 
-  describe('GET /api/events/:appId/:userId/:day', () => {
+  describe('GET /events/:appId/:userId/:day', () => {
     it('should fetch user events successfully', async () => {
       const mockEvents = [
         {
@@ -114,7 +114,7 @@ describe('Events API Integration Tests', () => {
       mockEventService.getUserEvents.mockResolvedValueOnce(mockEvents);
 
       const response = await request(app.callback())
-        .get('/api/events/poetry-slam/user123/2025-07-01')
+        .get('/events/poetry-slam/user123/2025-07-01')
         .expect(200);
 
       expect(response.body).toMatchObject({
@@ -127,17 +127,17 @@ describe('Events API Integration Tests', () => {
 
     it('should return 400 for missing parameters', async () => {
       const response = await request(app.callback())
-        .get('/api/events/poetry-slam/') // missing userId and day
+        .get('/events/poetry-slam/') // missing userId and day
         .expect(404); // This will be 404 since route doesn't match
 
       // Alternative test with correct route structure
       const response2 = await request(app.callback())
-        .get('/api/events///') // empty parameters
+        .get('/events///') // empty parameters
         .expect(404);
     });
   });
 
-  describe('GET /api/events/:appId/:userId/:day/:eventKey', () => {
+  describe('GET /events/:appId/:userId/:day/:eventKey', () => {
     it('should fetch specific event successfully', async () => {
       const mockEvent = {
         PK: 'DAY#2025-07-01#APP#poetry-slam#USER#user123',
@@ -153,7 +153,7 @@ describe('Events API Integration Tests', () => {
       mockEventService.getEvent.mockResolvedValueOnce(mockEvent);
 
       const response = await request(app.callback())
-        .get('/api/events/poetry-slam/user123/2025-07-01/poem')
+        .get('/events/poetry-slam/user123/2025-07-01/poem')
         .expect(200);
 
       expect(response.body).toMatchObject({
@@ -168,7 +168,7 @@ describe('Events API Integration Tests', () => {
       mockEventService.getEvent.mockResolvedValueOnce(null);
 
       const response = await request(app.callback())
-        .get('/api/events/poetry-slam/user123/2025-07-01/nonexistent')
+        .get('/events/poetry-slam/user123/2025-07-01/nonexistent')
         .expect(404);
 
       expect(response.body).toMatchObject({
@@ -178,7 +178,7 @@ describe('Events API Integration Tests', () => {
     });
   });
 
-  describe('GET /api/events/:appId/:userId', () => {
+  describe('GET /events/:appId/:userId', () => {
     it('should fetch events for today', async () => {
       const mockEvents = [
         {
@@ -194,7 +194,7 @@ describe('Events API Integration Tests', () => {
       mockEventService.getUserEvents.mockResolvedValueOnce(mockEvents);
 
       const response = await request(app.callback())
-        .get('/api/events/poetry-slam/user123')
+        .get('/events/poetry-slam/user123')
         .expect(200);
 
       expect(response.body).toMatchObject({

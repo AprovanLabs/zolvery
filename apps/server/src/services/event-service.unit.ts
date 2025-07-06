@@ -30,15 +30,13 @@ describe('EventService', () => {
     it('should create an event with all required fields', async () => {
       const request: CreateEventRequest = {
         appId: 'poetry-slam',
-        userId: 'user123',
         eventKey: 'poem',
         value: { content: 'Roses are red...' },
-        day: '2025-07-01',
       };
 
       mockSend.mockResolvedValueOnce({});
 
-      const result = await eventService.createEvent(request);
+      const result = await eventService.createEvent('user123', request);
 
       expect(result).toMatchObject({
         PK: 'DAY#2025-07-01#APP#poetry-slam#USER#user123',
@@ -58,14 +56,13 @@ describe('EventService', () => {
     it('should use current date when day is not provided', async () => {
       const request: CreateEventRequest = {
         appId: 'poetry-slam',
-        userId: 'user123',
         eventKey: 'vote',
         value: { score: 5 },
       };
 
       mockSend.mockResolvedValueOnce({});
 
-      const result = await eventService.createEvent(request);
+      const result = await eventService.createEvent('user123', request);
 
       expect(result.day).toMatch(/^\d{4}-\d{2}-\d{2}$/); // YYYY-MM-DD format
       expect(result.PK).toContain(`DAY#${result.day}#`);
@@ -74,14 +71,13 @@ describe('EventService', () => {
     it('should handle DynamoDB errors', async () => {
       const request: CreateEventRequest = {
         appId: 'poetry-slam',
-        userId: 'user123',
         eventKey: 'error-test',
         value: {},
       };
 
       mockSend.mockRejectedValueOnce(new Error('DynamoDB error'));
 
-      await expect(eventService.createEvent(request)).rejects.toThrow('DynamoDB error');
+      await expect(eventService.createEvent('user123', request)).rejects.toThrow('DynamoDB error');
     });
   });
 

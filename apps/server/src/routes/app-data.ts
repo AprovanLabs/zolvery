@@ -7,7 +7,7 @@ import { ApiResponse } from '@/models';
 const router = new Router();
 const appDataService = new AppDataService();
 
-// GET /api/app-data/:appId/:day - Get all app data for day
+// GET /app-data/:appId/:day - Get all app data for day
 router.get('/:appId/:day', async (ctx) => {
   try {
     const { appId, day } = ctx.params;
@@ -42,7 +42,7 @@ router.get('/:appId/:day', async (ctx) => {
   }
 });
 
-// GET /api/app-data/:appId/:day/:key - Get specific app data value
+// GET /app-data/:appId/:day/:key - Get specific app data value
 router.get('/:appId/:day/:key', async (ctx) => {
   try {
     const { appId, day, key } = ctx.params;
@@ -87,7 +87,7 @@ router.get('/:appId/:day/:key', async (ctx) => {
   }
 });
 
-// GET /api/app-data/:appId - Get app data for today (convenience endpoint)
+// GET /app-data/:appId - Get app data for today (convenience endpoint)
 router.get('/:appId', async (ctx) => {
   try {
     const { appId } = ctx.params;
@@ -123,7 +123,7 @@ router.get('/:appId', async (ctx) => {
   }
 });
 
-// POST /api/app-data/:appId/:day/:key - Update app data (admin endpoint)
+// POST /app-data/:appId/:day/:key - Update app data (admin endpoint)
 router.post('/:appId/:day/:key', async (ctx) => {
   try {
     const { appId, day, key } = ctx.params;
@@ -179,7 +179,7 @@ router.post('/:appId/:day/:key', async (ctx) => {
   }
 });
 
-// POST /api/app-data/:appId/:day - Bulk update app data
+// POST /app-data/:appId/:day - Bulk update app data
 router.post('/:appId/:day', async (ctx) => {
   try {
     const { appId, day } = ctx.params;

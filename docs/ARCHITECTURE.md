@@ -80,15 +80,15 @@ CLIENT Transport
 
 // AI
 ai: {
-    enumerate: (G) => {
-      let r = [];
-      for (let i = 0; i < 9; i++) {
-        if (G.cells[i] === null) {
-          r.push({ move: 'clickCell', args: [i] });
-        }
+  enumerate: (G) => {
+    let r = [];
+    for (let i = 0; i < 9; i++) {
+      if (G.cells[i] === null) {
+        r.push({ move: 'clickCell', args: [i] });
       }
-      return r;
-    },
+    }
+    return r;
+  },
 },
 ```
 

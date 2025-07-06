@@ -1,5 +1,7 @@
 {
   "appId": "classics/tic-tac-toe",
+  "name": "Tic Tac Toe",
+  "description": "A classic game of Tic Tac Toe, also known as Noughts and Crosses.",
   "runnerTag": "vue-vanilla",
   "version": "0.0.1",
   "author": {

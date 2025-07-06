@@ -1,11 +1,11 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: kossabos-prd-use1-domain Link Route53 record to distribution
+Description: Link Route53 record to distribution
 
 Parameters:
   DomainName:
     Type: String
-    Description: kossabos name
-    Default: aprovan.com
+    Description: Domain name
+    Default: lahilo.com
   SubdomainName:
     Type: String
     Description: Subdomain
@@ -14,20 +14,20 @@ Parameters:
     Type: String
     Description: Route53 hosted zone ID
     Default: Z046909917DGKP7W30GBS
-  DestinationDomainName:
+  DistributionDomainName:
     Type: String
-    Description: Domain name
+    Description: Name of CloudFront distribution
 
 Resources:
   Route53Record:
     Type: AWS::Route53::RecordSetGroup
     Properties:
       Comment:
-        !Sub 'Point ${SubdomainName}.${DomainName} to ${DestinationDomainName}'
+        !Sub 'Point ${SubdomainName}.${DomainName} to ${DistributionDomainName}'
       HostedZoneId: !Ref HostedZoneId
       RecordSets:
         - Name: !Sub '${SubdomainName}.${DomainName}.'
-          Type: CNAME
-          TTL: '300'
-          ResourceRecords:
-            - !Ref DestinationDomainName
+          Type: A
+          AliasTarget:
+            HostedZoneId: Z2FDTNDATAQYW2
+            DNSName: !Sub '${DistributionDomainName}.'

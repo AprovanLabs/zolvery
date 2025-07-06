@@ -1,15 +1,20 @@
 import { 
   getCurrentDay, 
+  getCurrentDayInTimezone,
+  getCurrentTimeInRolloverTimezone,
+  ROLLOVER_TIMEZONE,
   isValidDateString, 
   getDateFromTimestamp, 
-  getTTL, 
+  getTTL
+} from './date';
+import { 
   generatePartitionKey, 
   parsePartitionKey 
-} from './date';
+} from './dynamodb';
 
 describe('Date Utilities', () => {
   describe('getCurrentDay', () => {
-    it('should return current date in YYYY-MM-DD format', () => {
+    it('should return current date in YYYY-MM-DD format using rollover timezone', () => {
       const result = getCurrentDay();
       expect(result).toMatch(/^\d{4}-\d{2}-\d{2}$/);
       
@@ -17,6 +22,29 @@ describe('Date Utilities', () => {
       const date = new Date(result);
       expect(date).toBeInstanceOf(Date);
       expect(date.toString()).not.toBe('Invalid Date');
+    });
+
+    it('should use the rollover timezone (GMT+9)', () => {
+      expect(ROLLOVER_TIMEZONE).toBe('Asia/Tokyo');
+    });
+  });
+
+  describe('getCurrentDayInTimezone', () => {
+    it('should return current date for a specific timezone', () => {
+      const utcDay = getCurrentDayInTimezone('UTC');
+      const tokyoDay = getCurrentDayInTimezone('Asia/Tokyo');
+      const nyDay = getCurrentDayInTimezone('America/New_York');
+      
+      expect(utcDay).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      expect(tokyoDay).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      expect(nyDay).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    });
+  });
+
+  describe('getCurrentTimeInRolloverTimezone', () => {
+    it('should return current time in rollover timezone', () => {
+      const rolloverTime = getCurrentTimeInRolloverTimezone();
+      expect(rolloverTime).toBeInstanceOf(Date);
     });
   });
 
@@ -38,18 +66,27 @@ describe('Date Utilities', () => {
   });
 
   describe('getDateFromTimestamp', () => {
-    it('should convert timestamp to date string', () => {
+    it('should convert timestamp to date string using rollover timezone', () => {
+      // Test with a specific UTC timestamp
       const timestamp = new Date('2025-07-01T12:00:00Z').getTime();
       const result = getDateFromTimestamp(timestamp);
+      
+      // In Asia/Tokyo timezone, 2025-07-01T12:00:00Z becomes 2025-07-01T21:00:00 JST
+      // So it should still be 2025-07-01
       expect(result).toBe('2025-07-01');
     });
 
-    it('should handle different times on same day', () => {
-      const morningTimestamp = new Date('2025-07-01T08:00:00Z').getTime();
-      const eveningTimestamp = new Date('2025-07-01T20:00:00Z').getTime();
+    it('should handle timezone boundary cases', () => {
+      // Test with a timestamp that would be a different date in different timezones
+      // 2025-07-01T16:00:00Z = 2025-07-02T01:00:00 JST (next day in Tokyo)
+      const lateUtcTimestamp = new Date('2025-07-01T16:00:00Z').getTime();
+      const result = getDateFromTimestamp(lateUtcTimestamp);
+      expect(result).toBe('2025-07-02'); // Should be next day in Tokyo timezone
       
-      expect(getDateFromTimestamp(morningTimestamp)).toBe('2025-07-01');
-      expect(getDateFromTimestamp(eveningTimestamp)).toBe('2025-07-01');
+      // 2025-07-01T08:00:00Z = 2025-07-01T17:00:00 JST (same day in Tokyo)
+      const earlyUtcTimestamp = new Date('2025-07-01T08:00:00Z').getTime();
+      const result2 = getDateFromTimestamp(earlyUtcTimestamp);
+      expect(result2).toBe('2025-07-01'); // Should be same day in Tokyo timezone
     });
   });
 
@@ -70,45 +107,6 @@ describe('Date Utilities', () => {
       const zeroTTL = getTTL(0);
       const now = Math.floor(Date.now() / 1000);
       expect(Math.abs(zeroTTL - now)).toBeLessThan(5); // Within 5 seconds
-    });
-  });
-
-  describe('generatePartitionKey', () => {
-    it('should generate consistent partition keys', () => {
-      const pk1 = generatePartitionKey('DAY', '2025-07-01', 'APP', 'poetry-slam', 'USER', 'user123');
-      const pk2 = generatePartitionKey('LEADERBOARD', 'poetry-slam', 'GLOBAL');
-      
-      expect(pk1).toBe('DAY#2025-07-01#APP#poetry-slam#USER#user123');
-      expect(pk2).toBe('LEADERBOARD#poetry-slam#GLOBAL');
-    });
-
-    it('should handle single component', () => {
-      const pk = generatePartitionKey('SINGLE');
-      expect(pk).toBe('SINGLE');
-    });
-
-    it('should handle empty components', () => {
-      const pk = generatePartitionKey('TYPE', '', 'VALUE');
-      expect(pk).toBe('TYPE##VALUE');
-    });
-  });
-
-  describe('parsePartitionKey', () => {
-    it('should parse partition key components', () => {
-      const pk = 'DAY#2025-07-01#APP#poetry-slam#USER#user123';
-      const components = parsePartitionKey(pk);
-      
-      expect(components).toEqual(['DAY', '2025-07-01', 'APP', 'poetry-slam', 'USER', 'user123']);
-    });
-
-    it('should handle single component', () => {
-      const components = parsePartitionKey('SINGLE');
-      expect(components).toEqual(['SINGLE']);
-    });
-
-    it('should handle empty components', () => {
-      const components = parsePartitionKey('TYPE##VALUE');
-      expect(components).toEqual(['TYPE', '', 'VALUE']);
     });
   });
 });

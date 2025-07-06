@@ -16,10 +16,8 @@ export interface LeaderboardEntry {
   SK: string;           // "USER#user123"
   userId: string;
   username: string;
-  totalScore: number;   // Aggregate score
-  appsPlayed: number;
-  bestScore: number;
-  lastPlayed: string;
+  score: number;
+  submittedTimestamp: string;
   rank: number;
   GSI1PK?: string;     // For user-centric queries
   GSI1SK?: string;     // For time-based queries
@@ -27,7 +25,6 @@ export interface LeaderboardEntry {
 
 export interface SubmitScoreRequest {
   appId: string;
-  userId: string;
   username: string;
   score: number;
   appData?: any;

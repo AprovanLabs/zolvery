@@ -1,37 +1,36 @@
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { 
-  DynamoDBDocumentClient, 
-  PutCommand, 
-  QueryCommand, 
+import {
+  PutCommand,
+  QueryCommand,
   UpdateCommand,
-  BatchWriteCommand 
 } from '@aws-sdk/lib-dynamodb';
-import { format } from 'date-fns';
 import { appConfig } from '@/config';
-import { AppScore, LeaderboardEntry, SubmitScoreRequest } from '@/models/leaderboard';
+import { getDynamoDBDocumentClient } from '@/aws';
+import {
+  AppScore,
+  LeaderboardEntry,
+  SubmitScoreRequest,
+} from '@/models/leaderboard';
+import { getCurrentDay } from '@/utils/date';
 
 export class LeaderboardService {
-  private readonly docClient: DynamoDBDocumentClient;
-  private readonly tableName: string;
+  constructor(
+    private readonly docClient = getDynamoDBDocumentClient(),
+    private readonly tableName: string = appConfig.dynamodb.tableName,
+  ) {}
 
-  constructor() {
-    const client = new DynamoDBClient({
-      region: appConfig.dynamodb.region,
-      ...(appConfig.dynamodb.endpoint && { endpoint: appConfig.dynamodb.endpoint }),
-    });
-    this.docClient = DynamoDBDocumentClient.from(client);
-    this.tableName = appConfig.dynamodb.tableName;
-  }
-
-  async submitScore(request: SubmitScoreRequest): Promise<AppScore> {
-    const day = request.day || format(new Date(), 'yyyy-MM-dd');
+  async submitScore(
+    userId: string,
+    username: string,
+    request: SubmitScoreRequest,
+  ): Promise<AppScore> {
+    const day = request.day || getCurrentDay();
     const timestamp = new Date().toISOString();
     const createdAt = Date.now();
 
     const score: AppScore = {
       PK: `LEADERBOARD#${request.appId}#${day}`,
-      SK: `SCORE#${request.userId}#${createdAt}`,
-      userId: request.userId,
+      SK: `SCORE#${userId}#${createdAt}`,
+      userId: userId,
       appId: request.appId,
       day,
       score: request.score,
@@ -41,18 +40,24 @@ export class LeaderboardService {
     };
 
     // Save the score
-    await this.docClient.send(new PutCommand({
-      TableName: this.tableName,
-      Item: score,
-    }));
+    await this.docClient.send(
+      new PutCommand({
+        TableName: this.tableName,
+        Item: score,
+      }),
+    );
 
     // Update or create user's leaderboard entry
-    await this.updateUserLeaderboardEntry(request, day);
+    await this.updateUserLeaderboardEntry(userId, username, request, day);
 
     return score;
   }
 
-  async getDailyLeaderboard(appId: string, day: string, limit = 100): Promise<LeaderboardEntry[]> {
+  async getDailyLeaderboard(
+    appId: string,
+    day: string,
+    limit = 100,
+  ): Promise<LeaderboardEntry[]> {
     const command = new QueryCommand({
       TableName: this.tableName,
       KeyConditionExpression: 'PK = :pk AND begins_with(SK, :sk)',
@@ -65,7 +70,7 @@ export class LeaderboardService {
     });
 
     const result = await this.docClient.send(command);
-    const scores = result.Items as AppScore[] || [];
+    const scores = (result.Items as AppScore[]) || [];
 
     // Get the best score for each user
     const userBestScores = new Map<string, AppScore>();
@@ -77,25 +82,28 @@ export class LeaderboardService {
     }
 
     // Convert to leaderboard entries and sort by score
-    const leaderboardEntries: LeaderboardEntry[] = Array.from(userBestScores.values())
+    const leaderboardEntries: LeaderboardEntry[] = Array.from(
+      userBestScores.values(),
+    )
       .sort((a, b) => b.score - a.score)
       .slice(0, limit)
       .map((score, index) => ({
         PK: `LEADERBOARD#${appId}#${day}`,
         SK: `USER#${score.userId}`,
         userId: score.userId,
-        username: score.userId, // TODO: Get actual username from user service
-        totalScore: score.score,
-        appsPlayed: 1, // This would need to be calculated differently for actual usage
-        bestScore: score.score,
-        lastPlayed: score.timestamp,
+        username: score.userId,
+        score: score.score,
+        submittedTimestamp: score.timestamp,
         rank: index + 1,
       }));
 
     return leaderboardEntries;
   }
 
-  async getGlobalLeaderboard(appId: string, limit = 100): Promise<LeaderboardEntry[]> {
+  async getGlobalLeaderboard(
+    appId: string,
+    limit = 100,
+  ): Promise<LeaderboardEntry[]> {
     const command = new QueryCommand({
       TableName: this.tableName,
       KeyConditionExpression: 'PK = :pk AND begins_with(SK, :sk)',
@@ -108,13 +116,17 @@ export class LeaderboardService {
     });
 
     const result = await this.docClient.send(command);
-    return result.Items as LeaderboardEntry[] || [];
+    return (result.Items as LeaderboardEntry[]) || [];
   }
 
-  async getUserScores(appId: string, userId: string, limit = 50): Promise<AppScore[]> {
+  async getUserScores(
+    appId: string,
+    userId: string,
+    limit = 50,
+  ): Promise<AppScore[]> {
     // This would use GSI1 in a real implementation
     // For now, we'll query by day patterns (this is not optimal)
-    const today = format(new Date(), 'yyyy-MM-dd');
+    const today = getCurrentDay();
     const command = new QueryCommand({
       TableName: this.tableName,
       KeyConditionExpression: 'PK = :pk AND begins_with(SK, :sk)',
@@ -127,25 +139,35 @@ export class LeaderboardService {
     });
 
     const result = await this.docClient.send(command);
-    return result.Items as AppScore[] || [];
+    return (result.Items as AppScore[]) || [];
   }
 
-  async getUserRank(appId: string, userId: string, day: string): Promise<number | null> {
+  async getUserRank(
+    appId: string,
+    userId: string,
+    day: string,
+  ): Promise<number | null> {
     const leaderboard = await this.getDailyLeaderboard(appId, day);
-    const userEntry = leaderboard.find(entry => entry.userId === userId);
+    const userEntry = leaderboard.find((entry) => entry.userId === userId);
     return userEntry?.rank || null;
   }
 
-  private async updateUserLeaderboardEntry(request: SubmitScoreRequest, day: string): Promise<void> {
+  private async updateUserLeaderboardEntry(
+    userId: string,
+    username: string,
+    request: SubmitScoreRequest,
+    day: string,
+  ): Promise<void> {
     const globalPK = `LEADERBOARD#${request.appId}#GLOBAL`;
-    const userSK = `USER#${request.userId}`;
+    const userSK = `USER#${userId}`;
 
     try {
       // Try to update existing entry
-      await this.docClient.send(new UpdateCommand({
-        TableName: this.tableName,
-        Key: { PK: globalPK, SK: userSK },
-        UpdateExpression: `
+      await this.docClient.send(
+        new UpdateCommand({
+          TableName: this.tableName,
+          Key: { PK: globalPK, SK: userSK },
+          UpdateExpression: `
           SET 
             totalScore = if_not_exists(totalScore, :zero) + :score,
             appsPlayed = if_not_exists(appsPlayed, :zero) + :one,
@@ -154,32 +176,33 @@ export class LeaderboardService {
             username = :username
           SET bestScore = if_(bestScore < :score, :score, bestScore)
         `,
-        ExpressionAttributeValues: {
-          ':score': request.score,
-          ':zero': 0,
-          ':one': 1,
-          ':timestamp': new Date().toISOString(),
-          ':username': request.username,
-        },
-      }));
+          ExpressionAttributeValues: {
+            ':score': request.score,
+            ':zero': 0,
+            ':one': 1,
+            ':timestamp': new Date().toISOString(),
+            ':username': request.username,
+          },
+        }),
+      );
     } catch (error) {
       // If item doesn't exist, create it
       const newEntry: LeaderboardEntry = {
         PK: globalPK,
         SK: userSK,
-        userId: request.userId,
+        userId: userId,
         username: request.username,
-        totalScore: request.score,
-        appsPlayed: 1,
-        bestScore: request.score,
-        lastPlayed: new Date().toISOString(),
-        rank: 0, // Will be calculated when querying
+        score: request.score,
+        submittedTimestamp: new Date().toISOString(),
+        rank: 0,
       };
 
-      await this.docClient.send(new PutCommand({
-        TableName: this.tableName,
-        Item: newEntry,
-      }));
+      await this.docClient.send(
+        new PutCommand({
+          TableName: this.tableName,
+          Item: newEntry,
+        }),
+      );
     }
   }
 }

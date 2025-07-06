@@ -1,29 +1,16 @@
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, PutCommand, QueryCommand, GetCommand } from '@aws-sdk/lib-dynamodb';
-import { format } from 'date-fns';
 import { appConfig } from '@/config';
+import { getDynamoDBDocumentClient } from '@/aws';
 import { AppData, AppDataRequest, UpdateAppDataRequest } from '@/models/app';
 
 export class AppDataService {
-  private readonly docClient: DynamoDBDocumentClient;
-  private readonly tableName: string;
-
-  constructor() {
-    const client = new DynamoDBClient({
-      region: appConfig.dynamodb.region,
-      ...(appConfig.dynamodb.endpoint && { endpoint: appConfig.dynamodb.endpoint }),
-    });
-    this.docClient = DynamoDBDocumentClient.from(client);
-    this.tableName = appConfig.dynamodb.tableName;
-  }
+  constructor(
+    private readonly docClient = getDynamoDBDocumentClient(),
+    private readonly tableName: string = appConfig.dynamodb.tableName
+  ) {}
 
   async getAppData(request: AppDataRequest): Promise<Record<string, any> | any> {
-    const { appId, day, key } = request;
-
-    if (key) {
-      // Get specific key
-      return this.getAppDataByKey(appId, day, key);
-    }
+    const { appId, day } = request;
 
     // Get all app data for the day
     const command = new QueryCommand({

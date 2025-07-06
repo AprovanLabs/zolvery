@@ -7,12 +7,15 @@ import {
   aws_cloudfront as cloudfront,
   aws_apigateway as apigateway,
   aws_certificatemanager as certificatemanager,
+  aws_route53 as route53,
+  aws_route53_targets as targets,
 } from 'aws-cdk-lib';
 import { namer } from '../core/utils';
 
 export interface WebProps {
   domainName: string;
   certificate: certificatemanager.ICertificate;
+  hostedZoneId: string;
 }
 
 export class Web extends Construct {
@@ -23,6 +26,7 @@ export class Web extends Construct {
   public readonly apiArn: string;
   public readonly callbackUrl: string;
   public readonly logoutUrl: string;
+  public readonly distribution: cloudfront.Distribution;
 
   public constructor(scope: Construct, id: string, props: WebProps) {
     super(scope, id);
@@ -42,7 +46,7 @@ export class Web extends Construct {
 
     // this.hostingBucket.grantRead(originAccessIdentity);
 
-    new cloudfront.Distribution(this, 'Distribution', {
+    this.distribution = new cloudfront.Distribution(this, 'Distribution', {
       defaultBehavior: {
         origin: new origins.S3StaticWebsiteOrigin(this.hostingBucket),
         compress: true,
@@ -94,5 +98,22 @@ export class Web extends Construct {
     this.apiArn = this.api.arnForExecuteApi();
     this.callbackUrl = this.url;
     this.logoutUrl = this.url;
+
+    const hostedZone = route53.HostedZone.fromHostedZoneAttributes(this, 'HostedZone', {
+      hostedZoneId: props.hostedZoneId,
+      zoneName: this.extractRootDomain(props.domainName),
+    });
+
+    new route53.ARecord(this, 'Route53Record', {
+      zone: hostedZone,
+      recordName: props.domainName,
+      target: route53.RecordTarget.fromAlias(new targets.CloudFrontTarget(this.distribution)),
+      comment: `Point ${props.domainName} to CloudFront distribution`,
+    });
   }
+
+  private extractRootDomain = (fullDomain: string): string => {
+    const parts = fullDomain.split('.');
+    return parts.slice(-2).join('.');
+  };
 }

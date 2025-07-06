@@ -8,38 +8,15 @@ The server follows a modular architecture with clear separation of concerns:
 
 ```
 src/
-├── app.ts                 # Main Koa application setup
+├── app.ts                # Main Koa application setup
 ├── index.ts              # Entry point
 ├── config/               # Configuration management
-│   ├── index.ts
-│   └── database.ts
 ├── middleware/           # Custom middleware
-│   ├── auth.ts
-│   ├── error-handler.ts
-│   └── validation.ts
 ├── routes/               # Route handlers
-│   ├── events.ts         # Event storage and retrieval
-│   ├── leaderboard.ts    # Leaderboard management
-│   ├── game-data.ts      # Game-specific data endpoints
-│   └── i18n.ts           # Internationalization
 ├── services/             # Business logic
-│   ├── event-service.ts
-│   ├── leaderboard-service.ts
-│   ├── game-service.ts
-│   └── i18n-service.ts
 ├── models/               # Data models and types
-│   ├── event.ts
-│   ├── user.ts
-│   ├── game.ts
-│   └── leaderboard.ts
 ├── utils/                # Utility functions
-│   ├── date.ts
-│   ├── validation.ts
-│   └── s3.ts
-└── __tests__/           # Integration tests
-    ├── events.spec.ts
-    ├── leaderboard.spec.ts
-    └── game-data.spec.ts
+└── __tests__/            # Integration tests
 ```
 
 ## Core Functionalities
@@ -56,17 +33,16 @@ interface GameEvent {
   eventKey: string;     // Event identifier (e.g., "poem", "vote", "phase")
   value: any;          // Event data (JSON)
   timestamp: string;    // ISO timestamp
-  gameId: string;       // Game identifier
-  userId: string;       // User identifier
+  appId: string;       // App ID
   day: string;         // Date in YYYY-MM-DD format
   ttl?: number;        // Optional TTL for cleanup
 }
 ```
 
 **Endpoints**:
-- `POST /api/events` - Store event data
-- `GET /api/events/:gameId/:userId/:day` - Get latest events for user/game/day
-- `GET /api/events/:gameId/:userId/:day/:eventKey` - Get specific event value
+- `POST /events` - Store event data
+- `GET /events/:appId/:day` - Get latest events for user/game/day
+- `GET /events/:appId/:day/:eventKey` - Get specific event value
 
 ### 2. Leaderboard & Scoring
 
@@ -78,7 +54,7 @@ interface GameScore {
   PK: string;           // "LEADERBOARD#poetry-slam#2025-07-01"
   SK: string;           // "SCORE#user123#timestamp"
   userId: string;       // User identifier
-  gameId: string;       // Game identifier
+  appId: string;       // Game identifier
   day: string;         // Date in YYYY-MM-DD format
   score: number;        // Final score
   rank?: number;        // Calculated rank
@@ -101,10 +77,10 @@ interface LeaderboardEntry {
 ```
 
 **Endpoints**:
-- `POST /api/leaderboard/score` - Submit game score
-- `GET /api/leaderboard/:gameId/daily/:date` - Daily leaderboard
-- `GET /api/leaderboard/:gameId/global` - Global leaderboard
-- `GET /api/leaderboard/:gameId/user/:userId` - User's scores over time
+- `POST /leaderboard/score` - Submit game score
+- `GET /leaderboard/:appId/daily/:date` - Daily leaderboard
+- `GET /leaderboard/:appId/global` - Global leaderboard
+- `GET /leaderboard/:appId/user/:userId` - User's scores over time
 
 ### 3. Game Data (Key/Value) Endpoints
 
@@ -115,7 +91,7 @@ interface LeaderboardEntry {
 interface GameData {
   PK: string;           // "GAMEDATA#poetry-slam#2025-07-01"
   SK: string;           // "CONFIG" or specific data key
-  gameId: string;
+  appId: string;
   day: string;
   key: string;         // Data key (e.g., "prompt", "examples", "config")
   value: any;          // JSON data
@@ -125,9 +101,9 @@ interface GameData {
 ```
 
 **Endpoints**:
-- `GET /api/game-data/:gameId/:day` - Get all game data for day
-- `GET /api/game-data/:gameId/:day/:key` - Get specific data value
-- `POST /api/game-data/:gameId/:day/:key` - Update game data (admin)
+- `GET /game-data/:appId/:day` - Get all game data for day
+- `GET /game-data/:appId/:day/:key` - Get specific data value
+- `POST /game-data/:appId/:day/:key` - Update game data (admin)
 
 ### 4. Internationalization (i18n)
 
@@ -149,22 +125,22 @@ kossabos-i18n/
 ```
 
 **Endpoints**:
-- `GET /api/i18n/:gameId/:locale` - Get localized strings for game
-- `GET /api/i18n/common/:locale` - Get common localized strings
+- `GET /i18n/:appId/:locale` - Get localized strings for game
+- `GET /i18n/common/:locale` - Get common localized strings
 
 ## Database Schema (DynamoDB)
 
 ### Primary Table: `kossabos-game-data`
 
 **Access Patterns**:
-1. Get user events for specific game/day: `PK = DAY#date#GAME#gameId#USER#userId`
-2. Get daily leaderboard: `PK = LEADERBOARD#gameId#date`, `SK begins_with SCORE#`
-3. Get user's game history: `GSI1PK = USER#userId#GAME#gameId`, `GSI1SK = DAY#date`
-4. Get game configuration: `PK = GAMEDATA#gameId#date`
+1. Get user events for specific game/day: `PK = DAY#date#GAME#appId#USER#userId`
+2. Get daily leaderboard: `PK = LEADERBOARD#appId#date`, `SK begins_with SCORE#`
+3. Get user's game history: `GSI1PK = USER#userId#GAME#appId`, `GSI1SK = DAY#date`
+4. Get game configuration: `PK = GAMEDATA#appId#date`
 
 **Indexes**:
 - GSI1: `GSI1PK` / `GSI1SK` - User-centric queries
-- GSI2: `gameId` / `createdAt` - Time-based game queries
+- GSI2: `appId` / `createdAt` - Time-based game queries
 
 ## Testing Strategy
 
@@ -203,7 +179,7 @@ DYNAMODB_TABLE_NAME=kossabos-game-data
 DYNAMODB_REGION=us-east-2
 
 # S3
-S3_I18N_BUCKET=kossabos-i18n
+S3_DATA_BUCKET=kossabos-i18n
 S3_REGION=us-east-2
 
 # Application
@@ -254,9 +230,9 @@ Based on the client code analysis, the Poetry Slam game requires:
 // Client uses inject('kossabos') to access:
 const { get, env, emit, t } = inject('kossabos');
 
-// get() calls -> GET /api/game-data/poetry-slam/2025-07-01
-// emit() calls -> POST /api/events
-// t() calls -> cached i18n data from GET /api/i18n/poetry-slam/en
+// get() calls -> GET /game-data/poetry-slam/2025-07-01
+// emit() calls -> POST /events
+// t() calls -> cached i18n data from GET /i18n/poetry-slam/en
 ```
 
 ## Performance Considerations
@@ -273,7 +249,7 @@ const { get, env, emit, t } = inject('kossabos');
 2. **Rate Limiting**: Prevent spam and abuse
 3. **CORS**: Configured for allowed origins
 4. **Sanitization**: Clean user-generated content
-5. **Authentication**: JWT-based auth for user identification
+5. **Authentication**: Cognito
 
 ## Deployment
 
@@ -321,11 +297,11 @@ The server provides all necessary endpoints for the Poetry Slam client:
 // Client integration points:
 const { get, env, emit, t } = inject('kossabos');
 
-// get('context') -> GET /api/app-data/poetry-slam/2025-07-01
-// get('data') -> GET /api/app-data/poetry-slam/2025-07-01
-// emit('submit', data) -> POST /api/events
-// emit('end', data) -> POST /api/leaderboard/score
-// t('submit', 'Submit') -> cached from GET /api/i18n/poetry-slam/en
+// get('context') -> GET /app-data/poetry-slam/2025-07-01
+// get('data') -> GET /app-data/poetry-slam/2025-07-01
+// emit('submit', data) -> POST /events
+// emit('end', data) -> POST /leaderboard/score
+// t('submit', 'Submit') -> cached from GET /i18n/poetry-slam/en
 ```
 
 ## Database Setup

@@ -1,6 +1,6 @@
 export type { Event } from './events';
 export type { User } from './user';
-export type { App } from './app';
+export type { App, Settings } from './app';
 export { Random } from './random';
 export type { Transport } from './transport';
 export { ContextTransport } from './transport';

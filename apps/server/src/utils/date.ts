@@ -1,10 +1,49 @@
+/**
+ * Date utilities with rollover timezone support
+ * 
+ * This module implements a "rollover timezone" concept where all date calculations
+ * for daily game boundaries (events, leaderboards, etc.) use GMT+9:00 timezone.
+ * 
+ * Rollover times in major timezones:
+ * - US East Coast: 11:00 AM EST / 12:00 PM EDT
+ * - US West Coast: 8:00 AM PST / 9:00 AM PDT  
+ * - Europe (CET): 5:00 PM CET / 6:00 PM CEST
+ * - Asia/Tokyo: 12:00 AM JST (midnight)
+ * 
+ * This ensures daily boundaries occur at reasonable times for US and European users
+ * while maintaining global consistency.
+ */
+
 import { format, isValid } from 'date-fns';
+import { toZonedTime } from 'date-fns-tz';
+
+// Rollover timezone: GMT+9:00 (JST) - days roll over at a reasonable time for US and Europe
+export const ROLLOVER_TIMEZONE = 'Asia/Tokyo'; // GMT+9:00
 
 /**
- * Get current date in YYYY-MM-DD format
+ * Get current date in YYYY-MM-DD format using the rollover timezone (GMT+9:00)
+ * This ensures that days roll over at a reasonable time for US and Europe users.
  */
 export function getCurrentDay(): string {
-  return format(new Date(), 'yyyy-MM-dd');
+  const now = new Date();
+  const zonedTime = toZonedTime(now, ROLLOVER_TIMEZONE);
+  return format(zonedTime, 'yyyy-MM-dd');
+}
+
+/**
+ * Get current date in YYYY-MM-DD format for a specific timezone
+ */
+export function getCurrentDayInTimezone(timezone: string): string {
+  const now = new Date();
+  const zonedTime = toZonedTime(now, timezone);
+  return format(zonedTime, 'yyyy-MM-dd');
+}
+
+/**
+ * Get the current time in the rollover timezone
+ */
+export function getCurrentTimeInRolloverTimezone(): Date {
+  return toZonedTime(new Date(), ROLLOVER_TIMEZONE);
 }
 
 /**
@@ -20,10 +59,12 @@ export function isValidDateString(dateString: string): boolean {
 }
 
 /**
- * Get date string from timestamp
+ * Get date string from timestamp using the rollover timezone (GMT+9:00)
  */
 export function getDateFromTimestamp(timestamp: number): string {
-  return format(new Date(timestamp), 'yyyy-MM-dd');
+  const date = new Date(timestamp);
+  const zonedTime = toZonedTime(date, ROLLOVER_TIMEZONE);
+  return format(zonedTime, 'yyyy-MM-dd');
 }
 
 /**
@@ -33,18 +74,4 @@ export function getTTL(daysFromNow: number): number {
   const now = new Date();
   const ttlDate = new Date(now.getTime() + (daysFromNow * 24 * 60 * 60 * 1000));
   return Math.floor(ttlDate.getTime() / 1000);
-}
-
-/**
- * Generate a consistent partition key for DynamoDB
- */
-export function generatePartitionKey(type: string, ...parts: string[]): string {
-  return [type, ...parts].join('#');
-}
-
-/**
- * Parse partition key components
- */
-export function parsePartitionKey(pk: string): string[] {
-  return pk.split('#');
 }
