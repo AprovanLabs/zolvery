@@ -11,12 +11,24 @@ import {
   SubmitScoreRequest,
 } from '@/models/leaderboard';
 import { getCurrentDay } from '@/utils/date';
+import { leaderboardKeys } from '@/utils/dynamo';
+import { getLogger } from '@/config/logger';
+import { AppEventBusIntegration, AppEventType } from '@/utils/events/integration';
+import { InMemoryEventBus } from '@/utils/events';
+
+const logger = getLogger();
 
 export class LeaderboardService {
+  private readonly eventBus: AppEventBusIntegration;
+
   constructor(
     private readonly docClient = getDynamoDBDocumentClient(),
     private readonly tableName: string = appConfig.dynamodb.tableName,
-  ) {}
+    eventBus?: AppEventBusIntegration
+  ) {
+    // Use provided event bus or create a new one with in-memory implementation
+    this.eventBus = eventBus || new AppEventBusIntegration(new InMemoryEventBus());
+  }
 
   async submitScore(
     userId: string,
@@ -27,9 +39,17 @@ export class LeaderboardService {
     const timestamp = new Date().toISOString();
     const createdAt = Date.now();
 
+    logger.debug({ 
+      userId, 
+      username, 
+      appId: request.appId, 
+      day, 
+      score: request.score 
+    }, 'Submitting score');
+
     const score: AppScore = {
-      PK: `LEADERBOARD#${request.appId}#${day}`,
-      SK: `SCORE#${userId}#${createdAt}`,
+      PK: leaderboardKeys.partitionKey(request.appId, day),
+      SK: leaderboardKeys.sortKey(request.score, userId),
       userId: userId,
       appId: request.appId,
       day,
@@ -47,8 +67,40 @@ export class LeaderboardService {
       }),
     );
 
+    logger.debug({ userId, appId: request.appId, day, score: request.score }, 'Score saved successfully');
+
     // Update or create user's leaderboard entry
     await this.updateUserLeaderboardEntry(userId, username, request, day);
+
+    // Publish leaderboard updated event
+    try {
+      // Get updated leaderboard for publishing
+      const leaderboard = await this.getDailyLeaderboard(request.appId, day, 10);
+      
+      await this.eventBus.publishLeaderboardUpdated({
+        appId: request.appId,
+        day,
+        entries: leaderboard.map(entry => ({
+          userId: entry.userId,
+          username: entry.username,
+          score: entry.score,
+          rank: entry.rank,
+        })),
+      });
+
+      logger.debug({
+        appId: request.appId,
+        day,
+        eventType: AppEventType.LEADERBOARD_UPDATED,
+      }, 'Leaderboard updated event published');
+    } catch (busError) {
+      logger.error({
+        error: busError,
+        appId: request.appId,
+        day,
+        userId,
+      }, 'Failed to publish leaderboard updated event');
+    }
 
     return score;
   }
@@ -58,11 +110,13 @@ export class LeaderboardService {
     day: string,
     limit = 100,
   ): Promise<LeaderboardEntry[]> {
+    logger.debug({ appId, day, limit }, 'Getting daily leaderboard');
+    
     const command = new QueryCommand({
       TableName: this.tableName,
       KeyConditionExpression: 'PK = :pk AND begins_with(SK, :sk)',
       ExpressionAttributeValues: {
-        ':pk': `LEADERBOARD#${appId}#${day}`,
+        ':pk': leaderboardKeys.partitionKey(appId, day),
         ':sk': 'SCORE#',
       },
       ScanIndexForward: false, // Sort descending by SK (which includes timestamp)
@@ -71,6 +125,8 @@ export class LeaderboardService {
 
     const result = await this.docClient.send(command);
     const scores = (result.Items as AppScore[]) || [];
+
+    logger.debug({ appId, day, scoreCount: scores.length }, 'Retrieved scores for leaderboard');
 
     // Get the best score for each user
     const userBestScores = new Map<string, AppScore>();
@@ -88,7 +144,7 @@ export class LeaderboardService {
       .sort((a, b) => b.score - a.score)
       .slice(0, limit)
       .map((score, index) => ({
-        PK: `LEADERBOARD#${appId}#${day}`,
+        PK: leaderboardKeys.partitionKey(appId, day),
         SK: `USER#${score.userId}`,
         userId: score.userId,
         username: score.userId,
@@ -97,6 +153,7 @@ export class LeaderboardService {
         rank: index + 1,
       }));
 
+    logger.debug({ appId, day, entryCount: leaderboardEntries.length }, 'Generated leaderboard entries');
     return leaderboardEntries;
   }
 
@@ -104,11 +161,13 @@ export class LeaderboardService {
     appId: string,
     limit = 100,
   ): Promise<LeaderboardEntry[]> {
+    logger.debug({ appId, limit }, 'Getting global leaderboard');
+    
     const command = new QueryCommand({
       TableName: this.tableName,
       KeyConditionExpression: 'PK = :pk AND begins_with(SK, :sk)',
       ExpressionAttributeValues: {
-        ':pk': `LEADERBOARD#${appId}#GLOBAL`,
+        ':pk': leaderboardKeys.globalPartitionKey(appId),
         ':sk': 'USER#',
       },
       ScanIndexForward: false,
@@ -116,7 +175,10 @@ export class LeaderboardService {
     });
 
     const result = await this.docClient.send(command);
-    return (result.Items as LeaderboardEntry[]) || [];
+    const entries = (result.Items as LeaderboardEntry[]) || [];
+    
+    logger.debug({ appId, entryCount: entries.length }, 'Retrieved global leaderboard entries');
+    return entries;
   }
 
   async getUserScores(
@@ -124,22 +186,30 @@ export class LeaderboardService {
     userId: string,
     limit = 50,
   ): Promise<AppScore[]> {
-    // This would use GSI1 in a real implementation
-    // For now, we'll query by day patterns (this is not optimal)
+    logger.debug({ appId, userId, limit }, 'Getting user scores');
+    
+    // Query for all scores on the day, then filter in memory
+    // In a production system, this would use a GSI with userId as partition key
     const today = getCurrentDay();
     const command = new QueryCommand({
       TableName: this.tableName,
       KeyConditionExpression: 'PK = :pk AND begins_with(SK, :sk)',
       ExpressionAttributeValues: {
-        ':pk': `LEADERBOARD#${appId}#${today}`,
-        ':sk': `SCORE#${userId}#`,
+        ':pk': leaderboardKeys.partitionKey(appId, today),
+        ':sk': 'SCORE#',
       },
       ScanIndexForward: false,
-      Limit: limit,
+      Limit: limit * 10, // Get more items to account for filtering
     });
 
     const result = await this.docClient.send(command);
-    return (result.Items as AppScore[]) || [];
+    const allScores = (result.Items as AppScore[]) || [];
+    
+    // Filter for the specific user's scores in memory
+    const userScores = allScores.filter(score => score.userId === userId).slice(0, limit);
+    
+    logger.debug({ appId, userId, scoreCount: userScores.length, totalScores: allScores.length }, 'Retrieved user scores');
+    return userScores;
   }
 
   async getUserRank(
@@ -147,9 +217,14 @@ export class LeaderboardService {
     userId: string,
     day: string,
   ): Promise<number | null> {
+    logger.debug({ appId, userId, day }, 'Getting user rank');
+    
     const leaderboard = await this.getDailyLeaderboard(appId, day);
     const userEntry = leaderboard.find((entry) => entry.userId === userId);
-    return userEntry?.rank || null;
+    const rank = userEntry?.rank || null;
+    
+    logger.debug({ appId, userId, day, rank }, 'User rank determined');
+    return rank;
   }
 
   private async updateUserLeaderboardEntry(
@@ -158,7 +233,15 @@ export class LeaderboardService {
     request: SubmitScoreRequest,
     day: string,
   ): Promise<void> {
-    const globalPK = `LEADERBOARD#${request.appId}#GLOBAL`;
+    logger.debug({ 
+      userId, 
+      username, 
+      appId: request.appId, 
+      day, 
+      score: request.score 
+    }, 'Updating user leaderboard entry');
+    
+    const globalPK = leaderboardKeys.globalPartitionKey(request.appId);
     const userSK = `USER#${userId}`;
 
     try {
@@ -187,6 +270,8 @@ export class LeaderboardService {
       );
     } catch (error) {
       // If item doesn't exist, create it
+      logger.debug({ userId, appId: request.appId }, 'Creating new leaderboard entry');
+      
       const newEntry: LeaderboardEntry = {
         PK: globalPK,
         SK: userSK,
@@ -204,5 +289,7 @@ export class LeaderboardService {
         }),
       );
     }
+    
+    logger.debug({ userId, appId: request.appId }, 'User leaderboard entry updated');
   }
 }

@@ -1,6 +1,6 @@
 import Router from '@koa/router';
 import { I18nService } from '@/services/i18n-service';
-import { ApiResponse } from '@/models';
+import { sendErrorResponse, sendSuccessResponse } from '@/utils/api';
 
 const router = new Router();
 const i18nService = new I18nService();
@@ -9,38 +9,22 @@ const i18nService = new I18nService();
 router.get('/:appId/:locale', async (ctx) => {
   try {
     const { appId, locale } = ctx.params;
-    
+
     if (!appId || !locale) {
-      ctx.status = 400;
-      ctx.body = {
-        success: false,
-        error: 'Missing required parameters: appId, locale',
-        timestamp: new Date().toISOString(),
-      };
+      sendErrorResponse(ctx, 400, 'Missing required parameters: appId, locale');
       return;
     }
-    
+
     const translations = await i18nService.getTranslations(appId, locale);
-    
-    const response: ApiResponse = {
-      success: true,
-      data: {
-        translations,
-        locale,
-        appId,
-      },
-      timestamp: new Date().toISOString(),
-    };
-    
-    ctx.body = response;
+
+    sendSuccessResponse(ctx, 200, {
+      translations,
+      locale,
+      appId,
+    });
   } catch (error) {
     console.error('Error fetching app translations:', error);
-    ctx.status = 500;
-    ctx.body = {
-      success: false,
-      error: 'Failed to fetch app translations',
-      timestamp: new Date().toISOString(),
-    };
+    sendErrorResponse(ctx, 500, 'Failed to fetch app translations');
   }
 });
 
@@ -48,49 +32,30 @@ router.get('/:appId/:locale', async (ctx) => {
 router.post('/:appId/:locale', async (ctx) => {
   try {
     const { appId, locale } = ctx.params;
-    const { translations } = ctx.request.body as { translations: Record<string, string> };
-    
+    const { translations } = ctx.request.body as {
+      translations: Record<string, string>;
+    };
+
     if (!appId || !locale) {
-      ctx.status = 400;
-      ctx.body = {
-        success: false,
-        error: 'Missing required parameters: appId, locale',
-        timestamp: new Date().toISOString(),
-      };
+      sendErrorResponse(ctx, 400, 'Missing required parameters: appId, locale');
       return;
     }
 
     if (!translations || typeof translations !== 'object') {
-      ctx.status = 400;
-      ctx.body = {
-        success: false,
-        error: 'Missing or invalid translations object',
-        timestamp: new Date().toISOString(),
-      };
+      sendErrorResponse(ctx, 400, 'Missing or invalid translations object');
       return;
     }
-    
+
     await i18nService.storeTranslations(appId, locale, translations);
-    
-    const response: ApiResponse = {
-      success: true,
-      data: {
-        message: 'Translations stored successfully',
-        locale,
-        appId,
-      },
-      timestamp: new Date().toISOString(),
-    };
-    
-    ctx.body = response;
+
+    sendSuccessResponse(ctx, 201, {
+      message: 'Translations stored successfully',
+      locale,
+      appId,
+    });
   } catch (error) {
     console.error('Error storing app translations:', error);
-    ctx.status = 500;
-    ctx.body = {
-      success: false,
-      error: 'Failed to store app translations',
-      timestamp: new Date().toISOString(),
-    };
+    sendErrorResponse(ctx, 500, 'Failed to store app translations');
   }
 });
 
@@ -98,37 +63,21 @@ router.post('/:appId/:locale', async (ctx) => {
 router.get('/:appId/locales', async (ctx) => {
   try {
     const { appId } = ctx.params;
-    
+
     if (!appId) {
-      ctx.status = 400;
-      ctx.body = {
-        success: false,
-        error: 'Missing required parameter: appId',
-        timestamp: new Date().toISOString(),
-      };
+      sendErrorResponse(ctx, 400, 'Missing required parameter: appId');
       return;
     }
-    
+
     const locales = await i18nService.getAvailableLocales(appId);
-    
-    const response: ApiResponse = {
-      success: true,
-      data: {
-        locales,
-        appId,
-      },
-      timestamp: new Date().toISOString(),
-    };
-    
-    ctx.body = response;
+
+    sendSuccessResponse(ctx, 200, {
+      locales,
+      appId,
+    });
   } catch (error) {
     console.error('Error fetching available locales:', error);
-    ctx.status = 500;
-    ctx.body = {
-      success: false,
-      error: 'Failed to fetch available locales',
-      timestamp: new Date().toISOString(),
-    };
+    sendErrorResponse(ctx, 500, 'Failed to fetch available locales');
   }
 });
 
@@ -136,38 +85,22 @@ router.get('/:appId/locales', async (ctx) => {
 router.delete('/:appId/:locale', async (ctx) => {
   try {
     const { appId, locale } = ctx.params;
-    
+
     if (!appId || !locale) {
-      ctx.status = 400;
-      ctx.body = {
-        success: false,
-        error: 'Missing required parameters: appId, locale',
-        timestamp: new Date().toISOString(),
-      };
+      sendErrorResponse(ctx, 400, 'Missing required parameters: appId, locale');
       return;
     }
-    
+
     await i18nService.deleteTranslations(appId, locale);
-    
-    const response: ApiResponse = {
-      success: true,
-      data: {
-        message: 'Translations deleted successfully',
-        locale,
-        appId,
-      },
-      timestamp: new Date().toISOString(),
-    };
-    
-    ctx.body = response;
+
+    sendSuccessResponse(ctx, 200, {
+      message: 'Translations deleted successfully',
+      locale,
+      appId,
+    });
   } catch (error) {
     console.error('Error deleting app translations:', error);
-    ctx.status = 500;
-    ctx.body = {
-      success: false,
-      error: 'Failed to delete app translations',
-      timestamp: new Date().toISOString(),
-    };
+    sendErrorResponse(ctx, 500, 'Failed to delete app translations');
   }
 });
 
@@ -175,48 +108,27 @@ router.delete('/:appId/:locale', async (ctx) => {
 router.get('/:appId/:locale/metadata', async (ctx) => {
   try {
     const { appId, locale } = ctx.params;
-    
+
     if (!appId || !locale) {
-      ctx.status = 400;
-      ctx.body = {
-        success: false,
-        error: 'Missing required parameters: appId, locale',
-        timestamp: new Date().toISOString(),
-      };
+      sendErrorResponse(ctx, 400, 'Missing required parameters: appId, locale');
       return;
     }
-    
+
     const metadata = await i18nService.getTranslationMetadata(appId, locale);
-    
+
     if (!metadata) {
-      ctx.status = 404;
-      ctx.body = {
-        success: false,
-        error: 'Translations not found',
-        timestamp: new Date().toISOString(),
-      };
+      sendErrorResponse(ctx, 404, 'Translations not found');
       return;
     }
-    
-    const response: ApiResponse = {
-      success: true,
-      data: {
-        ...metadata,
-        locale,
-        appId,
-      },
-      timestamp: new Date().toISOString(),
-    };
-    
-    ctx.body = response;
+
+    sendSuccessResponse(ctx, 200, {
+      ...metadata,
+      locale,
+      appId,
+    });
   } catch (error) {
     console.error('Error fetching translation metadata:', error);
-    ctx.status = 500;
-    ctx.body = {
-      success: false,
-      error: 'Failed to fetch translation metadata',
-      timestamp: new Date().toISOString(),
-    };
+    sendErrorResponse(ctx, 500, 'Failed to fetch translation metadata');
   }
 });
 

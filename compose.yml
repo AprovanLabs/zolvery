@@ -6,11 +6,19 @@ services:
       - '4566:4566'
       - '4510-4559:4510-4559'
     environment:
+      - ORG_ID=aprovan
+      - PROJECT_ID=kossabos
+      - ENVIRONMENT=dev
       - PERSISTENCE=1
       - SERVICES=s3,sqs,dynamodb
-      - DATA_DIR=/tmp/localstack/data
+      - REGION_SHORT_CODE=use2
+      - AWS_REGION=us-east-2
+      - AWS_ACCESS_KEY_ID=kossabos
+      - AWS_SECRET_ACCESS_KEY=kossabos
+      - AWS_ENDPOINT_URL=http://localhost:4566
+      - AWS_DEFAULT_REGION=us-east-2
     volumes:
-      - localstack_data:/tmp/localstack/data
+      - localstack_data://var/lib/localstack/state
       - './scripts/init-aws.sh:/etc/localstack/init/ready.d/init-aws.sh'
 
 volumes:

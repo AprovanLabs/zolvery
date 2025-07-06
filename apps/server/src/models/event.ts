@@ -14,6 +14,7 @@ export interface CreateEventRequest {
   appId: string;
   eventKey: string;
   value: any;
+  day?: string;
 }
 
 export interface EventResponse {

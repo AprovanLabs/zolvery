@@ -27,7 +27,7 @@ src/
 
 **Data Model**:
 ```typescript
-interface GameEvent {
+interface AppEvent {
   PK: string;           // "DAY#2025-07-01#GAME#poetry-slam#USER#user123"
   SK: string;           // "EVENT#eventKey"
   eventKey: string;     // Event identifier (e.g., "poem", "vote", "phase")
@@ -40,7 +40,7 @@ interface GameEvent {
 ```
 
 **Endpoints**:
-- `POST /events` - Store event data
+- `POST /events/:appId` - Store event data
 - `GET /events/:appId/:day` - Get latest events for user/game/day
 - `GET /events/:appId/:day/:eventKey` - Get specific event value
 

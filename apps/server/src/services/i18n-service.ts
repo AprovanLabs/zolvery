@@ -1,11 +1,14 @@
-import { DynamoDBDocumentClient, DeleteCommand, GetCommand, PutCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
 import { appConfig } from '@/config';
 import { getDynamoDBDocumentClient } from '@/aws';
 import { I18nData } from '@/models';
+import { InMemoryCache, i18nCacheKeys } from '@/utils/cache';
+import { i18nKeys } from '@/utils/dynamo';
+import { getLogger } from '@/config/logger';
+
+const logger = getLogger();
 
 export class I18nService {
-  private readonly cache = new Map<string, I18nData>();
-  private readonly cacheExpiry = new Map<string, number>();
+  private readonly cache = new InMemoryCache<I18nData>();
   private readonly cacheTTL = 15 * 60 * 1000; // 15 minutes
 
   constructor(
@@ -14,14 +17,19 @@ export class I18nService {
   ) {}
 
   async getTranslations(appId: string, locale: string): Promise<Record<string, string>> {
-    const cacheKey = `${appId}:${locale}`;
+    const cacheKey = i18nCacheKeys.translations(appId, locale);
+    
+    logger.debug({ appId, locale, cacheKey }, 'Getting translations');
     
     // Check cache first
-    if (this.isValidCache(cacheKey)) {
-      return this.cache.get(cacheKey)!.translations;
+    const cachedData = await this.cache.get(cacheKey);
+    if (cachedData) {
+      logger.debug({ appId, locale }, 'Translations found in cache');
+      return cachedData.translations;
     }
 
     try {
+      logger.debug({ appId, locale }, 'Loading translations from DynamoDB');
       const translations = await this.loadTranslationsFromDynamoDB(appId, locale);
             
       // Cache the result
@@ -33,12 +41,12 @@ export class I18nService {
         lastUpdated: new Date().toISOString(),
       };
       
-      this.cache.set(cacheKey, i18nData);
-      this.cacheExpiry.set(cacheKey, Date.now() + this.cacheTTL);
+      await this.cache.set(cacheKey, i18nData, this.cacheTTL);
+      logger.debug({ appId, locale, translationCount: Object.keys(translations).length }, 'Translations cached');
       
       return translations;
     } catch (error) {
-      console.error(`Failed to load translations for ${appId}:${locale}`, error);
+      logger.error({ appId, locale, error }, 'Failed to load translations');
       return {}; // Return empty object if not found
     }
   }
@@ -47,8 +55,8 @@ export class I18nService {
     const command = new GetCommand({
       TableName: this.tableName,
       Key: {
-        PK: `I18N#${appId}`,
-        SK: locale,
+        PK: i18nKeys.partitionKey(appId),
+        SK: i18nKeys.sortKey(locale),
       },
     });
 
@@ -61,32 +69,30 @@ export class I18nService {
     return result.Item.translations as Record<string, string>;
   }
 
-  private isValidCache(key: string): boolean {
-    const cached = this.cache.get(key);
-    const expiry = this.cacheExpiry.get(key);
-    
-    return !!(cached && expiry && Date.now() < expiry);
-  }
-
   // Method to preload translations for better performance
   async preloadTranslations(appId: string, locales: string[]): Promise<void> {
+    logger.info({ appId, locales }, 'Preloading translations');
+    
     const promises = locales.map(locale => 
       this.getTranslations(appId, locale).catch(error => 
-        console.error(`Failed to preload translations for ${appId}:${locale}`, error)
+        logger.error({ appId, locale, error }, 'Failed to preload translations')
       )
     );
     
     await Promise.allSettled(promises);
+    logger.info({ appId, localeCount: locales.length }, 'Preloading translations completed');
   }
 
   // Method to preload all translations for an app (more efficient than individual calls)
   async preloadAllTranslations(appId: string): Promise<void> {
     try {
+      logger.info({ appId }, 'Preloading all translations for app');
+      
       const command = new QueryCommand({
         TableName: this.tableName,
         KeyConditionExpression: 'PK = :pk',
         ExpressionAttributeValues: {
-          ':pk': `I18N#${appId}`,
+          ':pk': i18nKeys.partitionKey(appId),
         },
       });
 
@@ -96,7 +102,7 @@ export class I18nService {
       // Cache all translations
       for (const item of items) {
         const locale = item.SK as string;
-        const cacheKey = `${appId}:${locale}`;
+        const cacheKey = i18nCacheKeys.translations(appId, locale);
         
         const i18nData: I18nData = {
           locale,
@@ -106,40 +112,44 @@ export class I18nService {
           lastUpdated: item.lastUpdated as string,
         };
         
-        this.cache.set(cacheKey, i18nData);
-        this.cacheExpiry.set(cacheKey, Date.now() + this.cacheTTL);
+        await this.cache.set(cacheKey, i18nData, this.cacheTTL);
       }
 
-      console.log(`Preloaded ${items.length} translation sets for app ${appId}`);
+      logger.info({ appId, translationSets: items.length }, 'Preloaded all translations for app');
     } catch (error) {
-      console.error(`Failed to preload all translations for ${appId}`, error);
+      logger.error({ appId, error }, 'Failed to preload all translations');
       throw error;
     }
   }
 
   // Method to clear cache (useful for testing or manual refresh)
-  clearCache(appId?: string, locale?: string): void {
+  async clearCache(appId?: string, locale?: string): Promise<void> {
     if (appId && locale) {
-      const key = `${appId}:${locale}`;
-      this.cache.delete(key);
-      this.cacheExpiry.delete(key);
+      const key = i18nCacheKeys.translations(appId, locale);
+      await this.cache.delete(key);
+      logger.info({ appId, locale }, 'Cleared translation cache');
+    } else if (appId) {
+      // Clear all translations for an app - need to get pattern
+      const pattern = i18nCacheKeys.translations(appId, '*');
+      const keys = await this.cache.keys(pattern);
+      for (const key of keys) {
+        await this.cache.delete(key);
+      }
+      logger.info({ appId, clearedKeys: keys.length }, 'Cleared app translation cache');
     } else {
-      this.cache.clear();
-      this.cacheExpiry.clear();
+      await this.cache.clear();
+      logger.info('Cleared all translation cache');
     }
   }
 
   // Method to get cached translation info (for debugging)
-  getCacheInfo(): Array<{ key: string; expiresAt: number; size: number }> {
-    const info: Array<{ key: string; expiresAt: number; size: number }> = [];
+  async getCacheInfo(): Promise<Array<{ key: string; hasData: boolean }>> {
+    const keys = await this.cache.keys('translations:*');
+    const info: Array<{ key: string; hasData: boolean }> = [];
     
-    for (const [key, data] of this.cache.entries()) {
-      const expiresAt = this.cacheExpiry.get(key) || 0;
-      info.push({
-        key,
-        expiresAt,
-        size: JSON.stringify(data.translations).length,
-      });
+    for (const key of keys) {
+      const hasData = await this.cache.has(key);
+      info.push({ key, hasData });
     }
     
     return info;
@@ -150,26 +160,28 @@ export class I18nService {
     const now = new Date().toISOString();
     const version = `v${Date.now()}`;
 
+    logger.info({ appId, locale, translationCount: Object.keys(translations).length }, 'Storing translations');
+
     const command = new PutCommand({
       TableName: this.tableName,
       Item: {
-        PK: `I18N#${appId}`,
-        SK: locale,
+        PK: i18nKeys.partitionKey(appId),
+        SK: i18nKeys.sortKey(locale),
         appId,
         locale,
         translations,
         version,
         lastUpdated: now,
         // Add GSI keys for querying by app or locale if needed
-        GSI1PK: `I18N#${appId}`,
-        GSI1SK: `LOCALE#${locale}`,
+        GSI1PK: i18nKeys.gsi1PartitionKey(locale),
+        GSI1SK: i18nKeys.gsi1SortKey(appId),
       },
     });
 
     await this.docClient.send(command);
 
     // Update cache
-    const cacheKey = `${appId}:${locale}`;
+    const cacheKey = i18nCacheKeys.translations(appId, locale);
     const i18nData: I18nData = {
       locale,
       appId,
@@ -178,8 +190,8 @@ export class I18nService {
       lastUpdated: now,
     };
     
-    this.cache.set(cacheKey, i18nData);
-    this.cacheExpiry.set(cacheKey, Date.now() + this.cacheTTL);
+    await this.cache.set(cacheKey, i18nData, this.cacheTTL);
+    logger.info({ appId, locale }, 'Translations stored and cached');
   }
 
   // Method to get all available locales for an app
@@ -188,7 +200,7 @@ export class I18nService {
       TableName: this.tableName,
       KeyConditionExpression: 'PK = :pk',
       ExpressionAttributeValues: {
-        ':pk': `I18N#${appId}`,
+        ':pk': i18nKeys.partitionKey(appId),
       },
       ProjectionExpression: 'SK',
     });
@@ -200,20 +212,23 @@ export class I18nService {
 
   // Method to delete translations for a specific locale
   async deleteTranslations(appId: string, locale: string): Promise<void> {
+    logger.info({ appId, locale }, 'Deleting translations');
+    
     const command = new DeleteCommand({
       TableName: this.tableName,
       Key: {
-        PK: `I18N#${appId}`,
-        SK: locale,
+        PK: i18nKeys.partitionKey(appId),
+        SK: i18nKeys.sortKey(locale),
       },
     });
 
     await this.docClient.send(command);
 
     // Clear from cache
-    const cacheKey = `${appId}:${locale}`;
-    this.cache.delete(cacheKey);
-    this.cacheExpiry.delete(cacheKey);
+    const cacheKey = i18nCacheKeys.translations(appId, locale);
+    await this.cache.delete(cacheKey);
+    
+    logger.info({ appId, locale }, 'Translations deleted');
   }
 
   // Method to get translation metadata (without the actual translations)
@@ -221,8 +236,8 @@ export class I18nService {
     const command = new GetCommand({
       TableName: this.tableName,
       Key: {
-        PK: `I18N#${appId}`,
-        SK: locale,
+        PK: i18nKeys.partitionKey(appId),
+        SK: i18nKeys.sortKey(locale),
       },
       ProjectionExpression: 'version, lastUpdated',
     });

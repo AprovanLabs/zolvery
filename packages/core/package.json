@@ -9,7 +9,8 @@
     },
     "files": ["src"],
     "dependencies": {
-        "rxjs": "^7.8.1"
+        "rxjs": "^7.8.1",
+        "uuid": "^11.1.0"
     },
     "devDependencies": {
         "typescript": "^5.7.2"
