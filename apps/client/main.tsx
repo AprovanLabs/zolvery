@@ -1,19 +1,42 @@
-import {
-  AdjustmentsHorizontalIcon,
-  ArrowLeftIcon,
-  ChartBarIcon,
-  QuestionMarkCircleIcon,
-} from '@heroicons/react/24/solid';
 import { PrimeReactProvider } from 'primereact/api';
 import { App as KossabosApp, createTransport } from '@kossabos/core';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { Dropdown } from 'primereact/dropdown';
+import { SettingsDrawer } from './src/components/settings-drawer';
+import { HelpDrawer } from './src/components/help-drawer';
+import { AppHeader } from './src/components/app-header';
+import { AppFooter } from './src/components/app-footer';
+import { AppSelector } from './src/components/app-selector';
+import { generateHelpContent, LocaleType, Locale } from './src/utils/help-content';
 
 import './style.css';
 
-const Match: React.FC<{ app: KossabosApp }> = ({ app }) => {
+type KossabosCtx = {
+  locale: LocaleType;
+}
+
+
+const Player: React.FC<{ app: KossabosApp, ctx: KossabosCtx }> = ({ app, ctx }) => {
   const ref = useRef<HTMLIFrameElement>(null);
+  const [helpDialogVisible, setHelpDialogVisible] = useState<boolean>(false);
+  const [helpContentMarkdown, setHelpContentMarkdown] = useState<string>('');
+  const [settingsVisible, setSettingsVisible] = useState<boolean>(false);
+  const [settingsValues, setSettingsValues] = useState<Record<string, any>>({});
+
+  useEffect(() => {
+    const content = generateHelpContent(app, ctx.locale);
+    setHelpContentMarkdown(content);
+  }, [app, ctx.locale]);
+
+  const showHelpMenu = useCallback(() => setHelpDialogVisible(true), []);
+
+  const showSettingsMenu = useCallback(() => setSettingsVisible(true), []);
+
+  const handleSettingsChange = useCallback((values: Record<string, any>) => {
+    setSettingsValues(values);
+    // You can also send these settings to the iframe app if needed
+    console.log('Settings changed:', values);
+  }, []);
 
   const emit = useCallback(
     (event: Event) => {
@@ -28,22 +51,17 @@ const Match: React.FC<{ app: KossabosApp }> = ({ app }) => {
     [ref],
   );
 
+  const handleReset = useCallback(() => {
+    emit(new CustomEvent('emit'));
+  }, [emit]);
+
   return (
     <div className="absolute top-0 left-0 w-full h-full bg-white">
-      <header
-        className="flex items-center justify-between px-8 py-4 border-b-1 border-slate-200"
-        style={{ height: '4rem' }}
-      >
-        <div>
-          <p>{app.name}</p>
-          <span className="text-xs">{app.author.username}</span>
-        </div>
-        <div className="flex items-center gap-6">
-          <AdjustmentsHorizontalIcon className="text-gray-900 size-6" />
-          <ChartBarIcon className="text-gray-900 size-6" />
-          <QuestionMarkCircleIcon className="text-gray-900 size-6" />
-        </div>
-      </header>
+      <AppHeader
+        app={app}
+        onShowSettings={showSettingsMenu}
+        onShowHelp={showHelpMenu}
+      />
 
       <iframe
         ref={ref}
@@ -53,14 +71,24 @@ const Match: React.FC<{ app: KossabosApp }> = ({ app }) => {
         style={{ height: 'calc(100vh - 4rem)' }}
       />
 
-      <footer className="fixed bottom-0 flex items-center justify-between w-full px-8 py-4 border-b-1 border-slate-200">
-        <div>
-          <ArrowLeftIcon className="text-gray-900 size-6" />
-        </div>
-        <div className="flex items-center gap-6">
-          <button onClick={() => emit(new CustomEvent('emit'))}>Reset</button>
-        </div>
-      </footer>
+      <AppFooter
+        onReset={handleReset}
+      />
+
+      <HelpDrawer
+        visible={helpDialogVisible}
+        onHide={() => setHelpDialogVisible(false)}
+        helpContent={helpContentMarkdown}
+        title={`${app.name} Help`}
+      />
+
+      <SettingsDrawer
+        visible={settingsVisible}
+        onHide={() => setSettingsVisible(false)}
+        settings={app.settings || []}
+        onSettingsChange={handleSettingsChange}
+        title={`${app.name} Settings`}
+      />
     </div>
   );
 };
@@ -98,21 +126,12 @@ const App: React.FC = () => {
   return (
     <PrimeReactProvider>
       <div>
-        {app && <Match app={app} />}
-        <div className="fixed top-0 flex items-center gap-2 pt-2 pl-2 bg-white">
-          <img
-            src="/logo.svg"
-            alt="logo"
-            className="w-10 h-10"
-          ></img>
-          <Dropdown
-            value={appId}
-            onChange={(e) => updateAppId(e.value)}
-            options={apps.map(({ appId }) => appId)}
-            optionLabel="name"
-            placeholder="Select an App"
-          />
-        </div>
+        {app && <Player app={app} ctx={{ locale: Locale.EN_US }} />}
+        <AppSelector
+          selectedAppId={appId}
+          apps={apps}
+          onAppChange={updateAppId}
+        />
       </div>
     </PrimeReactProvider>
   );

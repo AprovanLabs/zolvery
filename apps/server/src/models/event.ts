@@ -12,10 +12,8 @@ export interface AppEvent {
 
 export interface CreateEventRequest {
   appId: string;
-  userId: string;
   eventKey: string;
   value: any;
-  day?: string; // Optional, defaults to today
 }
 
 export interface EventResponse {

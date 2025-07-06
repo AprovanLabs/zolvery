@@ -25,6 +25,7 @@ export class KossabosStack extends Stack {
     );
     
     const web = new Web(this, 'Web', {
+      hostedZoneId: process.env.HOSTED_ZONE_ID!,
       domainName: DOMAIN_NAME,
       certificate,
     });

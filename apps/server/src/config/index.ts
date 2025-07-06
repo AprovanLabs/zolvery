@@ -1,29 +1,28 @@
 import { config } from 'dotenv';
 
-// Load environment variables
-config();
+const environment = process.env.ENVIRONMENT || 'dev';
+
+config({
+  path: environment === 'dev' ? '.env.local' : '.env'
+});
 
 export interface AppConfig {
   port: number;
   nodeEnv: string;
+  environment: 'dev' | 'tst' | 'stg' | 'prd';
   logLevel: string;
+  version: string;
   aws: {
     region: string;
     accessKeyId?: string;
     secretAccessKey?: string;
+    endpoint?: string; // For local development
   };
   dynamodb: {
     tableName: string;
-    region: string;
-    endpoint?: string; // For local development
   };
   s3: {
-    i18nBucket: string;
-    region: string;
-  };
-  jwt: {
-    secret: string;
-    expiresIn: string;
+    dataBucket: string;
   };
   cors: {
     origin: string[];
@@ -34,8 +33,7 @@ export interface AppConfig {
 const getConfig = (): AppConfig => {
   const requiredEnvVars = [
     'DYNAMODB_TABLE_NAME',
-    'S3_I18N_BUCKET',
-    'JWT_SECRET'
+    'S3_DATA_BUCKET',
   ];
 
   // Check for required environment variables
@@ -44,27 +42,26 @@ const getConfig = (): AppConfig => {
     throw new Error(`Missing required environment variables: ${missingVars.join(', ')}`);
   }
 
+  const sha = process.env.BUILD_SHA_PREFIX;
+  const version = `${process.env.npm_package_version || '1.0.0'}${sha ? `-${sha}` : ''}`;
+
   return {
     port: parseInt(process.env.PORT || '3000', 10),
     nodeEnv: process.env.NODE_ENV || 'development',
+    environment: (process.env.ENVIRONMENT || 'dev') as 'dev' | 'tst' | 'stg' | 'prd',
+    version,
     logLevel: process.env.LOG_LEVEL || 'info',
     aws: {
       region: process.env.AWS_REGION || 'us-east-2',
+      ...(process.env.AWS_ENDPOINT && { endpoint: process.env.AWS_ENDPOINT }),
       ...(process.env.AWS_ACCESS_KEY_ID && { accessKeyId: process.env.AWS_ACCESS_KEY_ID }),
       ...(process.env.AWS_SECRET_ACCESS_KEY && { secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY }),
     },
     dynamodb: {
       tableName: process.env.DYNAMODB_TABLE_NAME!,
-      region: process.env.DYNAMODB_REGION || process.env.AWS_REGION || 'us-east-2',
-      ...(process.env.DYNAMODB_ENDPOINT && { endpoint: process.env.DYNAMODB_ENDPOINT }),
     },
     s3: {
-      i18nBucket: process.env.S3_I18N_BUCKET!,
-      region: process.env.S3_REGION || process.env.AWS_REGION || 'us-east-2',
-    },
-    jwt: {
-      secret: process.env.JWT_SECRET!,
-      expiresIn: process.env.JWT_EXPIRES_IN || '24h',
+      dataBucket: process.env.S3_DATA_BUCKET!,
     },
     cors: {
       origin: process.env.CORS_ORIGINS?.split(',') || ['http://localhost:3000', 'http://localhost:5173'],

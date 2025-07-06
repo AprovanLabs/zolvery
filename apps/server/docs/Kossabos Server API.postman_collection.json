@@ -1,0 +1,585 @@
+{
+	"info": {
+		"_postman_id": "e4e72fb2-e463-442b-97db-9255c4cabb71",
+		"name": "Kossabos Server API",
+		"description": "A Koa.js-based TypeScript server for handling game events, leaderboards, and internationalization for word games like Poetry Slam. \n\n**Authentication**: \n- Set the 'cognitoAccessToken' collection variable to your AWS Cognito access token for production use\n- For local development, requests include an 'x-cognito-access-token' header that simulates Cognito authorizer claims\n- All protected endpoints require authentication and automatically extract user ID from the token",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "7769591"
+	},
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Get Current User Info",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/v1/protected/auth/me",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"v1",
+								"protected",
+								"auth",
+								"me"
+							]
+						},
+						"description": "Get current authenticated user information including sub, username, and groups"
+					},
+					"response": []
+				}
+			],
+			"description": "Authentication endpoints for AWS Cognito integration"
+		},
+		{
+			"name": "Events",
+			"item": [
+				{
+					"name": "Store Event Data",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"appId\": \"poetry-slam\",\n  \"eventKey\": \"poem\",\n  \"value\": {\n    \"text\": \"Roses are red, violets are blue, this poem is great, and so are you!\",\n    \"wordCount\": 14,\n    \"theme\": \"nature\"\n  },\n  \"day\": \"2025-07-05\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/v1/protected/events",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"v1",
+								"protected",
+								"events"
+							]
+						},
+						"description": "Store event data for authenticated user for a specific game and day. User ID comes from Cognito authentication."
+					},
+					"response": []
+				},
+				{
+					"name": "Get User Events for Game/Day",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/v1/protected/events/{{appId}}/{{day}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"v1",
+								"protected",
+								"events",
+								"{{appId}}",
+								"{{day}}"
+							]
+						},
+						"description": "Get latest events for authenticated user/game/day"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Specific Event Value",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/v1/protected/events/{{appId}}/{{day}}/poem",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"v1",
+								"protected",
+								"events",
+								"{{appId}}",
+								"{{day}}",
+								"poem"
+							]
+						},
+						"description": "Get specific event value for authenticated user/game/day/eventKey"
+					},
+					"response": []
+				}
+			],
+			"description": "Store and retrieve the latest event value for each event key per day-game-user instance."
+		},
+		{
+			"name": "Leaderboard",
+			"item": [
+				{
+					"name": "Submit Game Score",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"PoetryMaster\",\n  \"appId\": \"poetry-slam\",\n  \"day\": \"2025-07-05\",\n  \"score\": 850,\n  \"appData\": {\n    \"poem\": \"Roses are red, violets are blue...\",\n    \"votes\": 15,\n    \"difficulty\": \"medium\"\n  }\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/v1/protected/leaderboard/score",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"v1",
+								"protected",
+								"leaderboard",
+								"score"
+							]
+						},
+						"description": "Submit a game score to the leaderboard for authenticated user. User ID comes from Cognito authentication."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Daily Leaderboard",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/v1/protected/leaderboard/{{appId}}/daily/{{date}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"v1",
+								"protected",
+								"leaderboard",
+								"{{appId}}",
+								"daily",
+								"{{date}}"
+							]
+						},
+						"description": "Get daily leaderboard for a specific game and date"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Global Leaderboard",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-cognito-access-token",
+								"value": "{\"sub\":\"{{userId}}\",\"cognito:username\":\"{{username}}\",\"cognito:groups\":\"{{userGroups}}\"}",
+								"description": "For local development only - simulates Cognito authorizer claims"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/v1/protected/leaderboard/{{appId}}/global",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"v1",
+								"protected",
+								"leaderboard",
+								"{{appId}}",
+								"global"
+							]
+						},
+						"description": "Get global leaderboard for a specific game"
+					},
+					"response": []
+				},
+				{
+					"name": "Get User Scores Over Time",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-cognito-access-token",
+								"value": "{\"sub\":\"{{userId}}\",\"cognito:username\":\"{{username}}\",\"cognito:groups\":\"{{userGroups}}\"}",
+								"description": "For local development only - simulates Cognito authorizer claims"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/v1/protected/leaderboard/{{appId}}/user",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"v1",
+								"protected",
+								"leaderboard",
+								"{{appId}}",
+								"user"
+							]
+						},
+						"description": "Get authenticated user's scores over time for a specific game"
+					},
+					"response": []
+				}
+			],
+			"description": "Store game-end scores and maintain leaderboards with time-based queries."
+		},
+		{
+			"name": "App Data",
+			"item": [
+				{
+					"name": "Get All Game Data for Day",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-cognito-access-token",
+								"value": "{\"sub\":\"{{userId}}\",\"cognito:username\":\"{{username}}\",\"cognito:groups\":\"{{userGroups}}\"}",
+								"description": "For local development only - simulates Cognito authorizer claims"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/v1/protected/app-data/{{appId}}/{{day}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"v1",
+								"protected",
+								"app-data",
+								"{{appId}}",
+								"{{day}}"
+							]
+						},
+						"description": "Get all game data for a specific game and day"
+					},
+					"response": []
+				}
+			],
+			"description": "Provide game-specific configuration and data per game and day."
+		},
+		{
+			"name": "Internationalization (i18n)",
+			"item": [
+				{
+					"name": "Get App Localized Strings",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/v1/protected/i18n/{{appId}}/{{locale}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"v1",
+								"protected",
+								"i18n",
+								"{{appId}}",
+								"{{locale}}"
+							]
+						},
+						"description": "Get localized strings for a specific game and locale"
+					},
+					"response": []
+				}
+			],
+			"description": "Load and serve localized content from S3 per game."
+		},
+		{
+			"name": "Poetry Slam Examples",
+			"item": [
+				{
+					"name": "Submit Poem",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"eventKey\": \"poem_submit\",\n  \"value\": {\n    \"text\": \"In fields of gold where wheat does grow,\\nThe harvest moon begins to glow,\\nA farmer's work is never done,\\nFrom early morn till setting sun.\",\n    \"wordCount\": 24,\n    \"lines\": 4,\n    \"rhymeScheme\": \"AABB\",\n    \"theme\": \"nature\",\n    \"submittedAt\": \"2025-07-05T14:30:00Z\"\n  },\n  \"gameId\": \"poetry-slam\",\n  \"userId\": \"poet_123\",\n  \"day\": \"2025-07-05\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/v1/protected/events",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"v1",
+								"protected",
+								"events"
+							]
+						},
+						"description": "Submit a poem for Poetry Slam"
+					},
+					"response": []
+				},
+				{
+					"name": "Vote on Poem",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"eventKey\": \"vote\",\n  \"value\": {\n    \"targetUserId\": \"poet_456\",\n    \"voteType\": \"like\",\n    \"category\": \"creativity\",\n    \"timestamp\": \"2025-07-05T14:35:00Z\"\n  },\n  \"gameId\": \"poetry-slam\",\n  \"userId\": \"voter_789\",\n  \"day\": \"2025-07-05\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/v1/protected/events",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"v1",
+								"protected",
+								"events"
+							]
+						},
+						"description": "Vote on another player's poem"
+					},
+					"response": []
+				},
+				{
+					"name": "Game Phase Change",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"eventKey\": \"phase\",\n  \"value\": {\n    \"phase\": \"voting\",\n    \"previousPhase\": \"writing\",\n    \"phaseEndTime\": \"2025-07-05T15:00:00Z\",\n    \"participantCount\": 12\n  },\n  \"gameId\": \"poetry-slam\",\n  \"userId\": \"system\",\n  \"day\": \"2025-07-05\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/v1/protected/events",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"v1",
+								"protected",
+								"events"
+							]
+						},
+						"description": "Track game phase changes"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Today's Poetry Prompt",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/v1/protected/app-data/poetry-slam/2025-07-05/prompt",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"v1",
+								"protected",
+								"app-data",
+								"poetry-slam",
+								"2025-07-05",
+								"prompt"
+							]
+						},
+						"description": "Get today's poetry writing prompt"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Poetry Slam UI Text (English)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/v1/protected/i18n/poetry-slam/en-US",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"v1",
+								"protected",
+								"i18n",
+								"poetry-slam",
+								"en-US"
+							]
+						},
+						"description": "Get English UI text for Poetry Slam"
+					},
+					"response": []
+				},
+				{
+					"name": "Final Score Submission",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"userId\": \"poet_123\",\n  \"username\": \"WordWeaver\",\n  \"appId\": \"poetry-slam\",\n  \"day\": \"2025-07-05\",\n  \"score\": 1250,\n  \"appData\": {\n    \"finalPoem\": \"In fields of gold where wheat does grow...\",\n    \"votesReceived\": 18,\n    \"votesGiven\": 5,\n    \"wordsWritten\": 24,\n    \"timeSpent\": 285,\n    \"bonusPoints\": {\n      \"creativity\": 200,\n      \"rhyme\": 150,\n      \"participation\": 100\n    }\n  }\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/v1/protected/leaderboard/score",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"v1",
+								"protected",
+								"leaderboard",
+								"score"
+							]
+						},
+						"description": "Submit final score for Poetry Slam game"
+					},
+					"response": []
+				}
+			],
+			"description": "Real-world examples for Poetry Slam game integration"
+		},
+		{
+			"name": "Status",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:3000/status",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"status"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"auth": {
+		"type": "apikey",
+		"apikey": [
+			{
+				"key": "in",
+				"value": "header",
+				"type": "string"
+			},
+			{
+				"key": "key",
+				"value": "x-cognito-access-token",
+				"type": "string"
+			},
+			{
+				"key": "value",
+				"value": "{\"sub\":\"{{userId}}\",\"cognito:username\":\"{{username}}\",\"cognito:groups\":\"{{userGroups}}\"}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Set current date as default",
+					"const today = new Date().toISOString().split('T')[0];",
+					"pm.collectionVariables.set('day', today);",
+					"pm.collectionVariables.set('date', today);"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Basic response validation",
+					"pm.test('Response status code is successful', function () {",
+					"    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+					"});",
+					"",
+					"pm.test('Response has success field', function () {",
+					"    const responseJson = pm.response.json();",
+					"    pm.expect(responseJson).to.have.property('success');",
+					"});",
+					"",
+					"pm.test('Response has timestamp', function () {",
+					"    const responseJson = pm.response.json();",
+					"    pm.expect(responseJson).to.have.property('timestamp');",
+					"});",
+					"",
+					"// Store useful response data for subsequent requests",
+					"if (pm.response.code === 200 || pm.response.code === 201) {",
+					"    const responseJson = pm.response.json();",
+					"    if (responseJson.data && responseJson.data.userId) {",
+					"        pm.collectionVariables.set('userId', responseJson.data.userId);",
+					"    }",
+					"}"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://127.0.0.1:3000"
+		},
+		{
+			"key": "appId",
+			"value": "poetry-slam"
+		},
+		{
+			"key": "userId",
+			"value": "jsampson"
+		},
+		{
+			"key": "username",
+			"value": "jacob.samps@gmail.com"
+		},
+		{
+			"key": "userGroups",
+			"value": "admin,creator"
+		},
+		{
+			"key": "locale",
+			"value": "en-US"
+		},
+		{
+			"value": "",
+			"type": "string",
+			"disabled": true
+		},
+		{
+			"key": "day",
+			"value": "2025-07-05"
+		},
+		{
+			"key": "date",
+			"value": "2025-07-05"
+		}
+	]
+}

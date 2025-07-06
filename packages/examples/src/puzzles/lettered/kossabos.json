@@ -1,5 +1,7 @@
 {
   "appId": "puzzles/lettered",
+  "name": "Lettered",
+  "description": "A word puzzle game where players create words from a set of letters.",
   "version": "0.0.1",
   "runnerTag": "vue-boardgameio",
   "author": {

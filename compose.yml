@@ -8,10 +8,10 @@ services:
     environment:
       - PERSISTENCE=1
       - SERVICES=s3,sqs,dynamodb
-      - DEFAULT_REGION=us-east-2
       - DATA_DIR=/tmp/localstack/data
     volumes:
-      - localstack-data:/tmp/localstack/data
+      - localstack_data:/tmp/localstack/data
+      - './scripts/init-aws.sh:/etc/localstack/init/ready.d/init-aws.sh'
 
 volumes:
-  localstack-data:
+  localstack_data:

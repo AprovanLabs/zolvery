@@ -13,7 +13,6 @@ export interface AppData {
 export interface AppDataRequest {
   appId: string;
   day: string;
-  key?: string; // Optional for getting all data
 }
 
 export interface AppDataResponse {

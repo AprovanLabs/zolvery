@@ -3,26 +3,71 @@ import { format } from 'date-fns';
 import { LeaderboardService } from '@/services/leaderboard-service';
 import { SubmitScoreRequest } from '@/models/leaderboard';
 import { ApiResponse } from '@/models';
+import { leaderboardLogger, logError, logSuccess } from '@/config/logger';
+import { AuthContext } from '@/middleware/auth';
+import { LogContext } from '@/middleware/logger';
 
 const router = new Router();
 const leaderboardService = new LeaderboardService();
 
-// POST /api/leaderboard/score - Submit game score
-router.post('/score', async (ctx) => {
+// POST /leaderboard/score - Submit game score
+router.post('/score', async (ctx: LogContext) => {
+  const requestId = ctx.requestId;
+  const authCtx = ctx as AuthContext;
+  
   try {
     const scoreData = ctx.request.body as SubmitScoreRequest;
 
-    if (!scoreData || !scoreData.appId || !scoreData.userId || typeof scoreData.score !== 'number') {
-      ctx.status = 400;
+    if (!authCtx.user) {
+      ctx.status = 401;
       ctx.body = {
         success: false,
-        error: 'Missing required fields: appId, userId, score',
+        error: 'User not authenticated',
         timestamp: new Date().toISOString(),
+        requestId,
       };
       return;
     }
 
-    const score = await leaderboardService.submitScore(scoreData);
+    leaderboardLogger.info({
+      requestId,
+      scoreData: {
+        appId: scoreData?.appId,
+        userId: authCtx.user.sub,
+        score: scoreData?.score,
+        username: scoreData?.username,
+      },
+    }, 'Submitting new score');
+
+    if (!scoreData || !scoreData.appId || typeof scoreData.score !== 'number') {
+      leaderboardLogger.warn({
+        requestId,
+        receivedData: scoreData,
+      }, 'Invalid score data received');
+      
+      ctx.status = 400;
+      ctx.body = {
+        success: false,
+        error: 'Missing required fields: appId, score',
+        timestamp: new Date().toISOString(),
+        requestId,
+      };
+      return;
+    }
+
+    const score = await leaderboardService.submitScore(
+      authCtx.user.userId,
+      authCtx.user.username,
+      scoreData,
+    );
+    
+    logSuccess(leaderboardLogger, 'Score submitted successfully', {
+      requestId,
+      appId: score.appId,
+      userId: score.userId,
+      score: score.score,
+      rank: score.rank,
+    });
     
     const response: ApiResponse = {
       success: true,
@@ -34,17 +79,22 @@ router.post('/score', async (ctx) => {
     ctx.status = 201;
     ctx.body = response;
   } catch (error) {
-    console.error('Error submitting score:', error);
+    logError(leaderboardLogger, error as Error, {
+      requestId,
+      scoreData: ctx.request.body,
+    });
+    
     ctx.status = 500;
     ctx.body = {
       success: false,
       error: 'Failed to submit score',
       timestamp: new Date().toISOString(),
+      requestId,
     };
   }
 });
 
-// GET /api/leaderboard/:appId/daily/:date - Daily leaderboard
+// GET /leaderboard/:appId/daily/:date - Daily leaderboard
 router.get('/:appId/daily/:date', async (ctx) => {
   try {
     const { appId, date } = ctx.params;
@@ -85,7 +135,7 @@ router.get('/:appId/daily/:date', async (ctx) => {
   }
 });
 
-// GET /api/leaderboard/:appId/global - Global leaderboard
+// GET /leaderboard/:appId/global - Global leaderboard
 router.get('/:appId/global', async (ctx) => {
   try {
     const { appId } = ctx.params;
@@ -126,23 +176,47 @@ router.get('/:appId/global', async (ctx) => {
   }
 });
 
-// GET /api/leaderboard/:appId/user/:userId - User's scores over time
-router.get('/:appId/user/:userId', async (ctx) => {
+// GET /leaderboard/:appId/user - Authenticated user's scores over time
+router.get('/:appId/user', async (ctx: LogContext) => {
+  const requestId = ctx.requestId;
+  const authCtx = ctx as AuthContext;
+  
   try {
-    const { appId, userId } = ctx.params;
+    const { appId } = ctx.params;
     const limit = parseInt(ctx.query.limit as string) || 50;
     
-    if (!appId || !userId) {
+    if (!authCtx.user) {
+      ctx.status = 401;
+      ctx.body = {
+        success: false,
+        error: 'User not authenticated',
+        timestamp: new Date().toISOString(),
+        requestId,
+      };
+      return;
+    }
+
+    const userId = authCtx.user.sub;
+    
+    if (!appId) {
       ctx.status = 400;
       ctx.body = {
         success: false,
-        error: 'Missing required parameters: appId, userId',
+        error: 'Missing required parameters: appId',
         timestamp: new Date().toISOString(),
+        requestId,
       };
       return;
     }
     
     const scores = await leaderboardService.getUserScores(appId, userId, limit);
+    
+    logSuccess(leaderboardLogger, 'User scores retrieved successfully', {
+      requestId,
+      appId,
+      userId,
+      scoreCount: scores.length,
+    });
     
     const response: ApiResponse = {
       success: true,
@@ -157,17 +231,21 @@ router.get('/:appId/user/:userId', async (ctx) => {
     
     ctx.body = response;
   } catch (error) {
-    console.error('Error fetching user scores:', error);
+    logError(leaderboardLogger, error as Error, {
+      requestId,
+      appId: ctx.params.appId,
+    });
     ctx.status = 500;
     ctx.body = {
       success: false,
       error: 'Failed to fetch user scores',
       timestamp: new Date().toISOString(),
+      requestId,
     };
   }
 });
 
-// GET /api/leaderboard/:appId/daily - Today's leaderboard (convenience endpoint)
+// GET /leaderboard/:appId/daily - Today's leaderboard (convenience endpoint)
 router.get('/:appId/daily', async (ctx) => {
   try {
     const { appId } = ctx.params;
@@ -209,22 +287,47 @@ router.get('/:appId/daily', async (ctx) => {
   }
 });
 
-// GET /api/leaderboard/:appId/user/:userId/rank/:date - Get user's rank for specific date
-router.get('/:appId/user/:userId/rank/:date', async (ctx) => {
+// GET /leaderboard/:appId/user/rank/:date - Get authenticated user's rank for specific date
+router.get('/:appId/user/rank/:date', async (ctx: LogContext) => {
+  const requestId = ctx.requestId;
+  const authCtx = ctx as AuthContext;
+  
   try {
-    const { appId, userId, date } = ctx.params;
+    const { appId, date } = ctx.params;
     
-    if (!appId || !userId || !date) {
+    if (!authCtx.user) {
+      ctx.status = 401;
+      ctx.body = {
+        success: false,
+        error: 'User not authenticated',
+        timestamp: new Date().toISOString(),
+        requestId,
+      };
+      return;
+    }
+
+    const userId = authCtx.user.sub;
+    
+    if (!appId || !date) {
       ctx.status = 400;
       ctx.body = {
         success: false,
-        error: 'Missing required parameters: appId, userId, date',
+        error: 'Missing required parameters: appId, date',
         timestamp: new Date().toISOString(),
+        requestId,
       };
       return;
     }
     
     const rank = await leaderboardService.getUserRank(appId, userId, date);
+    
+    logSuccess(leaderboardLogger, 'User rank retrieved successfully', {
+      requestId,
+      appId,
+      userId,
+      date,
+      rank,
+    });
     
     const response: ApiResponse = {
       success: true,
