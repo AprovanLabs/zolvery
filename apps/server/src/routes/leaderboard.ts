@@ -5,7 +5,6 @@ import { SubmitScoreRequest } from '@/models/leaderboard';
 import { leaderboardLogger, logError, logSuccess } from '@/config/logger';
 import { LogContext } from '@/middleware/logger';
 import { sendErrorResponse, sendSuccessResponse, validateAuth } from '@/utils/api';
-import { validateWithJoi, gameSchemas } from '@/utils/validation';
 
 const router = new Router();
 const leaderboardService = new LeaderboardService();
@@ -30,28 +29,10 @@ router.post('/score', async (ctx: LogContext) => {
       },
     }, 'Submitting new score');
 
-    // Validate request body with Joi
-    const validation = validateWithJoi(
-      scoreData,
-      gameSchemas.createLeaderboardEntry
-    );
-
-    if (!validation.success) {
-      leaderboardLogger.warn({
-        requestId,
-        receivedData: scoreData,
-        validationError: validation.error,
-        details: validation.details,
-      }, 'Invalid score data received');
-      
-      sendErrorResponse(ctx, 400, `Validation error: ${validation.error}`);
-      return;
-    }
-
     const score = await leaderboardService.submitScore(
       user.userId,
       user.username,
-      validation.data as SubmitScoreRequest,
+      scoreData as SubmitScoreRequest,
     );
     
     logSuccess(leaderboardLogger, 'Score submitted successfully', {

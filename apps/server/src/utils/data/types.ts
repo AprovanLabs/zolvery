@@ -35,7 +35,7 @@ export interface AppConfig extends BaseDataStructure {
   name: string;
   description: string;
   settings: Record<string, any>;
-  status: 'active' | 'inactive' | 'maintenance';
+  status: 'active' | 'inactive';
 }
 
 export interface AppData extends BaseDataStructure {
