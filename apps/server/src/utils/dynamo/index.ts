@@ -8,6 +8,7 @@ export {
   parseSortKey, 
   eventKeys, 
   leaderboardKeys, 
+  votingKeys,
   userKeys, 
   appKeys, 
   appDataKeys,

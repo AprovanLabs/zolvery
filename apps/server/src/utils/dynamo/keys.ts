@@ -61,6 +61,16 @@ export const leaderboardKeys = {
 };
 
 /**
+ * Voting-specific key generators
+ */
+export const votingKeys = {
+  voteAggregatePartitionKey: (appId: string, day: string) =>
+    generatePartitionKey('VOTE_AGG', appId, day),
+  voteAggregateSortKey: (userId: string) =>
+    generateSortKey('USER', userId),
+};
+
+/**
  * User-specific key generators
  */
 export const userKeys = {
@@ -135,6 +145,7 @@ export const tableKeyGenerators = {
   [DynamoTableType.MAIN]: {
     event: eventKeys,
     leaderboard: leaderboardKeys,
+    voting: votingKeys,
     user: userKeys,
     app: appKeys,
     appData: appDataKeys,

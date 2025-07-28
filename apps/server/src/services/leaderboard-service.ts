@@ -9,17 +9,24 @@ import {
   AppScore,
   LeaderboardEntry,
   SubmitScoreRequest,
+  AppMetadata,
 } from '@/models/leaderboard';
 import { getCurrentDay } from '@/utils/date';
 import { leaderboardKeys } from '@/utils/dynamo';
 import { getLogger } from '@/config/logger';
 import { AppEventBusIntegration, AppEventType } from '@/utils/events/integration';
 import { InMemoryEventBus } from '@/utils/events';
+import { VotingService } from './voting-service';
+import { ValidationService } from './validation-service';
+import { AppDataService } from './app-service';
 
 const logger = getLogger();
 
 export class LeaderboardService {
   private readonly eventBus: AppEventBusIntegration;
+  private readonly votingService: VotingService;
+  private readonly validationService: ValidationService;
+  private readonly appDataService: AppDataService;
 
   constructor(
     private readonly docClient = getDynamoDBDocumentClient(),
@@ -28,6 +35,9 @@ export class LeaderboardService {
   ) {
     // Use provided event bus or create a new one with in-memory implementation
     this.eventBus = eventBus || new AppEventBusIntegration(new InMemoryEventBus());
+    this.votingService = new VotingService(docClient, tableName);
+    this.validationService = new ValidationService(docClient, tableName);
+    this.appDataService = new AppDataService(docClient, tableName);
   }
 
   async submitScore(
@@ -35,6 +45,7 @@ export class LeaderboardService {
     userId: string,
     username: string,
     request: SubmitScoreRequest,
+    appMetadata?: AppMetadata,
   ): Promise<AppScore> {
     const day = request.day || getCurrentDay();
     const timestamp = new Date().toISOString();
@@ -48,13 +59,75 @@ export class LeaderboardService {
       score: request.score 
     }, 'Submitting score');
 
+    // Get app metadata if not provided
+    if (!appMetadata) {
+      const fetchedMetadata = await this.getAppMetadata(appId);
+      appMetadata = fetchedMetadata || undefined;
+    }
+
+    // Handle different scoring types
+    let finalScore = request.score;
+    let scoringType: 'score' | 'voting' | 'race' = 'score';
+
+    if (appMetadata?.leaderboard) {
+      const leaderboardConfig = appMetadata.leaderboard;
+      
+      // For friends leaderboards, allow any score (less strict validation)
+      if (leaderboardConfig.type === 'friends') {
+        logger.debug({ appId, userId }, 'Processing friends leaderboard submission');
+        // No additional validation for friends leaderboards
+      } else if (leaderboardConfig.type === 'global') {
+        scoringType = leaderboardConfig.scoringType || 'score';
+        
+        switch (scoringType) {
+          case 'voting':
+            // For voting-based leaderboards, process the batch votes
+            if (request.votes && request.votes.length > 0) {
+              await this.votingService.processBatchVotes(appId, userId, request.votes, day);
+              // Get the aggregated vote score from the voting service
+              const voteAggregate = await this.votingService.getVoteAggregateForUser(appId, userId, day);
+              finalScore = voteAggregate?.totalScore || 0;
+              logger.debug({ appId, userId, finalScore }, 'Processed voting and calculated final score');
+            } else {
+              // If no votes provided, use the base score
+              logger.debug({ appId, userId }, 'No votes provided for voting-based leaderboard');
+            }
+            break;
+
+          case 'race':
+            // Handle race validation - validation happens at API level before DB storage
+            const validationResult = await this.validationService.validateRaceSubmission(
+              appId, request, appMetadata, day
+            );
+            
+            if (!validationResult.isValid) {
+              logger.warn({ 
+                appId, 
+                userId, 
+                reason: validationResult.reason 
+              }, 'Race validation failed');
+              throw new Error(`Race validation failed: ${validationResult.reason}`);
+            }
+            
+            finalScore = validationResult.score;
+            break;
+
+          case 'score':
+          default:
+            // Standard server-authoritative scoring
+            // Score is accepted as-is (server should validate this)
+            break;
+        }
+      }
+    }
+
     const score: AppScore = {
       PK: leaderboardKeys.partitionKey(appId, day),
-      SK: leaderboardKeys.sortKey(request.score, userId),
+      SK: leaderboardKeys.sortKey(finalScore, userId),
       userId: userId,
       appId,
       day,
-      score: request.score,
+      score: finalScore,
       appData: request.appData,
       timestamp,
       createdAt,
@@ -68,10 +141,10 @@ export class LeaderboardService {
       }),
     );
 
-    logger.debug({ userId, appId: appId, day, score: request.score }, 'Score saved successfully');
+    logger.debug({ userId, appId, day, score: finalScore }, 'Score saved successfully');
 
     // Update or create user's leaderboard entry
-    await this.updateUserLeaderboardEntry(userId, username, request, day);
+    await this.updateUserLeaderboardEntry(userId, username, appId, finalScore, day);
 
     // Publish leaderboard updated event
     try {
@@ -231,18 +304,19 @@ export class LeaderboardService {
   private async updateUserLeaderboardEntry(
     userId: string,
     username: string,
-    request: SubmitScoreRequest,
+    appId: string,
+    score: number,
     day: string,
   ): Promise<void> {
     logger.debug({ 
       userId, 
       username, 
-      appId: request.appId, 
+      appId, 
       day, 
-      score: request.score 
+      score 
     }, 'Updating user leaderboard entry');
     
-    const globalPK = leaderboardKeys.globalPartitionKey(request.appId);
+    const globalPK = leaderboardKeys.globalPartitionKey(appId);
     const userSK = `USER#${userId}`;
 
     try {
@@ -261,7 +335,7 @@ export class LeaderboardService {
           SET bestScore = if_(bestScore < :score, :score, bestScore)
         `,
           ExpressionAttributeValues: {
-            ':score': request.score,
+            ':score': score,
             ':zero': 0,
             ':one': 1,
             ':timestamp': new Date().toISOString(),
@@ -278,7 +352,7 @@ export class LeaderboardService {
         SK: userSK,
         userId: userId,
         username,
-        score: request.score,
+        score: score,
         submittedTimestamp: new Date().toISOString(),
         rank: 0,
       };
@@ -292,5 +366,75 @@ export class LeaderboardService {
     }
     
     logger.debug({ userId, appId }, 'User leaderboard entry updated');
+  }
+
+  async getAppMetadata(appId: string): Promise<AppMetadata | null> {
+    logger.debug({ appId }, 'Getting app metadata');
+    
+    try {
+      // Try to get from app data first
+      const metadata = await this.appDataService.getAppDataByKey(appId, 'config', 'metadata');
+      if (metadata) {
+        return metadata as AppMetadata;
+      }
+      
+      // Fallback: create default metadata based on runnerTag detection
+      const defaultMetadata: AppMetadata = {
+        appId,
+        name: appId,
+        description: '',
+        tags: [],
+        leaderboard: {
+          type: 'friends', // Default to friends for safety
+        },
+        version: '1.0.0',
+        runnerTag: 'vue-vanilla',
+        author: {
+          id: 'system',
+          username: 'System',
+        },
+        settings: [],
+      };
+      
+      logger.debug({ appId }, 'Using default app metadata');
+      return defaultMetadata;
+    } catch (error) {
+      logger.error({ appId, error }, 'Failed to get app metadata');
+      return null;
+    }
+  }
+
+  async updateVotingScores(appId: string, day: string = getCurrentDay()): Promise<void> {
+    logger.debug({ appId, day }, 'Updating voting scores');
+    
+    const voteAggregates = await this.votingService.getVoteAggregatesForDay(appId, day);
+    
+    for (const aggregate of voteAggregates) {
+      // Create or update leaderboard entry with voting score
+      const leaderboardEntry: LeaderboardEntry = {
+        PK: leaderboardKeys.partitionKey(appId, day),
+        SK: `USER#${aggregate.targetUserId}`,
+        userId: aggregate.targetUserId,
+        username: aggregate.targetUserId, // TODO: Get actual username
+        score: aggregate.totalScore,
+        submittedTimestamp: new Date().toISOString(),
+        rank: 0, // Will be calculated later
+        scoringType: 'voting',
+        votingData: {
+          totalVotes: aggregate.totalScore,
+          averageScore: aggregate.averageScore,
+          voteCount: aggregate.voteCount,
+        },
+      };
+
+      await this.docClient.send(
+        new PutCommand({
+          TableName: this.tableName,
+          Item: leaderboardEntry,
+        }),
+      );
+    }
+    
+    logger.debug({ appId, day, updatedCount: voteAggregates.length }, 'Voting scores updated');
   }
 }

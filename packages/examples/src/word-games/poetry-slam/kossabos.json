@@ -1,12 +1,20 @@
 {
   "appId": "word-games/poetry-slam",
+  "name": "Poetry Slam",
+  "description": "A creative writing competition where users vote on each other's poems",
   "runnerTag": "vue-vanilla",
   "version": "0.0.1",
   "author": {
     "username": "Jacob Sampson",
     "email": "jacob.samps@gmail.com"
   },
-  "tags": ["game", "classics"],
-  "features": [],
+  "tags": ["game", "creative", "voting"],
+  "leaderboard": {
+    "type": "global",
+    "scoringType": "voting",
+    "maximumNumberOfVotes": 50,
+    "maximumVotesPerUser": 10
+  },
+  "features": ["voting", "leaderboard"],
   "settings": []
 }

@@ -9,6 +9,9 @@
     "email": "jacob.samps@gmail.com"
   },
   "tags": ["game", "classics"],
+  "leaderboard": {
+    "type": "friends"
+  },
   "features": ["bots"],
   "settings": [
     {

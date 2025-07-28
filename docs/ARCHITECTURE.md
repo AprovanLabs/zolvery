@@ -153,6 +153,7 @@ type KossabosContext = {
       // 'friends' Internal friends leaderboard
       // 'global' Aggregate votes for all users
       type: 'friends' | 'global',
+      scoringType: 'race' | 'voting' | 'score',
       // Maximum number of users to vote for
       maximumNumberOfVotes?: number,
       // Maximum number of votes per user
