@@ -32,7 +32,19 @@ export interface LeaderboardEntry {
 
 export interface SubmitScoreRequest {
   score: number;
-  metadata?: Record<string, any>;
+  appData?: any;
+  day?: string; // Optional, defaults to today
+  validationData?: {
+    submissionValue?: string; // For race validation (client-provided answer)
+    proofOfWork?: any; // Additional validation data
+  };
+  // Note: completionTime is calculated server-side, not client-provided
+  votes?: VoteSubmission[]; // All votes submitted in one batch
+}
+
+export interface VoteSubmission {
+  targetUserId: string;
+  score: number; // Vote weight/score (0-10)
 }
 
 /**
