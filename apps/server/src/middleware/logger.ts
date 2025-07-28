@@ -21,7 +21,7 @@ export const requestLogger = async (ctx: LogContext, next: Next): Promise<void> 
   apiLogger.info({
     requestId: ctx.requestId,
     method: ctx.method,
-    url: ctx.url,
+    path: ctx.path,
     userAgent: ctx.headers['user-agent'],
     contentType: ctx.headers['content-type'],
     contentLength: ctx.headers['content-length'],
@@ -39,7 +39,7 @@ export const requestLogger = async (ctx: LogContext, next: Next): Promise<void> 
     apiLogger.info({
       requestId: ctx.requestId,
       method: ctx.method,
-      url: ctx.url,
+      path: ctx.path,
       status: ctx.status,
       duration: `${duration.toFixed(2)}ms`,
       responseLength: ctx.length,
@@ -53,7 +53,7 @@ export const requestLogger = async (ctx: LogContext, next: Next): Promise<void> 
     apiLogger.error({
       requestId: ctx.requestId,
       method: ctx.method,
-      url: ctx.url,
+      path: ctx.path,
       status: ctx.status || 500,
       duration: `${duration.toFixed(2)}ms`,
       err: {
@@ -90,7 +90,7 @@ export const errorLogger = async (ctx: LogContext, next: Next): Promise<void> =>
     apiLogger.error({
       requestId: ctx.requestId,
       method: ctx.method,
-      url: ctx.url,
+      path: ctx.path,
       err: {
         message: err.message,
         name: err.name,

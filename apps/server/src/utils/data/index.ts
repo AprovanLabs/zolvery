@@ -6,7 +6,7 @@ export type {
   AppData,
   AppEvent,
   LeaderboardEntry,
-  GameState,
+  AppState,
   TranslationSet,
   AnalyticsEvent,
   CacheDataTypeMap,

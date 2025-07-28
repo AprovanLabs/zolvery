@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Sidebar } from 'primereact/sidebar';
 import { Button } from 'primereact/button';
 import { Dropdown } from 'primereact/dropdown';
@@ -32,29 +32,14 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
   onSettingsChange,
   title
 }) => {
-  const [settingsValues, setSettingsValues] = useState<Record<string, any>>({});
-
-  // Initialize settings values with defaults or initial values
-  useEffect(() => {
-    const defaultValues = settings.reduce((acc, setting) => {
-      const initialValue = initialValues[setting.id] ?? setting.defaultValue;
-      acc[setting.id] = initialValue;
-      return acc;
-    }, {} as Record<string, any>);
-    
-    setSettingsValues(defaultValues);
-  }, [settings, initialValues]);
-
-  // Update parent when values change
-  useEffect(() => {
-    onSettingsChange(settingsValues);
-  }, [settingsValues, onSettingsChange]);
+  const [settingsValues, setSettingsValues] = useState<Record<string, any>>(initialValues);
 
   const updateSettingValue = (settingId: string, value: any) => {
-    setSettingsValues(prev => ({
-      ...prev,
-      [settingId]: value
-    }));
+    setSettingsValues(prev => {
+      const updatedValues = {...prev, [settingId]: value };
+      onSettingsChange(updatedValues);
+      return updatedValues;
+    });
   };
 
   const renderSettingInput = (setting: Settings) => {

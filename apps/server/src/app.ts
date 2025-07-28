@@ -13,8 +13,10 @@ import { i18nRoutes } from './routes/i18n';
 import { authRoutes } from './routes/auth';
 import { getCurrentDay, getTimeLeftInCurrentDay } from './utils/date';
 
-const app = new Koa();
-const router = new Router();
+import type { LogContext } from '@/middleware/logger';
+
+const app = new Koa<{}, LogContext>();
+const router = new Router<{}, LogContext>();
 
 // Log application startup
 logger.info(
@@ -159,7 +161,7 @@ app.on('error', (err: Error, ctx?: any) => {
     {
       requestId: ctx?.requestId,
       method: ctx?.method,
-      url: ctx?.url,
+      path: ctx?.path,
       err: {
         message: err.message,
         name: err.name,

@@ -14,10 +14,10 @@ export enum DynamoTableType {
   APPS = 'apps',
   APP_CONFIG = 'app_config',
   
-  // Event and game data
+  // Event and app data
   EVENTS = 'events',
   LEADERBOARD = 'leaderboard',
-  GAME_STATE = 'game_state',
+  APP_STATE = 'app_state',
   
   // I18n tables
   TRANSLATIONS = 'translations',
@@ -173,9 +173,9 @@ export const tableSchemas: Record<DynamoTableType, TableSchema> = {
     ],
   },
   
-  [DynamoTableType.GAME_STATE]: {
-    tableName: generateTableName(DynamoTableType.GAME_STATE),
-    partitionKey: 'gameId',
+  [DynamoTableType.APP_STATE]: {
+    tableName: generateTableName(DynamoTableType.APP_STATE),
+    partitionKey: 'appId',
     sortKey: 'userId',
     ttl: {
       attributeName: 'ttl',

@@ -40,15 +40,6 @@ export const appCacheKeys = {
   config: (appId: string) => generateCacheKey(CacheType.APP_CONFIG, appId),
 };
 
-/**
- * Generate game-specific cache keys
- */
-export const gameCacheKeys = {
-  leaderboard: (appId: string, day: string, type?: string) => 
-    generateCacheKey(CacheType.LEADERBOARD, appId, day, type || 'global'),
-  state: (appId: string, userId: string, day: string) => 
-    generateCacheKey(CacheType.GAME_STATE, appId, userId, day),
-};
 
 /**
  * Generate i18n cache keys

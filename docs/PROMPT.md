@@ -17,7 +17,7 @@ Tips:
   `ai: enumerate: ({ G, ctx }) => { ... }` that returns a list of possible plays
 - Prefer helper functions to be arrow functions in lower camel case
 - Edit the game state in-place
-- Print out type definitions of the game state in a GameState type along with a Moves interface specifying valid moves. Do this with JSDoc at the top of the file
+- Print out type definitions of the game state in a AppState type along with a Moves interface specifying valid moves. Do this with JSDoc at the top of the file
 
 Use the following technologies:
 

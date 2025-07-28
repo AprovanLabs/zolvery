@@ -35,4 +35,5 @@ This CDK app defines the AWS infrastructure for the Kossabos backend platform, i
 https://app.improvmx.com
 
 - [admin@aprovan.com](mailto:admin@aprovan.com)
+- [demo@aprovan.com](mailto:demo@aprovan.com) P5mY&676Qy
 - [info@aprovan.com](mailto:info@aprovan.com)

@@ -31,6 +31,7 @@ export class LeaderboardService {
   }
 
   async submitScore(
+    appId: string,
     userId: string,
     username: string,
     request: SubmitScoreRequest,
@@ -42,16 +43,16 @@ export class LeaderboardService {
     logger.debug({ 
       userId, 
       username, 
-      appId: request.appId, 
+      appId, 
       day, 
       score: request.score 
     }, 'Submitting score');
 
     const score: AppScore = {
-      PK: leaderboardKeys.partitionKey(request.appId, day),
+      PK: leaderboardKeys.partitionKey(appId, day),
       SK: leaderboardKeys.sortKey(request.score, userId),
       userId: userId,
-      appId: request.appId,
+      appId,
       day,
       score: request.score,
       appData: request.appData,
@@ -67,7 +68,7 @@ export class LeaderboardService {
       }),
     );
 
-    logger.debug({ userId, appId: request.appId, day, score: request.score }, 'Score saved successfully');
+    logger.debug({ userId, appId: appId, day, score: request.score }, 'Score saved successfully');
 
     // Update or create user's leaderboard entry
     await this.updateUserLeaderboardEntry(userId, username, request, day);
@@ -75,10 +76,10 @@ export class LeaderboardService {
     // Publish leaderboard updated event
     try {
       // Get updated leaderboard for publishing
-      const leaderboard = await this.getDailyLeaderboard(request.appId, day, 10);
+      const leaderboard = await this.getDailyLeaderboard(appId, day, 10);
       
       await this.eventBus.publishLeaderboardUpdated({
-        appId: request.appId,
+        appId,
         day,
         entries: leaderboard.map(entry => ({
           userId: entry.userId,
@@ -89,14 +90,14 @@ export class LeaderboardService {
       });
 
       logger.debug({
-        appId: request.appId,
+        appId,
         day,
         eventType: AppEventType.LEADERBOARD_UPDATED,
       }, 'Leaderboard updated event published');
     } catch (busError) {
       logger.error({
         error: busError,
-        appId: request.appId,
+        appId,
         day,
         userId,
       }, 'Failed to publish leaderboard updated event');
@@ -264,19 +265,19 @@ export class LeaderboardService {
             ':zero': 0,
             ':one': 1,
             ':timestamp': new Date().toISOString(),
-            ':username': request.username,
+            ':username': username,
           },
         }),
       );
     } catch (error) {
       // If item doesn't exist, create it
-      logger.debug({ userId, appId: request.appId }, 'Creating new leaderboard entry');
+      logger.debug({ userId, appId }, 'Creating new leaderboard entry');
       
       const newEntry: LeaderboardEntry = {
         PK: globalPK,
         SK: userSK,
         userId: userId,
-        username: request.username,
+        username,
         score: request.score,
         submittedTimestamp: new Date().toISOString(),
         rank: 0,
@@ -290,6 +291,6 @@ export class LeaderboardService {
       );
     }
     
-    logger.debug({ userId, appId: request.appId }, 'User leaderboard entry updated');
+    logger.debug({ userId, appId }, 'User leaderboard entry updated');
   }
 }

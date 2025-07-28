@@ -21,7 +21,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   app,
   onShowSettings,
   onShowHelp,
-  onShowStats
+  onShowStats,
 }) => (
   <header
     className="flex items-center justify-between px-8 py-4 border-b-1 border-slate-200"
@@ -32,18 +32,24 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
       <span className="text-xs">{app.author.username}</span>
     </div>
     <div className="flex items-center gap-6">
-      <QuestionMarkCircleIcon 
+      <QuestionMarkCircleIcon
         className="text-gray-900 cursor-pointer size-6 hover:text-gray-700"
         onClick={onShowHelp}
         title="Help"
       />
-      <AdjustmentsHorizontalIcon 
-        className="text-gray-900 cursor-pointer size-6 hover:text-gray-700"
-        onClick={onShowSettings}
-        title="Settings"
-      />
-      <ChartBarIcon 
-        className={`text-gray-900 size-6 ${onShowStats ? 'cursor-pointer hover:text-gray-700' : 'cursor-not-allowed opacity-50'}`}
+      {app.settings?.length && (
+        <AdjustmentsHorizontalIcon
+          className="text-gray-900 cursor-pointer size-6 hover:text-gray-700"
+          onClick={onShowSettings}
+          title="Settings"
+        />
+      )}
+      <ChartBarIcon
+        className={`text-gray-900 size-6 ${
+          onShowStats
+            ? 'cursor-pointer hover:text-gray-700'
+            : 'cursor-not-allowed opacity-50'
+        }`}
         onClick={onShowStats}
         title="Statistics"
       />
