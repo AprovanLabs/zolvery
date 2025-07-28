@@ -306,7 +306,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"eventKey\": \"poem_submit\",\n  \"value\": {\n    \"text\": \"In fields of gold where wheat does grow,\\nThe harvest moon begins to glow,\\nA farmer's work is never done,\\nFrom early morn till setting sun.\",\n    \"wordCount\": 24,\n    \"lines\": 4,\n    \"rhymeScheme\": \"AABB\",\n    \"theme\": \"nature\",\n    \"submittedAt\": \"2025-07-05T14:30:00Z\"\n  },\n  \"gameId\": \"poetry-slam\",\n  \"userId\": \"poet_123\",\n  \"day\": \"2025-07-05\"\n}"
+							"raw": "{\n  \"eventKey\": \"poem_submit\",\n  \"value\": {\n    \"text\": \"In fields of gold where wheat does grow,\\nThe harvest moon begins to glow,\\nA farmer's work is never done,\\nFrom early morn till setting sun.\",\n    \"wordCount\": 24,\n    \"lines\": 4,\n    \"rhymeScheme\": \"AABB\",\n    \"theme\": \"nature\",\n    \"submittedAt\": \"2025-07-05T14:30:00Z\"\n  },\n  \"appId\": \"poetry-slam\",\n  \"userId\": \"poet_123\",\n  \"day\": \"2025-07-05\"\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/v1/protected/events",
@@ -335,7 +335,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"eventKey\": \"vote\",\n  \"value\": {\n    \"targetUserId\": \"poet_456\",\n    \"voteType\": \"like\",\n    \"category\": \"creativity\",\n    \"timestamp\": \"2025-07-05T14:35:00Z\"\n  },\n  \"gameId\": \"poetry-slam\",\n  \"userId\": \"voter_789\",\n  \"day\": \"2025-07-05\"\n}"
+							"raw": "{\n  \"eventKey\": \"vote\",\n  \"value\": {\n    \"targetUserId\": \"poet_456\",\n    \"voteType\": \"like\",\n    \"category\": \"creativity\",\n    \"timestamp\": \"2025-07-05T14:35:00Z\"\n  },\n  \"appId\": \"poetry-slam\",\n  \"userId\": \"voter_789\",\n  \"day\": \"2025-07-05\"\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/v1/protected/events",
@@ -364,7 +364,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"eventKey\": \"phase\",\n  \"value\": {\n    \"phase\": \"voting\",\n    \"previousPhase\": \"writing\",\n    \"phaseEndTime\": \"2025-07-05T15:00:00Z\",\n    \"participantCount\": 12\n  },\n  \"gameId\": \"poetry-slam\",\n  \"userId\": \"system\",\n  \"day\": \"2025-07-05\"\n}"
+							"raw": "{\n  \"eventKey\": \"phase\",\n  \"value\": {\n    \"phase\": \"voting\",\n    \"previousPhase\": \"writing\",\n    \"phaseEndTime\": \"2025-07-05T15:00:00Z\",\n    \"participantCount\": 12\n  },\n  \"appId\": \"poetry-slam\",\n  \"userId\": \"system\",\n  \"day\": \"2025-07-05\"\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/v1/protected/events",

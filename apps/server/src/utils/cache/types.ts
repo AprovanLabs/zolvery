@@ -4,24 +4,22 @@
 
 export enum CacheType {
   // User-related caches
-  USER_PROFILE = 'user_profile',
-  USER_EVENTS = 'user_events',
-  USER_SESSION = 'user_session',
+  USER_PROFILE = 'user-profile',
+  USER_EVENTS = 'user-events',
+  USER_SESSION = 'user-session',
   
   // App-related caches
-  APP_DATA = 'app_data',
-  APP_CONFIG = 'app_config',
-  
-  // Game-related caches
-  LEADERBOARD = 'leaderboard',
-  GAME_STATE = 'game_state',
+  APP_DATA = 'app-data',
+  APP_CONFIG = 'app-config',
+    LEADERBOARD = 'leaderboard',
+  APP_STATE = 'app-state',
   
   // I18n caches
   TRANSLATIONS = 'translations',
   
   // Temporary caches
-  TEMP_DATA = 'temp_data',
-  API_RESPONSE = 'api_response',
+  TEMP_DATA = 'temp-data',
+  API_RESPONSE = 'api-response',
 }
 
 export interface CacheMetadata {

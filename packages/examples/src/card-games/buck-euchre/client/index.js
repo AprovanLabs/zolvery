@@ -7,7 +7,7 @@ import { computed, createApp, ref, inject, watch } from 'vue';
  */
 
 /**
- * @typedef {Object} GameState
+ * @typedef {Object} AppState
  * @property {Card[]} deck - The deck of cards
  * @property {Card[]} widow - The widow hand of cards
  * @property {Player[]} players - Array of player objects

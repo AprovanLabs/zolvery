@@ -3,7 +3,7 @@ export interface AppScore {
   SK: string;           // "SCORE#user123#timestamp"
   userId: string;       // User identifier
   appId: string;        // App identifier
-  day: string;         // Date in YYYY-MM-DD format
+  day: string;          // Date in YYYY-MM-DD format
   score: number;        // Final score
   rank?: number;        // Calculated rank
   appData?: any;        // App-specific data (poem, votes, etc.)
@@ -24,8 +24,6 @@ export interface LeaderboardEntry {
 }
 
 export interface SubmitScoreRequest {
-  appId: string;
-  username: string;
   score: number;
   appData?: any;
   day?: string; // Optional, defaults to today

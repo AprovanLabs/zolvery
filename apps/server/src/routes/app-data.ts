@@ -26,30 +26,6 @@ router.get('/:appId/:day', async (ctx) => {
   }
 });
 
-// GET /app-data/:appId/:day/:key - Get specific app data value
-router.get('/:appId/:day/:key', async (ctx) => {
-  try {
-    const { appId, day, key } = ctx.params;
-    
-    if (!appId || !day || !key) {
-      sendErrorResponse(ctx, 400, 'Missing required parameters: appId, day, key');
-      return;
-    }
-    
-    const value = await appDataService.getAppDataByKey(appId, day, key);
-    
-    if (value === null) {
-      sendErrorResponse(ctx, 404, 'App data not found');
-      return;
-    }
-    
-    sendSuccessResponse(ctx, 200, { [key]: value });
-  } catch (error) {
-    console.error('Error fetching app data:', error);
-    sendErrorResponse(ctx, 500, 'Failed to fetch app data');
-  }
-});
-
 // GET /app-data/:appId - Get app data for today (convenience endpoint)
 router.get('/:appId', async (ctx) => {
   try {

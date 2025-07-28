@@ -66,8 +66,8 @@ export interface LeaderboardEntry extends BaseDataStructure {
   metadata: Record<string, any>;
 }
 
-export interface GameState extends BaseDataStructure {
-  gameId: string;
+export interface AppState extends BaseDataStructure {
+  appId: string;
   userId: string;
   state: any;
   phase: string;
@@ -102,7 +102,7 @@ export interface CacheDataTypeMap {
   [CacheType.APP_DATA]: AppData;
   [CacheType.APP_CONFIG]: AppConfig;
   [CacheType.LEADERBOARD]: LeaderboardEntry[];
-  [CacheType.GAME_STATE]: GameState;
+  [CacheType.APP_STATE]: AppState;
   [CacheType.TRANSLATIONS]: TranslationSet;
   [CacheType.TEMP_DATA]: any;
   [CacheType.API_RESPONSE]: any;
@@ -119,7 +119,7 @@ export interface DynamoDataTypeMap {
   [DynamoTableType.APP_CONFIG]: AppData;
   [DynamoTableType.EVENTS]: AppEvent;
   [DynamoTableType.LEADERBOARD]: LeaderboardEntry;
-  [DynamoTableType.GAME_STATE]: GameState;
+  [DynamoTableType.APP_STATE]: AppState;
   [DynamoTableType.TRANSLATIONS]: TranslationSet;
   [DynamoTableType.ANALYTICS]: AnalyticsEvent;
   [DynamoTableType.AUDIT_LOGS]: any;
@@ -177,12 +177,10 @@ export interface DataStructureMapping {
     table: DynamoTableType.APP_CONFIG;
     type: AppData;
   };
-  
-  // Game data
-  gameState: {
-    cache: CacheType.GAME_STATE;
-    table: DynamoTableType.GAME_STATE;
-    type: GameState;
+  appState: {
+    cache: CacheType.APP_STATE;
+    table: DynamoTableType.APP_STATE;
+    type: AppState;
   };
   leaderboard: {
     cache: CacheType.LEADERBOARD;

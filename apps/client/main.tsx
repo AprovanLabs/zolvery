@@ -5,18 +5,23 @@ import { createRoot } from 'react-dom/client';
 import { SettingsDrawer } from './src/components/settings-drawer';
 import { HelpDrawer } from './src/components/help-drawer';
 import { AppHeader } from './src/components/app-header';
-import { AppFooter } from './src/components/app-footer';
 import { AppSelector } from './src/components/app-selector';
-import { generateHelpContent, LocaleType, Locale } from './src/utils/help-content';
+import {
+  generateHelpContent,
+  LocaleType,
+  Locale,
+} from './src/utils/help-content';
 
 import './style.css';
 
 type KossabosCtx = {
   locale: LocaleType;
-}
+};
 
-
-const Player: React.FC<{ app: KossabosApp, ctx: KossabosCtx }> = ({ app, ctx }) => {
+const Player: React.FC<{ app: KossabosApp; ctx: KossabosCtx }> = ({
+  app,
+  ctx,
+}) => {
   const ref = useRef<HTMLIFrameElement>(null);
   const [helpDialogVisible, setHelpDialogVisible] = useState<boolean>(false);
   const [helpContentMarkdown, setHelpContentMarkdown] = useState<string>('');
@@ -51,10 +56,6 @@ const Player: React.FC<{ app: KossabosApp, ctx: KossabosCtx }> = ({ app, ctx }) 
     [ref],
   );
 
-  const handleReset = useCallback(() => {
-    emit(new CustomEvent('emit'));
-  }, [emit]);
-
   return (
     <div className="absolute top-0 left-0 w-full h-full bg-white">
       <AppHeader
@@ -71,10 +72,6 @@ const Player: React.FC<{ app: KossabosApp, ctx: KossabosCtx }> = ({ app, ctx }) 
         style={{ height: 'calc(100vh - 4rem)' }}
       />
 
-      <AppFooter
-        onReset={handleReset}
-      />
-
       <HelpDrawer
         visible={helpDialogVisible}
         onHide={() => setHelpDialogVisible(false)}
@@ -82,13 +79,15 @@ const Player: React.FC<{ app: KossabosApp, ctx: KossabosCtx }> = ({ app, ctx }) 
         title={`${app.name} Help`}
       />
 
-      <SettingsDrawer
-        visible={settingsVisible}
-        onHide={() => setSettingsVisible(false)}
-        settings={app.settings || []}
-        onSettingsChange={handleSettingsChange}
-        title={`${app.name} Settings`}
-      />
+      {app.settings?.length > 0 && (
+        <SettingsDrawer
+          visible={true}
+          onHide={() => setSettingsVisible(false)}
+          settings={app.settings}
+          onSettingsChange={handleSettingsChange}
+          title={`${app.name} Settings`}
+        />
+      )}
     </div>
   );
 };
@@ -101,7 +100,7 @@ const LOCAL_STORAGE_KOSSABOS_APP_ID = 'kossabos-app-id';
 const App: React.FC = () => {
   const [apps, setApps] = useState([]);
   const [appId, setAppId] = useState<string | null>(
-    localStorage.getItem(LOCAL_STORAGE_KOSSABOS_APP_ID) || DEFAULT_APP_ID
+    localStorage.getItem(LOCAL_STORAGE_KOSSABOS_APP_ID) || DEFAULT_APP_ID,
   );
   const [app, setApp] = useState();
 
@@ -126,7 +125,12 @@ const App: React.FC = () => {
   return (
     <PrimeReactProvider>
       <div>
-        {app && <Player app={app} ctx={{ locale: Locale.EN_US }} />}
+        {app && (
+          <Player
+            app={app}
+            ctx={{ locale: Locale.EN_US }}
+          />
+        )}
         <AppSelector
           selectedAppId={appId}
           apps={apps}

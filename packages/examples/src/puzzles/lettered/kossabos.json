@@ -8,5 +8,14 @@
     "username": "Jacob Sampson",
     "email": "jacob.samps@gmail.com"
   },
+  "settings": [
+    {
+      "id": "hardMode",
+      "type": "boolean",
+      "label": "Hard Mode",
+      "description": "Must use any previously matched letters.",
+      "defaultValue": false
+    }
+  ],
   "tags": ["puzzle", "words"]
 }

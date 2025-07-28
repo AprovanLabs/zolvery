@@ -9,27 +9,33 @@ import { sendErrorResponse, sendSuccessResponse, validateAuth } from '@/utils/ap
 const router = new Router();
 const leaderboardService = new LeaderboardService();
 
-// POST /leaderboard/score - Submit game score
-router.post('/score', async (ctx: LogContext) => {
+// POST /leaderboard/:appId/score - Submit game score
+router.post('/:appId/score', async (ctx: LogContext) => {
   const requestId = ctx.requestId;
   
   try {
+    const { appId } = ctx.params;
     const scoreData = ctx.request.body as any;
+
+    if (!appId || !scoreData || !scoreData.score || !scoreData.username) {
+      sendErrorResponse(ctx, 400, 'Missing required parameters: appId, score, username');
+      return;
+    }
 
     const user = validateAuth(ctx);
     if (!user) return;
 
     leaderboardLogger.info({
       requestId,
+      userId: user.userId,
+      appId,
       scoreData: {
-        appId: scoreData?.appId,
-        userId: user.userId,
         score: scoreData?.score,
-        username: scoreData?.username,
       },
     }, 'Submitting new score');
 
     const score = await leaderboardService.submitScore(
+      appId,
       user.userId,
       user.username,
       scoreData as SubmitScoreRequest,
@@ -54,22 +60,22 @@ router.post('/score', async (ctx: LogContext) => {
   }
 });
 
-// GET /leaderboard/:appId/daily/:date - Daily leaderboard
-router.get('/:appId/daily/:date', async (ctx) => {
+// GET /leaderboard/:appId/daily/:day - Daily leaderboard
+router.get('/:appId/daily/:day', async (ctx) => {
   try {
-    const { appId, date } = ctx.params;
+    const { appId, day } = ctx.params;
     const limit = parseInt(ctx.query.limit as string) || 100;
     
-    if (!appId || !date) {
-      sendErrorResponse(ctx, 400, 'Missing required parameters: appId, date');
+    if (!appId || !day) {
+      sendErrorResponse(ctx, 400, 'Missing required parameters: appId, day');
       return;
     }
     
-    const leaderboard = await leaderboardService.getDailyLeaderboard(appId, date, limit);
+    const leaderboard = await leaderboardService.getDailyLeaderboard(appId, day, limit);
     
     sendSuccessResponse(ctx, 200, {
       leaderboard,
-      date,
+      day,
       appId,
       count: leaderboard.length,
     });
@@ -80,13 +86,13 @@ router.get('/:appId/daily/:date', async (ctx) => {
 });
 
 // GET /leaderboard/:appId/global - Global leaderboard
-router.get('/:appId/global', async (ctx) => {
+router.get('/:appId/global/:day', async (ctx) => {
   try {
-    const { appId } = ctx.params;
+    const { appId, day } = ctx.params;
     const limit = parseInt(ctx.query.limit as string) || 100;
-    
-    if (!appId) {
-      sendErrorResponse(ctx, 400, 'Missing required parameter: appId');
+
+    if (!appId || !day) {
+      sendErrorResponse(ctx, 400, 'Missing required parameters: appId, day');
       return;
     }
     

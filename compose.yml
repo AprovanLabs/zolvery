@@ -17,9 +17,27 @@ services:
       - AWS_SECRET_ACCESS_KEY=kossabos
       - AWS_ENDPOINT_URL=http://localhost:4566
       - AWS_DEFAULT_REGION=us-east-2
+      # - OTEL_EXPORTER_OTLP_ENDPOINT=http://clickstack:4318
     volumes:
       - localstack_data://var/lib/localstack/state
       - './scripts/init-aws.sh:/etc/localstack/init/ready.d/init-aws.sh'
+  # clickstack:
+  #   image: docker.hyperdx.io/hyperdx/hyperdx-local
+  #   container_name: clickstack
+  #   ports:
+  #     - '8080:8080'
+  #     # OpenTelemetry HTTP
+  #     - '4318:4318'
+  #   environment:
+  #     - BETA_CH_OTEL_JSON_SCHEMA_ENABLED=true
+  #     - OTEL_AGENT_FEATURE_GATE_ARG='--feature-gates=clickhouse.json'
+  #   volumes:
+  #     - clickstack_data:/data/db
+  #     - clickstack_db:/var/lib/clickhouse
+  #     - clickstack_logs:/var/log/clickhouse-server
 
 volumes:
   localstack_data:
+  clickstack_data:
+  clickstack_db:
+  clickstack_logs:

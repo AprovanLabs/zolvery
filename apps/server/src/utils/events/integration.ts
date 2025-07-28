@@ -45,14 +45,14 @@ export interface UserRegisteredPayload {
 export interface GameStartedPayload {
   appId: string;
   userId: string;
-  gameId: string;
+  appId: string;
   timestamp: string;
 }
 
 export interface GameEndedPayload {
   appId: string;
   userId: string;
-  gameId: string;
+  appId: string;
   score?: number;
   duration: number;
   timestamp: string;
@@ -61,7 +61,7 @@ export interface GameEndedPayload {
 export interface PlayerActionPayload {
   appId: string;
   userId: string;
-  gameId: string;
+  appId: string;
   action: string;
   data: any;
   timestamp: string;

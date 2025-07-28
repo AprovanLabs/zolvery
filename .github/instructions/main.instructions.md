@@ -6,13 +6,13 @@ applyTo: '**'
 
 ### Instructions
 
-[../docs/INSTRUCTIONS.md](../docs/INSTRUCTIONS.md)
+[../docs/instructions.md](../docs/instructions.md)
 
 The instructions file may provide current instructions to follow. If the instructions are defined with checkboxes, update the box once each step is complete. If nothing defined, just use the current prompt for instructions.
 
 ### Briefing
 
-[../docs/BRIEFING.md](../docs/BRIEFING.md)
+[../docs/briefing.md](../docs/briefing.md)
 
 The briefing file provides a spot to document high-level information and any particular technical details of note. Keep this as brief as possible, but make important updates clear.
 
