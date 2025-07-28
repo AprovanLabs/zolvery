@@ -1,6 +1,6 @@
 import { Transport } from '../transport';
 import { User } from '../user';
-import { Client } from './client';
+import { Client, ClientConfig } from './client.js';
 
 export const createTransport = (windowTarget: Window): Transport => ({
   addEventListener: (
@@ -34,7 +34,15 @@ export const createTransport = (windowTarget: Window): Transport => ({
 export const createChildTransport = (): Transport =>
   createTransport(window.parent ?? window.top);
 
-export const loadClient = (user: User, config: unknown, transport: Transport) =>
+export const loadClient = (user: User, config: ClientConfig, transport: Transport) =>
   new Client(user, config, transport);
 
 export { loadScript, getQueryParam } from './util';
+
+// Export client-related types and classes
+export type { ClientConfig, ClientEvent } from './client.js';
+export { Client, CoreEventType } from './client.js';
+export { ClientEventBus } from './event-bus.js';
+export { ClientStorage } from './storage.js';
+export { ClientAPI } from './api.js';
+export { Localization } from './localization.js';
