@@ -1,9 +1,10 @@
-import { createApp, inject, ref } from 'vue';
+import { connect } from '@kossabos/mcp';
+import { createApp, ref } from 'vue';
+
+const games = await connect('kossabos/games');
 
 export const app = createApp({
   setup() {
-    const { on, emit } = inject('kossabos');
-
     // Mancala board setup: 6 pits per side, 2 stores (one for each player)
     const initialStones = 4;
     const board = ref(Array(14).fill(initialStones));
@@ -44,7 +45,7 @@ export const app = createApp({
         }
 
         // Emit final game result
-        emit('final', {
+        games.complete({
           label:
             winner.value === 0
               ? "It's a draw!"

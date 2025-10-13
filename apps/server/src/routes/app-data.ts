@@ -1,11 +1,84 @@
 import Router from '@koa/router';
-import { format } from 'date-fns';
-import { AppDataService } from '@/services/app-service';
-import { UpdateAppDataRequest } from '@/models/app';
+import { AppDataService } from '@/domains/app/app-service';
+import { UpdateAppDataRequest } from '@/domains/app/app';
 import { sendErrorResponse, sendSuccessResponse } from '@/utils/api';
+import { getCurrentDay } from '@/utils/date';
 
 const router = new Router();
 const appDataService = new AppDataService();
+
+
+/**
+// GET /app-data/:appId/:day - Get all app data for day
+// GET /app-data/:appId - Get app data for today (convenience endpoint)
+// POST /app-data/:appId/:day/:key - Update app data (admin endpoint)
+// POST /app-data/:appId/:day - Bulk update app data
+
+// POST /events/:appId - Store new event
+// GET /events/:appId/:day - Get all events for user/app/day
+// GET /events/:appId/:day/:eventKey - Get specific event for user
+// GET /events/:appId - Get events for today (convenience endpoint) for authenticated user
+
+->
+
+// GET /apps/:appId
+
+/// App data
+/apps/:appId/data?version=latest
+- APP level - Versioned, runner data
+  - Functions
+  - Assets
+  - Localization
+/apps/:appId/
+- APP level - Instanced, runner data
+  - Daily challenges
+  - Validations
+  - Leaderboards
+
+
+- USER level - App configuration
+  - Settings
+  - Authentication/authorization?
+  - Event information
+
+- USER level - App usage instance
+  - Session information
+  - Daily score
+
+/// Events
+- MULTI-USER level - multi-player sessions
+
+- USER level - App usage instance
+  - User actually using an app
+
+- USER level - long-running
+  - Webhook. Should this start an instance?
+
+- GLOBAL level
+  - Unrelated to a user?
+
+--> AGGREGATIONS
+
+Some way to tick over a clock and run an aggregation on data
+- Leaderboards
+- Want this to be very thin, though...developers should be able to run this themselves
+
+ */
+
+
+/**
+
+MCPs / WASI
+
+- Cache
+
+- Storage
+  - SQL
+  - Document?
+
+- Pub/sub
+
+ */
 
 // GET /app-data/:appId/:day - Get all app data for day
 router.get('/:appId/:day', async (ctx) => {
@@ -36,8 +109,7 @@ router.get('/:appId', async (ctx) => {
       return;
     }
     
-    const today = format(new Date(), 'yyyy-MM-dd');
-    const data = await appDataService.getAppData({ appId, day: today });
+    const data = await appDataService.getAppData({ appId, day: getCurrentDay() });
     
     sendSuccessResponse(ctx, 200, data);
   } catch (error) {

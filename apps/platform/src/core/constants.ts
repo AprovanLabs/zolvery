@@ -11,9 +11,10 @@ export const PROJECT_DOMAIN = `${PROJECT_ID}.${ORG_ID}.com`;
 export const DOMAIN_NAME = process.env.DOMAIN_NAME || PROJECT_DOMAIN;
 export const MOBILE_PORT = process.env.MOBILE_PORT ? Number(process.env.MOBILE_PORT) : 4300;
 
-type AwsRegion = 'us-east-2' | 'us-east-2' | 'us-west-1';
+type AwsRegion = 'us-east-1' | 'us-east-2' | 'us-west-1';
 export const RegionShortCodeMap: Record<AwsRegion, string> = {
-    'us-east-2': 'use1',
+    'us-east-1': 'use1',
+    'us-east-2': 'use2',
     'us-west-1': 'usw1',
 };
 

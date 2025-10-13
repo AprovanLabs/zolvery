@@ -3,13 +3,13 @@ import Router from '@koa/router';
 import bodyParser from 'koa-bodyparser';
 import cors from '@koa/cors';
 import { appConfig } from '@/config';
-import { logger, apiLogger } from '@/config/logger';
+import logger from '@/logger';
 import { requestLogger, errorLogger } from '@/middleware/logger';
 import { authMiddleware } from '@/middleware/auth';
+import { telemetryMiddleware } from '@/middleware/telemetry';
 import { leaderboardRoutes } from './routes/leaderboard';
 import { eventRoutes } from './routes/events';
 import { appDataRoutes } from './routes/app-data';
-import { i18nRoutes } from './routes/i18n';
 import { authRoutes } from './routes/auth';
 import { getCurrentDay, getTimeLeftInCurrentDay } from './utils/date';
 
@@ -38,6 +38,9 @@ app.use(errorLogger);
 // Request logging middleware
 app.use(requestLogger);
 
+// Telemetry middleware to enhance spans with custom attributes
+app.use(telemetryMiddleware());
+
 // Configure CORS
 app.use(
   cors({
@@ -47,7 +50,7 @@ app.use(
         ? origin || ''
         : (appConfig.cors.origin[0] as string);
 
-      apiLogger.debug(
+      logger.debug(
         {
           requestOrigin: origin,
           allowedOrigin,
@@ -69,14 +72,9 @@ app.use(
     formLimit: '10mb',
     jsonLimit: '10mb',
     onerror: (err: Error, ctx: any) => {
-      apiLogger.error(
-        {
-          requestId: ctx.requestId,
-          err: {
-            message: err.message,
-            name: err.name,
-          },
-        },
+      logger.error(
+        err,
+        { requestId: ctx.requestId },
         'Body parser error',
       );
       throw err;
@@ -99,7 +97,7 @@ router.get('/about', (ctx) => {
     day: getCurrentDay(),
   };
 
-  apiLogger.info(
+  logger.info(
     {
       requestId: (ctx as any).requestId,
       health: healthData,
@@ -128,7 +126,7 @@ router.get('/status', (ctx) => {
     }),
   };
 
-  apiLogger.info(
+  logger.info(
     {
       requestId: (ctx as any).requestId,
       health: healthData,
@@ -139,17 +137,11 @@ router.get('/status', (ctx) => {
   ctx.body = healthData;
 });
 
-// Protected API routes
-apiLogger.info('Setting up API routes');
-router.use('/v1/protected/auth', authMiddleware, authRoutes.routes());
-router.use('/v1/protected/events', authMiddleware, eventRoutes.routes());
-router.use(
-  '/v1/protected/leaderboard',
-  authMiddleware,
-  leaderboardRoutes.routes(),
-);
-router.use('/v1/protected/app-data', authMiddleware, appDataRoutes.routes());
-router.use('/v1/protected/i18n', authMiddleware, i18nRoutes.routes());
+logger.info('Setting up API routes');
+
+router.use('/v1/auth', authMiddleware, authRoutes.routes());
+router.use('/v1/events', authMiddleware, eventRoutes.routes());
+router.use('/v1/app-data', authMiddleware, appDataRoutes.routes());
 
 // Apply routes to app
 app.use(router.routes());

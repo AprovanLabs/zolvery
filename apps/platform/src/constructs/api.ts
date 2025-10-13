@@ -135,7 +135,7 @@ export class Api extends Construct {
       integration: appLambdaIntegration,
     });
     this.addMethods({
-      resource: v1Resource.addResource('protected').addResource('{proxy+}'),
+      resource: v1Resource.addResource('v1').addResource('{proxy+}'),
       integration: appLambdaIntegration,
       options: {
         authorizer: this.authorizer,

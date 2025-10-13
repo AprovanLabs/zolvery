@@ -1,5 +1,5 @@
 import { Context, Next } from 'koa';
-import { apiLogger, generateRequestId, createTimer } from '@/config/logger';
+import logger, { generateRequestId, createTimer, setRequestContext } from '@/config/logger';
 
 export interface LogContext extends Context {
   requestId: string;
@@ -10,18 +10,28 @@ export interface LogContext extends Context {
  * Request logging middleware that logs incoming requests and responses
  */
 export const requestLogger = async (ctx: LogContext, next: Next): Promise<void> => {
+  const requestId =
+    (ctx.headers['x-request-id'] as string) || ctx.get('X-Request-ID') || generateRequestId();
+  const userId = ctx.headers['x-user-id'] as string;
+  const appId = ctx.headers['x-app-id'] as string;
+
   // Generate unique request ID
-  ctx.requestId = generateRequestId();
+  ctx.requestId = requestId;
   ctx.startTime = Date.now();
 
   // Create timer for request duration
   const timer = createTimer();
 
-  // Log incoming request
-  apiLogger.info({
-    requestId: ctx.requestId,
-    method: ctx.method,
+  setRequestContext({
+    ...(requestId && { requestId }),
+    ...(userId && { userId }),
+    ...(appId && { appId }),
     path: ctx.path,
+    method: ctx.method,
+  });
+
+  // Log incoming request
+  logger.info({
     userAgent: ctx.headers['user-agent'],
     contentType: ctx.headers['content-type'],
     contentLength: ctx.headers['content-length'],
@@ -36,10 +46,7 @@ export const requestLogger = async (ctx: LogContext, next: Next): Promise<void> 
     const duration = timer();
 
     // Log successful response
-    apiLogger.info({
-      requestId: ctx.requestId,
-      method: ctx.method,
-      path: ctx.path,
+    logger.info({
       status: ctx.status,
       duration: `${duration.toFixed(2)}ms`,
       responseLength: ctx.length,
@@ -50,17 +57,9 @@ export const requestLogger = async (ctx: LogContext, next: Next): Promise<void> 
     const duration = timer();
 
     // Log error response
-    apiLogger.error({
-      requestId: ctx.requestId,
-      method: ctx.method,
-      path: ctx.path,
+    logger.error(error, {
       status: ctx.status || 500,
       duration: `${duration.toFixed(2)}ms`,
-      err: {
-        message: error instanceof Error ? error.message : 'Unknown error',
-        name: error instanceof Error ? error.name : 'Error',
-        stack: error instanceof Error ? error.stack : undefined,
-      },
     }, 'Request failed');
 
     // Re-throw the error to be handled by other middleware
@@ -76,8 +75,7 @@ export const errorLogger = async (ctx: LogContext, next: Next): Promise<void> =>
     await next();
   } catch (error) {
     const err = error as Error;
-    
-    // Set error response
+
     ctx.status = 500;
     ctx.body = {
       success: false,
@@ -86,21 +84,10 @@ export const errorLogger = async (ctx: LogContext, next: Next): Promise<void> =>
       requestId: ctx.requestId,
     };
 
-    // Log the error with context
-    apiLogger.error({
-      requestId: ctx.requestId,
-      method: ctx.method,
-      path: ctx.path,
-      err: {
-        message: err.message,
-        name: err.name,
-        stack: err.stack,
-      },
+    logger.error(err, {
       body: ctx.request.body,
       query: ctx.query,
       headers: ctx.headers,
     }, 'Unhandled error in request');
-
-    // Don't re-throw as we've handled the error
   }
 };

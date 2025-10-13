@@ -11,7 +11,6 @@ export {
   getQueryParam,
   loadClient,
   loadScript,
-  // Export new client types and classes
   Client,
   CoreEventType,
   ClientEventBus,

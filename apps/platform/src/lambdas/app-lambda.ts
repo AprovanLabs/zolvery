@@ -48,7 +48,7 @@ export class AppLambda extends Construct {
     
 
     const lambdaDir = path.join(__dirname, '../../../server');
-    this.function = new NodejsFunction(this, 'ApiFunction', {
+    this.function = new NodejsFunction(this, 'AppFunction', {
       functionName: namer().regional('app'),
       runtime: Runtime.NODEJS_20_X,
       entry: path.join(lambdaDir, 'src/app.ts'),

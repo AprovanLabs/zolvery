@@ -1,4 +1,9 @@
-import { createApp, computed, inject, ref } from 'vue';
+import { connect } from '@kossabos/mcp';
+import { createApp, computed, ref } from 'vue';
+
+const games = await connect('kossabos/games');
+
+const isDev = process.env.ENVIRONMENT === 'development';
 
 /** @see https://github.com/words/syllable */
 
@@ -445,12 +450,8 @@ const SAMPLE_POEMS = [
 
 export const app = createApp({
   setup() {
-    const { get, env, emit, t } = inject('kossabos');
-
-    const isDev = computed(() => env('ENVIRONMENT') === 'dev');
-    const context = computed(() => get('context') || {});
-    const data = computed(() => get('data') || {});
-    const users = computed(() => get('users') || []);
+    const data = computed(() => games.get_daily_data());
+    const users = computed(() => games.get_voting_pool());
 
     const poem = ref(isDev ? SAMPLE_POEM : '');
     const prompt = computed(() => data?.prompt || 'Write a haiku.');
@@ -497,7 +498,7 @@ export const app = createApp({
         score: vote.score,
       }));
       const data = { poem: poem.value };
-      emit('end', { votes, data });
+      games.vote({ votes, data });
     }
 
     const vote = (userId, score) => {
@@ -511,7 +512,7 @@ export const app = createApp({
       nextPoem();
     };
     const submit = () => {
-      emit('submit', { value: poem.value });
+      games.submit({ value: poem.value });
       phase.value = 'voting';
       nextPoem();
     };

@@ -7,10 +7,6 @@ import {
   getDateFromTimestamp, 
   getTTL
 } from './date';
-import { 
-  generatePartitionKey, 
-  parsePartitionKey 
-} from './dynamodb';
 
 describe('Date Utilities', () => {
   describe('getCurrentDay', () => {

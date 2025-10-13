@@ -1,32 +1,28 @@
 import Router from '@koa/router';
 import { format } from 'date-fns';
-import { EventService } from '@/services/event-service';
-import { CreateEventRequest } from '@/models/event';
-import { eventLogger, logError, logSuccess } from '@/config/logger';
-import { LogContext } from '@/middleware/logger';
+import logger from '@/logger';
+import { EventService } from '@/domains/events/event-service';
+import { CreateEventRequest } from '@/domains/events/event';
 import {
   sendErrorResponse,
   sendSuccessResponse,
   validateAuth,
 } from '@/utils/api';
+import { Context } from 'koa';
+import { AuthContext } from '@/auth';
 
 const router = new Router();
 const eventService = new EventService();
 
 // POST /events/:appId - Store new event
-router.post('/:appId', async (ctx: LogContext) => {
-  const requestId = ctx.requestId;
-
+router.post('/:appId', async (ctx: AuthContext) => {
   try {
     const { appId } = ctx.params;
     const eventData = ctx.request.body as any;
+    const user = ctx.user;
 
-    const user = validateAuth(ctx);
-    if (!user) return;
-
-    eventLogger.info(
+    logger.info(
       {
-        requestId,
         eventData: {
           appId,
           userId: user.userId,
@@ -41,19 +37,14 @@ router.post('/:appId', async (ctx: LogContext) => {
       eventData as CreateEventRequest,
     );
 
-    logSuccess(eventLogger, 'Event created successfully', {
-      requestId,
-      PK: event.PK,
-      SK: event.SK,
+    logger.info('Event created successfully', {
       appId: event.appId,
-      userId: event.userId,
       eventKey: event.eventKey,
     });
 
     sendSuccessResponse(ctx, 201, event, 'Event stored successfully');
   } catch (error) {
-    logError(eventLogger, error as Error, {
-      requestId,
+    logger.error(error as Error, {
       eventData: ctx.request.body,
     });
 
@@ -61,32 +52,17 @@ router.post('/:appId', async (ctx: LogContext) => {
   }
 });
 
-// GET /events/:appId/:day - Get all events for authenticated user/app/day
-router.get('/:appId/:day', async (ctx: LogContext) => {
-  const requestId = ctx.requestId;
-
+// GET /events/:appId/:day - Get all events for user/app/day
+router.get('/:appId/:day', async (ctx: AuthContext) => {
   try {
     const { appId, day } = ctx.params;
+    const userId = ctx.user.userId;
 
-    const user = validateAuth(ctx);
-    if (!user) return;
-
-    const userId = user.userId;
-
-    eventLogger.info(
-      {
-        requestId,
-        appId,
-        userId,
-        day,
-      },
-      'Fetching user events',
-    );
+    logger.info({ appId, day }, 'Fetching user events');
 
     if (!appId || !day) {
-      eventLogger.warn(
+      logger.warn(
         {
-          requestId,
           params: { appId, day },
         },
         'Missing required parameters',
@@ -98,18 +74,15 @@ router.get('/:appId/:day', async (ctx: LogContext) => {
 
     const events = await eventService.getUserEvents(appId, userId, day);
 
-    logSuccess(eventLogger, 'User events retrieved successfully', {
-      requestId,
+    logger.info('User events retrieved successfully', {
       appId,
-      userId,
       day,
       eventCount: events.length,
     });
 
     sendSuccessResponse(ctx, 200, events);
   } catch (error) {
-    logError(eventLogger, error as Error, {
-      requestId,
+    logger.error(error as Error, {
       params: ctx.params,
     });
 
@@ -117,34 +90,25 @@ router.get('/:appId/:day', async (ctx: LogContext) => {
   }
 });
 
-// GET /events/:appId/:day/:eventKey - Get specific event for authenticated user
-router.get('/:appId/:day/:eventKey', async (ctx: LogContext) => {
-  const requestId = ctx.requestId;
-
+// GET /events/:appId/:day/:eventKey - Get specific event for user
+router.get('/:appId/:day/events/:key', async (ctx: Context) => {
   try {
-    const { appId, day, eventKey } = ctx.params;
+    const { appId, day, key } = ctx.params;
+    const userId = ctx.user.userId;
 
-    const user = validateAuth(ctx);
-    if (!user) return;
-
-    const userId = user.userId;
-
-    eventLogger.info(
+    logger.info(
       {
-        requestId,
         appId,
-        userId,
         day,
-        eventKey,
+        key,
       },
       'Fetching specific event',
     );
 
-    if (!appId || !day || !eventKey) {
-      eventLogger.warn(
+    if (!appId || !day || !key) {
+      logger.warn(
         {
-          requestId,
-          params: { appId, day, eventKey },
+          params: { appId, day, key },
         },
         'Missing required parameters for specific event',
       );
@@ -157,16 +121,14 @@ router.get('/:appId/:day/:eventKey', async (ctx: LogContext) => {
       return;
     }
 
-    const event = await eventService.getEvent(appId, userId, day, eventKey);
+    const event = await eventService.getEvent(appId, userId, day, key);
 
     if (!event) {
-      eventLogger.info(
+      logger.info(
         {
-          requestId,
           appId,
-          userId,
           day,
-          eventKey,
+          key,
         },
         'Event not found',
       );
@@ -175,18 +137,15 @@ router.get('/:appId/:day/:eventKey', async (ctx: LogContext) => {
       return;
     }
 
-    logSuccess(eventLogger, 'Specific event retrieved successfully', {
-      requestId,
+    logger.info('Specific event retrieved successfully', {
       appId,
-      userId,
       day,
-      eventKey,
+      key,
     });
 
     sendSuccessResponse(ctx, 200, event);
   } catch (error) {
-    logError(eventLogger, error as Error, {
-      requestId,
+    logger.error(error as Error, {
       params: ctx.params,
     });
     sendErrorResponse(ctx, 500, 'Failed to fetch event');
@@ -194,30 +153,16 @@ router.get('/:appId/:day/:eventKey', async (ctx: LogContext) => {
 });
 
 // GET /events/:appId - Get events for today (convenience endpoint) for authenticated user
-router.get('/:appId', async (ctx: LogContext) => {
-  const requestId = ctx.requestId;
-
+router.get('/:appId', async (ctx: Context) => {
   try {
     const { appId } = ctx.params;
+    const userId = ctx.user.id;
 
-    const user = validateAuth(ctx);
-    if (!user) return;
-
-    const userId = user.userId;
-
-    eventLogger.info(
-      {
-        requestId,
-        appId,
-        userId,
-      },
-      "Fetching today's events",
-    );
+    logger.info({ appId }, "Fetching today's events");
 
     if (!appId) {
-      eventLogger.warn(
+      logger.warn(
         {
-          requestId,
           params: { appId },
         },
         "Missing required parameters for today's events",
@@ -230,18 +175,15 @@ router.get('/:appId', async (ctx: LogContext) => {
     const today = format(new Date(), 'yyyy-MM-dd');
     const events = await eventService.getUserEvents(appId, userId, today);
 
-    logSuccess(eventLogger, "Today's events retrieved successfully", {
-      requestId,
+    logger.info("Today's events retrieved successfully", {
       appId,
-      userId,
       day: today,
       eventCount: events.length,
     });
 
     sendSuccessResponse(ctx, 200, events);
   } catch (error) {
-    logError(eventLogger, error as Error, {
-      requestId,
+    logger.error(error as Error, {
       params: ctx.params,
     });
 

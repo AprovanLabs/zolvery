@@ -16,13 +16,12 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/v1/protected/auth/me",
+							"raw": "{{baseUrl}}/v1/auth/me",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"v1",
-								"protected",
 								"auth",
 								"me"
 							]
@@ -52,13 +51,12 @@
 							"raw": "{\n  \"appId\": \"poetry-slam\",\n  \"eventKey\": \"poem\",\n  \"value\": {\n    \"text\": \"Roses are red, violets are blue, this poem is great, and so are you!\",\n    \"wordCount\": 14,\n    \"theme\": \"nature\"\n  },\n  \"day\": \"2025-07-05\"\n}"
 						},
 						"url": {
-							"raw": "{{baseUrl}}/v1/protected/events",
+							"raw": "{{baseUrl}}/v1/events",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"v1",
-								"protected",
 								"events"
 							]
 						},
@@ -72,13 +70,12 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/v1/protected/events/{{appId}}/{{day}}",
+							"raw": "{{baseUrl}}/v1/events/{{appId}}/{{day}}",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"v1",
-								"protected",
 								"events",
 								"{{appId}}",
 								"{{day}}"
@@ -94,13 +91,12 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/v1/protected/events/{{appId}}/{{day}}/poem",
+							"raw": "{{baseUrl}}/v1/events/{{appId}}/{{day}}/poem",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"v1",
-								"protected",
 								"events",
 								"{{appId}}",
 								"{{day}}",
@@ -132,13 +128,12 @@
 							"raw": "{\n  \"username\": \"PoetryMaster\",\n  \"appId\": \"poetry-slam\",\n  \"day\": \"2025-07-05\",\n  \"score\": 850,\n  \"appData\": {\n    \"poem\": \"Roses are red, violets are blue...\",\n    \"votes\": 15,\n    \"difficulty\": \"medium\"\n  }\n}"
 						},
 						"url": {
-							"raw": "{{baseUrl}}/v1/protected/leaderboard/score",
+							"raw": "{{baseUrl}}/v1/leaderboard/score",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"v1",
-								"protected",
 								"leaderboard",
 								"score"
 							]
@@ -153,13 +148,12 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/v1/protected/leaderboard/{{appId}}/daily/{{date}}",
+							"raw": "{{baseUrl}}/v1/leaderboard/{{appId}}/daily/{{date}}",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"v1",
-								"protected",
 								"leaderboard",
 								"{{appId}}",
 								"daily",
@@ -182,13 +176,12 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/v1/protected/leaderboard/{{appId}}/global",
+							"raw": "{{baseUrl}}/v1/leaderboard/{{appId}}/global",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"v1",
-								"protected",
 								"leaderboard",
 								"{{appId}}",
 								"global"
@@ -210,13 +203,12 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/v1/protected/leaderboard/{{appId}}/user",
+							"raw": "{{baseUrl}}/v1/leaderboard/{{appId}}/user",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"v1",
-								"protected",
 								"leaderboard",
 								"{{appId}}",
 								"user"
@@ -244,13 +236,12 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/v1/protected/app-data/{{appId}}/{{day}}",
+							"raw": "{{baseUrl}}/v1/app-data/{{appId}}/{{day}}",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"v1",
-								"protected",
 								"app-data",
 								"{{appId}}",
 								"{{day}}"
@@ -272,13 +263,12 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/v1/protected/i18n/{{appId}}/{{locale}}",
+							"raw": "{{baseUrl}}/v1/i18n/{{appId}}/{{locale}}",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"v1",
-								"protected",
 								"i18n",
 								"{{appId}}",
 								"{{locale}}"
@@ -309,13 +299,12 @@
 							"raw": "{\n  \"eventKey\": \"poem_submit\",\n  \"value\": {\n    \"text\": \"In fields of gold where wheat does grow,\\nThe harvest moon begins to glow,\\nA farmer's work is never done,\\nFrom early morn till setting sun.\",\n    \"wordCount\": 24,\n    \"lines\": 4,\n    \"rhymeScheme\": \"AABB\",\n    \"theme\": \"nature\",\n    \"submittedAt\": \"2025-07-05T14:30:00Z\"\n  },\n  \"appId\": \"poetry-slam\",\n  \"userId\": \"poet_123\",\n  \"day\": \"2025-07-05\"\n}"
 						},
 						"url": {
-							"raw": "{{baseUrl}}/v1/protected/events",
+							"raw": "{{baseUrl}}/v1/events",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"v1",
-								"protected",
 								"events"
 							]
 						},
@@ -338,13 +327,12 @@
 							"raw": "{\n  \"eventKey\": \"vote\",\n  \"value\": {\n    \"targetUserId\": \"poet_456\",\n    \"voteType\": \"like\",\n    \"category\": \"creativity\",\n    \"timestamp\": \"2025-07-05T14:35:00Z\"\n  },\n  \"appId\": \"poetry-slam\",\n  \"userId\": \"voter_789\",\n  \"day\": \"2025-07-05\"\n}"
 						},
 						"url": {
-							"raw": "{{baseUrl}}/v1/protected/events",
+							"raw": "{{baseUrl}}/v1/events",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"v1",
-								"protected",
 								"events"
 							]
 						},
@@ -367,13 +355,12 @@
 							"raw": "{\n  \"eventKey\": \"phase\",\n  \"value\": {\n    \"phase\": \"voting\",\n    \"previousPhase\": \"writing\",\n    \"phaseEndTime\": \"2025-07-05T15:00:00Z\",\n    \"participantCount\": 12\n  },\n  \"appId\": \"poetry-slam\",\n  \"userId\": \"system\",\n  \"day\": \"2025-07-05\"\n}"
 						},
 						"url": {
-							"raw": "{{baseUrl}}/v1/protected/events",
+							"raw": "{{baseUrl}}/v1/events",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"v1",
-								"protected",
 								"events"
 							]
 						},
@@ -387,13 +374,12 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/v1/protected/app-data/poetry-slam/2025-07-05/prompt",
+							"raw": "{{baseUrl}}/v1/app-data/poetry-slam/2025-07-05/prompt",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"v1",
-								"protected",
 								"app-data",
 								"poetry-slam",
 								"2025-07-05",
@@ -410,13 +396,12 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/v1/protected/i18n/poetry-slam/en-US",
+							"raw": "{{baseUrl}}/v1/i18n/poetry-slam/en-US",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"v1",
-								"protected",
 								"i18n",
 								"poetry-slam",
 								"en-US"
@@ -441,13 +426,12 @@
 							"raw": "{\n  \"userId\": \"poet_123\",\n  \"username\": \"WordWeaver\",\n  \"appId\": \"poetry-slam\",\n  \"day\": \"2025-07-05\",\n  \"score\": 1250,\n  \"appData\": {\n    \"finalPoem\": \"In fields of gold where wheat does grow...\",\n    \"votesReceived\": 18,\n    \"votesGiven\": 5,\n    \"wordsWritten\": 24,\n    \"timeSpent\": 285,\n    \"bonusPoints\": {\n      \"creativity\": 200,\n      \"rhyme\": 150,\n      \"participation\": 100\n    }\n  }\n}"
 						},
 						"url": {
-							"raw": "{{baseUrl}}/v1/protected/leaderboard/score",
+							"raw": "{{baseUrl}}/v1/leaderboard/score",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"v1",
-								"protected",
 								"leaderboard",
 								"score"
 							]

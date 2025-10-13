@@ -1,16 +1,33 @@
-import OpenAI from 'openai';
+import { connect } from '@kossabos/mcp';
 
-// Uses 'OPENAI_API_KEY' evironment variable
-const client = new OpenAI();
+const games = await connect('kossabos/games');
+const mastra = await connect('kossabos/mastra');
 
-export default () => {
-  return {
-    generate: async () => {
-      const response = await client.responses.create({
-        model: 'gpt-4o',
-        input: 'Generate a prompt for a poetry competition.',
-      });
-      return response.output_text;
-    }
-  }
-}
+export default async () => {
+  const dailyPoem = mastra.generate({
+    description: 'Generate a prompt for a poetry competition.',
+    structuredOutput: {
+      type: 'object',
+      properties: {
+        prompt: {
+          type: 'string',
+          description: 'Writing prompt for the day',
+        },
+        examples: { 
+          type: 'array',
+          description: 'Example poems',
+          items: {
+            type: 'array',
+            minItems: 3,
+            maxItems: 3,
+            items: {
+              type: 'string',
+            },
+          },
+        },
+      },
+      required: ['prompt', 'examples'],
+    },
+  })
+  await games.save_daily_data(dailyPoem);
+};

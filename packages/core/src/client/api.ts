@@ -11,8 +11,6 @@ export interface CreateEventRequest {
 }
 
 export interface AppEvent {
-  PK: string;
-  SK: string;
   eventKey: string;
   value: any;
   timestamp: string;
