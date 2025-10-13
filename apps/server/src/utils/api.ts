@@ -2,7 +2,6 @@ import { Context } from 'koa';
 import { AuthContext } from '@/middleware/auth';
 import { LogContext } from '@/middleware/logger';
 
-// Types for API responses
 export interface ErrorResponse {
   success: false;
   error: string;

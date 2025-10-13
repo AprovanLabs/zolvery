@@ -5,6 +5,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': resolve(__dirname, 'src'),
+      '@/logger': resolve(__dirname, 'src/config/logger'),
       '@/config': resolve(__dirname, 'src/config'),
       '@/models': resolve(__dirname, 'src/models'),
       '@/services': resolve(__dirname, 'src/services'),

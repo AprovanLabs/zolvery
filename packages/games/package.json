@@ -1,0 +1,19 @@
+{
+    "name": "@kossabos/games",
+    "description": "Kossabos game runner platform",
+    "scripts": {
+        "build": "tsc",
+        "deploy": "node dist/scripts/deploy-script-runner.js",
+        "dev": "tsx scripts/deploy-script-runner.ts"
+    },
+    "dependencies": {
+        "dotenv": "^16.3.1",
+        "@modelcontextprotocol/sdk": "1.20.0",
+        "zod": "*"
+    },
+    "devDependencies": {
+        "@types/node": "^20.0.0",
+        "tsx": "^4.0.0",
+        "typescript": "^5.0.0"
+    }
+}

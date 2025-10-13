@@ -1,25 +1,6 @@
 import { Context, Next } from 'koa';
-import { apiLogger } from '@/config/logger';
-import { LogContext } from './logger';
-
-export enum Group {
-  ADMIN = 'admin',
-  CREATOR = 'creator',
-}
-
-export type GroupType = `${Group}`;
-
-const GROUPS = new Set<GroupType>(Object.values(Group));
-
-export interface CognitoUser {
-  userId: string;
-  username: string;
-  groups: GroupType[];
-}
-
-export interface AuthContext extends LogContext {
-  user?: CognitoUser;
-}
+import logger from '@/logger';
+import { AuthContext, GROUPS, GroupType } from '@/auth';
 
 /**
  * Extract Cognito claims from AWS Lambda request context
@@ -43,7 +24,7 @@ function getCognitoClaimsFromRequest(ctx: Context): Record<string, any> {
       // Fallback: if the token data directly contains claims
       return tokenData;
     } catch (error) {
-      apiLogger.warn(
+      logger.warn(
         {
           requestId: (ctx as any).requestId,
           error: error instanceof Error ? error.message : 'Unknown error',
@@ -58,7 +39,7 @@ function getCognitoClaimsFromRequest(ctx: Context): Record<string, any> {
     try {
       return JSON.parse(headers['x-cognito-claims'] as string);
     } catch (error) {
-      apiLogger.warn(
+      logger.warn(
         {
           requestId: (ctx as any).requestId,
           error: error instanceof Error ? error.message : 'Unknown error',
@@ -80,7 +61,7 @@ function getCognitoSubFromRequest(ctx: Context): string | null {
     const cognitoSub = claims.sub;
 
     if (cognitoSub) {
-      apiLogger.debug(
+      logger.debug(
         {
           requestId: (ctx as any).requestId,
           sub: cognitoSub,
@@ -90,7 +71,7 @@ function getCognitoSubFromRequest(ctx: Context): string | null {
       return cognitoSub;
     }
   } catch (error) {
-    apiLogger.error(
+    logger.error(
       {
         requestId: (ctx as any).requestId,
         error: error instanceof Error ? error.message : 'Unknown error',
@@ -110,7 +91,7 @@ function getCognitoUsernameFromRequest(ctx: Context): string | null {
     const claims = getCognitoClaimsFromRequest(ctx);
     return claims['cognito:username'] || null;
   } catch (error) {
-    apiLogger.error(
+    logger.error(
       {
         requestId: (ctx as any).requestId,
         error: error instanceof Error ? error.message : 'Unknown error',
@@ -139,7 +120,7 @@ function getCognitoGroupsFromRequest(ctx: Context): GroupType[] {
       .filter(Boolean)
       .filter((group: string) => GROUPS.has(group as Group)) as GroupType[];
 
-    apiLogger.debug(
+    logger.debug(
       {
         requestId: (ctx as any).requestId,
         groups,
@@ -149,7 +130,7 @@ function getCognitoGroupsFromRequest(ctx: Context): GroupType[] {
 
     return groups;
   } catch (error) {
-    apiLogger.error(
+    logger.error(
       {
         requestId: (ctx as any).requestId,
         error: error instanceof Error ? error.message : 'Unknown error',
@@ -164,7 +145,7 @@ function getCognitoGroupsFromRequest(ctx: Context): GroupType[] {
  * Authentication middleware that extracts Cognito user information
  */
 export const authMiddleware = async (
-  ctx: LogContext,
+  ctx: Context,
   next: Next,
 ): Promise<void> => {
   const requestId = ctx.requestId;
@@ -173,7 +154,7 @@ export const authMiddleware = async (
     const sub = getCognitoSubFromRequest(ctx);
 
     if (!sub) {
-      apiLogger.warn(
+      logger.warn(
         {
           requestId,
           path: ctx.path,
@@ -202,7 +183,7 @@ export const authMiddleware = async (
       groups,
     };
 
-    apiLogger.info(
+    logger.info(
       {
         requestId,
         user: {
@@ -216,7 +197,7 @@ export const authMiddleware = async (
 
     await next();
   } catch (error) {
-    apiLogger.error(
+    logger.error(
       {
         requestId,
         error: error instanceof Error ? error.message : 'Unknown error',
@@ -238,12 +219,11 @@ export const authMiddleware = async (
  * Middleware to check if user belongs to required groups
  */
 export const requireGroups = (requiredGroups: string[]) => {
-  return async (ctx: LogContext, next: Next): Promise<void> => {
+  return async (ctx: AuthContext, next: Next): Promise<void> => {
     const requestId = ctx.requestId;
-    const authCtx = ctx as AuthContext;
 
-    if (!authCtx.user) {
-      apiLogger.warn(
+    if (!ctx.user) {
+      logger.warn(
         {
           requestId,
         },
@@ -260,13 +240,13 @@ export const requireGroups = (requiredGroups: string[]) => {
       return;
     }
 
-    const userGroups = authCtx.user.groups;
+    const userGroups = ctx.user.groups;
     const hasRequiredGroup = requiredGroups.some((group) =>
       userGroups.includes(group as GroupType),
     );
 
     if (!hasRequiredGroup) {
-      apiLogger.warn(
+      logger.warn(
         {
           requestId,
           userGroups,
@@ -285,7 +265,7 @@ export const requireGroups = (requiredGroups: string[]) => {
       return;
     }
 
-    apiLogger.debug(
+    logger.debug(
       {
         requestId,
         userGroups,

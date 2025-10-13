@@ -204,10 +204,8 @@ export const app = createApp({
     const isDev = computed(() => env('ENVIRONMENT') === 'dev');
     
     // Data retrieval
-    const context = computed(() => get('context') || {});
-    const data = computed(() => get('data') || {});
-    const users = computed(() => get('users') || []);
-    
+    const example = computed(() => get('example') || {});
+
     // Game logic
     const submit = () => {
       emit('submit', { value: poem.value });

@@ -9,12 +9,21 @@
     "email": "jacob.samps@gmail.com"
   },
   "tags": ["game", "creative", "voting"],
-  "leaderboard": {
-    "type": "global",
-    "scoringType": "voting",
-    "maximumNumberOfVotes": 50,
-    "maximumVotesPerUser": 10
+  "servers": {
+    "kossabos/games": {
+      "version": "1.0.0",
+      "features": ["leaderboard", "voting"],
+      "config": {
+        "type": "global",
+        "scoringType": "voting",
+        "maximumNumberOfVotes": 50,
+        "maximumVotesPerUser": 10
+      }
+    },
+    "kossabos/mastra": {
+      "version": "1.0.0",
+      "config": { "models": ["gpt-4.1-nano"] }
+    }
   },
-  "features": ["voting", "leaderboard"],
   "settings": []
 }

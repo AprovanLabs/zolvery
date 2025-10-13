@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+
+import { shutdownTelemetry, telemetrySDK } from './config/telemetry';
+
 import { app } from './app';
 import { appConfig } from '@/config';
 import { logger } from '@/config/logger';
@@ -11,21 +14,24 @@ const server = app.listen(port, () => {
     nodeEnv: appConfig.nodeEnv,
     environment: appConfig.environment,
     version: process.env.npm_package_version || '1.0.0',
+    telemetryEnabled: !!telemetrySDK,
   }, `🚀 Kossabos server started successfully on port ${port}`);
 });
 
 // Graceful shutdown
-const shutdown = (signal: string) => {
+const shutdown = async (signal: string) => {
   logger.info({ signal }, 'Received shutdown signal, closing server...');
   
-  server.close((err) => {
+  server.close(async (err) => {
     if (err) {
       logger.error({ err }, 'Error during server shutdown');
-      process.exit(1);
+    } else {
+      logger.info('Server closed successfully');
     }
     
-    logger.info('Server closed successfully');
-    process.exit(0);
+    await shutdownTelemetry(telemetrySDK);
+    
+    process.exit(err ? 1 : 0);
   });
 };
 
@@ -33,7 +39,7 @@ process.on('SIGINT', () => shutdown('SIGINT'));
 process.on('SIGTERM', () => shutdown('SIGTERM'));
 
 // Handle uncaught exceptions
-process.on('uncaughtException', (error) => {
+process.on('uncaughtException', async (error) => {
   logger.fatal({
     err: {
       message: error.message,
@@ -41,15 +47,19 @@ process.on('uncaughtException', (error) => {
       stack: error.stack,
     },
   }, 'Uncaught exception, shutting down...');
+  
+  await shutdownTelemetry(telemetrySDK);
   process.exit(1);
 });
 
 // Handle unhandled promise rejections
-process.on('unhandledRejection', (reason, promise) => {
+process.on('unhandledRejection', async (reason, promise) => {
   logger.fatal({
     reason,
     promise,
   }, 'Unhandled promise rejection, shutting down...');
+  
+  await shutdownTelemetry(telemetrySDK);
   process.exit(1);
 });
 

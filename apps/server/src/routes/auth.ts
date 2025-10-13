@@ -1,24 +1,17 @@
 import Router from '@koa/router';
-import { LogContext } from '@/middleware/logger';
-import { apiLogger } from '@/config/logger';
+import logger from '@/logger';
 import { sendErrorResponse, sendSuccessResponse, validateAuth } from '@/utils/api';
+import { AuthContext } from '@/auth';
 
 const router = new Router();
 
 // GET /auth/me - Get current user information
-router.get('/me', async (ctx: LogContext) => {
+router.get('/me', async (ctx: AuthContext) => {
   const requestId = ctx.requestId;
+  const user = ctx.user;
   
   try {
-    const user = validateAuth(ctx);
-    if (!user) {
-      apiLogger.warn({
-        requestId,
-      }, 'No user found in auth context');
-      return;
-    }
-
-    apiLogger.info({
+    logger.info({
       requestId,
       userId: user.userId,
     }, 'User info requested');
@@ -29,7 +22,7 @@ router.get('/me', async (ctx: LogContext) => {
       groups: user.groups,
     }, 'User information retrieved successfully');
   } catch (error) {
-    apiLogger.error({
+    logger.error({
       requestId,
       error: error instanceof Error ? error.message : 'Unknown error',
     }, 'Failed to get user information');

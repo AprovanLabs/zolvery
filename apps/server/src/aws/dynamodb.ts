@@ -48,3 +48,18 @@ export function getDynamoDBDocumentClient(): DynamoDBDocumentClient {
 
   return dynamoDBDocumentClient;
 }
+
+export const generatePartitionKey = (type: string, ...parts: (string | number)[]): string => {
+  const cleanParts = parts.map(p => String(p).replace(/[:#]/g, '_'));
+  return [type, ...cleanParts].join('#');
+};
+
+export const generateSortKey = (type: string, ...parts: (string | number)[]): string => {
+  const cleanParts = parts.map(p => String(p).replace(/[:#]/g, '_'));
+  return [type, ...cleanParts].join('#');
+};
+
+export type DynamoDbRecord<T> = {
+  PK: string,
+  SK: string
+} & T

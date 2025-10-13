@@ -9,11 +9,7 @@ echo "   Environment: $ENVIRONMENT"
 echo "   Region: $AWS_REGION ($REGION_SHORT_CODE)"
 echo ""
 
-# Generate resource names following the CDK naming convention
-# Table name: kossabos-prd-use1-main
 TABLE_NAME="$PROJECT_ID-$ENVIRONMENT-$REGION_SHORT_CODE-main"
-
-# Bucket name: aprovan-kossabos-prd-use1-data  
 BUCKET_NAME="$ORG_ID-$PROJECT_ID-$ENVIRONMENT-$REGION_SHORT_CODE-data"
 
 echo "📊 Creating DynamoDB table: $TABLE_NAME"

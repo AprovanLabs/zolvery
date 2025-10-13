@@ -11,8 +11,9 @@
     "baseUrl": "./",
     "paths": {
       "@/*": ["src/*"],
+      "@/logger": ["src/config/logger"],
       "@/config/*": ["src/config/*"],
-      "@/models/*": ["src/models/*"],
+      "@/models/*": ["src/types/*"],
       "@/services/*": ["src/services/*"],
       "@/utils/*": ["src/utils/*"],
       "@/middleware/*": ["src/middleware/*"],
@@ -42,7 +43,8 @@
   },
   "include": [
     "src/**/*",
-    "src/**/*.json"
+    "src/**/*.json",
+    "types/**/*.d.ts"
   ],
   "exclude": [
     "node_modules",

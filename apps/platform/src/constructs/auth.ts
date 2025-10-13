@@ -5,11 +5,8 @@ import {
   RemovalPolicy,
   aws_cognito as cognito,
   aws_certificatemanager as certificatemanager,
-  aws_route53 as route53,
-  aws_route53_targets as targets,
 } from 'aws-cdk-lib';
 import {
-  DOMAIN_NAME,
   DOMAIN_PACKAGE,
   MOBILE_PORT,
   PROJECT_DOMAIN,
