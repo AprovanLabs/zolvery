@@ -5,10 +5,8 @@
   "tags": ["card-game", "classic"],
   "version": "0.0.1",
   "runnerTag": "vue-boardgameio",
-  "author": {
-    "username": "Jacob Sampson",
-    "email": "jacob.samps@gmail.com"
-  },
+  "authorId": "jsampson",
+  "visibility": "public",
   "settings": [
     {
       "id": "num-players",

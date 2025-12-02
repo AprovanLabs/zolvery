@@ -11,6 +11,12 @@ export type Settings = {
   required?: boolean;
 }
 
+export type Server = {
+  version: string,
+  features?: string[],
+  config?: { [key: string]: any },
+}
+
 export type App = {
   appId: string;
   name: string;
@@ -18,6 +24,8 @@ export type App = {
   tags: string[];
   version: string;
   runnerTag: string;
-  author: User;
+  authorId: string;
+  visibility: 'public' | 'private';
   settings: Settings[],
+  servers?: { [serverId: string]: string | Server },
 };

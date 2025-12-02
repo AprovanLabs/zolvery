@@ -14,7 +14,7 @@
  * while maintaining global consistency.
  */
 
-import { format, isValid } from 'date-fns';
+import { format } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
 
 // Rollover timezone: GMT+9:00 (JST) - days roll over at a reasonable time for US and Europe
@@ -71,34 +71,4 @@ export function getCurrentDayInTimezone(timezone: string): string {
  */
 export function getCurrentTimeInRolloverTimezone(): Date {
   return toZonedTime(new Date(), ROLLOVER_TIMEZONE);
-}
-
-/**
- * Validate date string format (YYYY-MM-DD)
- */
-export function isValidDateString(dateString: string): boolean {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
-    return false;
-  }
-  
-  const date = new Date(dateString);
-  return isValid(date);
-}
-
-/**
- * Get date string from timestamp using the rollover timezone (GMT+9:00)
- */
-export function getDateFromTimestamp(timestamp: number): string {
-  const date = new Date(timestamp);
-  const zonedTime = toZonedTime(date, ROLLOVER_TIMEZONE);
-  return format(zonedTime, 'yyyy-MM-dd');
-}
-
-/**
- * Calculate TTL timestamp (seconds since epoch) for given days from now
- */
-export function getTTL(daysFromNow: number): number {
-  const now = new Date();
-  const ttlDate = new Date(now.getTime() + (daysFromNow * 24 * 60 * 60 * 1000));
-  return Math.floor(ttlDate.getTime() / 1000);
 }

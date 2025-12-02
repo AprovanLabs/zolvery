@@ -1,5 +1,5 @@
 import { Context } from 'koa';
-import { AuthContext } from '@/middleware/auth';
+import { AuthContext } from '@/auth';
 import { LogContext } from '@/middleware/logger';
 
 export interface ErrorResponse {

@@ -2,10 +2,7 @@
   "appId": "board-games/connect-4",
   "version": "0.0.1",
   "runnerTag": "vue-boardgameio",
-  "author": {
-    "username": "Jacob Sampson",
-    "email": "jacob.samps@gmail.com"
-  },
+  "authorId": "jsampson",
   "tags": ["game", "classics"],
   "features": ["bots"],
   "settings": [

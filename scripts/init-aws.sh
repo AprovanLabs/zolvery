@@ -40,4 +40,7 @@ echo "   S3 Bucket: $BUCKET_NAME"
 echo ""
 echo "🔗 Access LocalStack at: $LOCALSTACK_ENDPOINT"
 echo "🌐 Web UI available at: http://localhost:4566/_localstack/health"
+echo ""
+echo "💡 To load app data into DynamoDB:"
+echo "   cd scripts && pnpm install && pnpm run load-apps"
 

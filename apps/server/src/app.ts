@@ -5,15 +5,11 @@ import cors from '@koa/cors';
 import { appConfig } from '@/config';
 import logger from '@/logger';
 import { requestLogger, errorLogger } from '@/middleware/logger';
-import { authMiddleware } from '@/middleware/auth';
 import { telemetryMiddleware } from '@/middleware/telemetry';
-import { leaderboardRoutes } from './routes/leaderboard';
-import { eventRoutes } from './routes/events';
-import { appDataRoutes } from './routes/app-data';
-import { authRoutes } from './routes/auth';
-import { getCurrentDay, getTimeLeftInCurrentDay } from './utils/date';
+import { buildApiRouter } from './api';
 
 import type { LogContext } from '@/middleware/logger';
+import { buildServices } from './services';
 
 const app = new Koa<{}, LogContext>();
 const router = new Router<{}, LogContext>();
@@ -72,11 +68,7 @@ app.use(
     formLimit: '10mb',
     jsonLimit: '10mb',
     onerror: (err: Error, ctx: any) => {
-      logger.error(
-        err,
-        { requestId: ctx.requestId },
-        'Body parser error',
-      );
+      logger.error(err, { requestId: ctx.requestId }, 'Body parser error');
       throw err;
     },
   }),
@@ -94,7 +86,6 @@ router.get('/about', (ctx) => {
       endpoint: appConfig.aws.endpoint,
     },
     requestId: ctx.requestId,
-    day: getCurrentDay(),
   };
 
   logger.info(
@@ -115,8 +106,6 @@ router.get('/status', (ctx) => {
     environment: appConfig.environment,
     version: appConfig.version,
     requestId: ctx.requestId,
-    day: getCurrentDay(),
-    remainingTime: getTimeLeftInCurrentDay(),
     ...(appConfig.environment === 'dev' && {
       config: {
         aws: appConfig.aws,
@@ -139,9 +128,11 @@ router.get('/status', (ctx) => {
 
 logger.info('Setting up API routes');
 
-router.use('/v1/auth', authMiddleware, authRoutes.routes());
-router.use('/v1/events', authMiddleware, eventRoutes.routes());
-router.use('/v1/app-data', authMiddleware, appDataRoutes.routes());
+const services = buildServices();
+router.use(
+  '/api',
+  buildApiRouter({ services }).routes(),
+)
 
 // Apply routes to app
 app.use(router.routes());

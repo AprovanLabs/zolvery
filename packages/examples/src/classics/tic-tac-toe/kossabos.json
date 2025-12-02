@@ -4,15 +4,12 @@
   "description": "A classic game of Tic Tac Toe, also known as Noughts and Crosses.",
   "runnerTag": "vue-vanilla",
   "version": "0.0.1",
-  "author": {
-    "username": "Jacob Sampson",
-    "email": "jacob.samps@gmail.com"
-  },
+  "authorId": "jsampson",
+  "visibility": "public",
   "tags": ["game", "classics"],
-  "leaderboard": {
-    "type": "friends"
+  "servers": {
+    "kossabos/games": "latest"
   },
-  "features": ["bots"],
   "settings": [
     {
       "id": "cats-game",

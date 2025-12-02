@@ -1,4 +1,4 @@
-const pino = require('pino');
+import pino from 'pino';
 import { appConfig } from './index';
 import { v7 as uuid } from 'uuid';
 import { AsyncLocalStorage } from 'async_hooks';
@@ -83,7 +83,9 @@ const createLogger = () => {
   return pino(loggerOptions);
 };
 
-export const logger = createLogger();
+export type Logger = ExtendedLogger;
+
+export const logger = createLogger() as Logger;
 
 // Request ID generator for tracing
 export const generateRequestId = (): string => uuid();

@@ -3,11 +3,8 @@
   "name": "Lettered",
   "description": "A word puzzle game where players create words from a set of letters.",
   "version": "0.0.1",
-  "runnerTag": "vue-boardgameio",
-  "author": {
-    "username": "Jacob Sampson",
-    "email": "jacob.samps@gmail.com"
-  },
+  "authorId": "jsampson",
+  "visibility": "public",
   "settings": [
     {
       "id": "hardMode",
