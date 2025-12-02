@@ -31,7 +31,7 @@ export const requestLogger = async (ctx: LogContext, next: Next): Promise<void> 
   });
 
   // Log incoming request
-  logger.info({
+  logger.debug({
     userAgent: ctx.headers['user-agent'],
     contentType: ctx.headers['content-type'],
     contentLength: ctx.headers['content-length'],
@@ -46,7 +46,7 @@ export const requestLogger = async (ctx: LogContext, next: Next): Promise<void> 
     const duration = timer();
 
     // Log successful response
-    logger.info({
+    logger.debug({
       status: ctx.status,
       duration: `${duration.toFixed(2)}ms`,
       responseLength: ctx.length,

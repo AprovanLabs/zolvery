@@ -1,0 +1,21 @@
+{
+  "name": "@kossabos/scripts",
+  "version": "1.0.0",
+  "description": "Development scripts for Kossabos",
+  "type": "module",
+  "scripts": {
+    "load-apps": "tsx dynamodb/load-apps.ts",
+    "wipe-table": "tsx dynamodb/wipe-table.ts",
+    "setup-aws": "./setup-local-aws.sh"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.0.0",
+    "@aws-sdk/lib-dynamodb": "^3.0.0",
+    "@aws-sdk/util-dynamodb": "^3.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0"
+  }
+}

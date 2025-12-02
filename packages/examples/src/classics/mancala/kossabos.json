@@ -2,10 +2,8 @@
   "appId": "classics/mancala",
   "runnerTag": "vue-vanilla",
   "version": "0.0.1",
-  "author": {
-    "username": "Jacob Sampson",
-    "email": "jacob.samps@gmail.com"
-  },
+  "authorId": "jsampson",
+  "visibility": "public",
   "tags": ["game", "classics"],
   "servers": ["kossabos/games"]
 }

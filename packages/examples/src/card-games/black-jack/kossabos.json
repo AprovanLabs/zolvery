@@ -2,10 +2,8 @@
   "appId": "card-games/black-jack",
   "version": "0.0.1",
   "runnerTag": "vue-boardgameio",
-  "author": {
-    "username": "Jacob Sampson",
-    "email": "jacob.samps@gmail.com"
-  },
+  "authorId": "jsampson",
+  "visibility": "public",
   "tags": ["game", "classics"],
   "settings": [
     {

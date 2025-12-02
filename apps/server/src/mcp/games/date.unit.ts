@@ -85,24 +85,4 @@ describe('Date Utilities', () => {
       expect(result2).toBe('2025-07-01'); // Should be same day in Tokyo timezone
     });
   });
-
-  describe('getTTL', () => {
-    it('should calculate TTL for future dates', () => {
-      const oneDayTTL = getTTL(1);
-      const thirtyDayTTL = getTTL(30);
-      
-      expect(oneDayTTL).toBeGreaterThan(Math.floor(Date.now() / 1000));
-      expect(thirtyDayTTL).toBeGreaterThan(oneDayTTL);
-      
-      // Should be roughly 1 day in the future (allowing for test execution time)
-      const expectedOneDayTTL = Math.floor(Date.now() / 1000) + (24 * 60 * 60);
-      expect(Math.abs(oneDayTTL - expectedOneDayTTL)).toBeLessThan(60); // Within 1 minute
-    });
-
-    it('should handle zero days', () => {
-      const zeroTTL = getTTL(0);
-      const now = Math.floor(Date.now() / 1000);
-      expect(Math.abs(zeroTTL - now)).toBeLessThan(5); // Within 5 seconds
-    });
-  });
 });

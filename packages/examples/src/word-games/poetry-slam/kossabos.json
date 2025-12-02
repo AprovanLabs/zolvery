@@ -4,10 +4,8 @@
   "description": "A creative writing competition where users vote on each other's poems",
   "runnerTag": "vue-vanilla",
   "version": "0.0.1",
-  "author": {
-    "username": "Jacob Sampson",
-    "email": "jacob.samps@gmail.com"
-  },
+  "authorId": "jsampson",
+  "visibility": "public",
   "tags": ["game", "creative", "voting"],
   "servers": {
     "kossabos/games": {
