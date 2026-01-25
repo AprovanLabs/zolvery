@@ -1,0 +1,7 @@
+{
+  "commands": {
+    "aws": {
+      "help": "aws help"
+    }
+  }
+}

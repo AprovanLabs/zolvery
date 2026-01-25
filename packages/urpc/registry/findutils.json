@@ -1,0 +1,7 @@
+{
+  "commands": {
+    "find": { "help": "man find" },
+    "locate": { "help": "man locate" },
+    "xargs": { "help": "man xargs" }
+  }
+}

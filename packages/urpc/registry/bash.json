@@ -1,0 +1,7 @@
+{
+  "commands": {
+    "bash": {
+      "help": "man bash"
+    }
+  }
+}
