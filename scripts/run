@@ -1,0 +1,33 @@
+#!/bin/bash
+
+# Script runner - executes .ts scripts by name
+#
+# Usage:
+#   ./run <script-name> [args...]
+#
+# Examples:
+#   ./run dynamodb/load-apps
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_NAME="$1"
+shift
+
+if [ -z "$SCRIPT_NAME" ]; then
+  echo "Usage: run <script-name> [args...]"
+  echo "Example: run dynamodb/load-apps"
+  exit 1
+fi
+
+# Try with and without .ts extension
+if [ -f "$SCRIPT_DIR/$SCRIPT_NAME.ts" ]; then
+  SCRIPT_PATH="$SCRIPT_DIR/$SCRIPT_NAME.ts"
+elif [ -f "$SCRIPT_DIR/$SCRIPT_NAME" ]; then
+  SCRIPT_PATH="$SCRIPT_DIR/$SCRIPT_NAME"
+elif [ -f "$SCRIPT_DIR/$SCRIPT_NAME/index.ts" ]; then
+  SCRIPT_PATH="$SCRIPT_DIR/$SCRIPT_NAME/index.ts"
+else
+  echo "Script not found: $SCRIPT_NAME"
+  exit 1
+fi
+
+exec pnpm tsx "$SCRIPT_PATH" "$@"
