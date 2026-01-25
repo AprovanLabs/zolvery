@@ -1,7 +1,0 @@
-{
-  "commands": {
-    "ffmpeg": {
-      "help": "man ffmpeg"
-    }
-  }
-}

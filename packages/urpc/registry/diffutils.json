@@ -1,8 +1,0 @@
-{
-  "commands": {
-    "diff": { "help": "man diff" },
-    "diff3": { "help": "man diff3" },
-    "sdiff": { "help": "man sdiff" },
-    "cmp": { "help": "man cmp" }
-  }
-}

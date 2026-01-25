@@ -1,7 +1,0 @@
-{
-  "commands": {
-    "tar": {
-      "help": "man tar"
-    }
-  }
-}
