@@ -1,0 +1,7 @@
+{
+  "commands": {
+    "gzip": {
+      "help": "man gzip"
+    }
+  }
+}

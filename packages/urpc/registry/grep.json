@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "grep": {
+      "url": "https://mcp.grep.app",
+      "type": "text"
+    }
+  },
+  "commands": {
+    "grep": {
+      "help": "man grep"
+    }
+  }
+}
