@@ -6,3 +6,8 @@ dist
 .DS_Store
 .env
 .venv
+
+# bmad
+_bmad
+.github/agents/bmd*
+

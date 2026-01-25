@@ -7,6 +7,7 @@
     "build": "tsc",
     "dev": "ENVIRONMENT=dev BUILD_SHA_PREFIX=`git rev-parse --verify HEAD | cut -c1-6` tsx watch src/index.ts",
     "dev:logs": "ENVIRONMENT=dev BUILD_SHA_PREFIX=`git rev-parse --verify HEAD | cut -c1-6` LOG_LEVEL=debug tsx watch src/index.ts",
+    "gen:urpc": "npm run urpc generate",
     "start": "node dist/index.js",
     "test": "jest",
     "test:unit": "jest --testPathPattern='\\.unit\\.(ts|js)$'",

@@ -28,16 +28,10 @@ logger.info(
   'Starting Kossabos API',
 );
 
-// Error handling middleware (should be first)
 app.use(errorLogger);
-
-// Request logging middleware
 app.use(requestLogger);
-
-// Telemetry middleware to enhance spans with custom attributes
 app.use(telemetryMiddleware());
 
-// Configure CORS
 app.use(
   cors({
     origin: (ctx) => {
@@ -61,7 +55,6 @@ app.use(
   }),
 );
 
-// Body parser middleware
 app.use(
   bodyParser({
     enableTypes: ['json', 'form'],
@@ -74,7 +67,6 @@ app.use(
   }),
 );
 
-// Health check endpoint
 router.get('/about', (ctx) => {
   const healthData = {
     status: 'ok',
@@ -129,16 +121,11 @@ router.get('/status', (ctx) => {
 logger.info('Setting up API routes');
 
 const services = buildServices();
-router.use(
-  '/api',
-  buildApiRouter({ services }).routes(),
-)
+router.use('/api', buildApiRouter({ services }).routes());
 
-// Apply routes to app
 app.use(router.routes());
 app.use(router.allowedMethods());
 
-// Error handling middleware
 app.on('error', (err: Error, ctx?: any) => {
   logger.error(
     {

@@ -1,7 +1,4 @@
-import { connect } from '@kossabos/mcp';
-
-const games = await connect('kossabos/games');
-const mastra = await connect('kossabos/mastra');
+import { kossabos, mastra } from '@urpc/clients';
 
 export default async () => {
   const dailyPoem = mastra.generate({
@@ -13,7 +10,7 @@ export default async () => {
           type: 'string',
           description: 'Writing prompt for the day',
         },
-        examples: { 
+        examples: {
           type: 'array',
           description: 'Example poems',
           items: {
@@ -28,6 +25,6 @@ export default async () => {
       },
       required: ['prompt', 'examples'],
     },
-  })
-  await games.save_daily_data(dailyPoem);
+  });
+  await kossabos.saveDailyData(dailyPoem);
 };
