@@ -10,9 +10,9 @@
     "dependencies": {
         "@heroicons/react": "^2.2.0",
         "@kossabos/core": "*",
-        "@kossabos/vue": "*",
         "@tailwindcss/typography": "^0.5.16",
-        "primereact": "^10.8.5",
+        "@aprovan/patchwork-compiler": "workspace:*",
+        "@aprovan/patchwork-image-shadcn": "workspace:*",
         "react": "^19.0.0",
         "react-dom": "^19.0.0",
         "react-markdown": "^10.1.0"

@@ -1,6 +1,7 @@
 {
   "appId": "classics/mancala",
-  "runnerTag": "vue-vanilla",
+  "name": "Mancala",
+  "runnerTag": "shadcn",
   "version": "0.0.1",
   "authorId": "jsampson",
   "visibility": "public",

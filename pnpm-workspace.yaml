@@ -1,10 +1,10 @@
 packages:
   - 'apps/**'
-  - 'packages/runners/**'
   - 'packages/**'
   - 'scripts/**'
   - '!**/build/**'
   - '!**/dist/**'
 
-catalog:
-  '@kossabos/vue': ^0.0.1
+  # Patchwork packages
+  - '../apprentice/packages/*'
+  - '../apprentice/packages/images/*'
