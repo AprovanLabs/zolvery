@@ -4,7 +4,12 @@ import {
   ChartBarIcon,
   QuestionMarkCircleIcon,
 } from '@heroicons/react/24/solid';
-import { App as KossabosApp } from '@kossabos/core';
+
+export interface KossabosApp {
+  name: string;
+  authorId?: string;
+  settings?: unknown[];
+}
 
 export interface AppHeaderProps {
   /** The app data */
@@ -29,7 +34,6 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   >
     <div>
       <p>{app.name}</p>
-      <span className="text-xs">{app.author.username}</span>
     </div>
     <div className="flex items-center gap-6">
       <QuestionMarkCircleIcon
