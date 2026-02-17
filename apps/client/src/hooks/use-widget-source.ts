@@ -24,9 +24,7 @@ export interface UseWidgetSourceReturn {
   error: Error | null;
 }
 
-export function useWidgetSource(
-  appId: string | null,
-): UseWidgetSourceReturn {
+export function useWidgetSource(appId: string | null): UseWidgetSourceReturn {
   const [manifest, setManifest] = useState<KossabosManifest | null>(null);
   const [source, setSource] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);

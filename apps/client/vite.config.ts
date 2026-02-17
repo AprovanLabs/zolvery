@@ -4,12 +4,21 @@ import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 
 // Apprentice packages directory (adjust if needed)
-const APPRENTICE_PACKAGES = path.resolve(__dirname, '../../../apprentice/packages');
+const APPRENTICE_PACKAGES = path.resolve(
+  __dirname,
+  '../../../apprentice/packages',
+);
 
 // Map npm package names to local directories
 const LOCAL_NPM_PACKAGES: Record<string, string> = {
-  '@aprovan/patchwork-image-shadcn': path.join(APPRENTICE_PACKAGES, 'images/shadcn'),
-  '@aprovan/patchwork-image-vanilla': path.join(APPRENTICE_PACKAGES, 'images/vanilla'),
+  '@aprovan/patchwork-image-shadcn': path.join(
+    APPRENTICE_PACKAGES,
+    'images/shadcn',
+  ),
+  '@aprovan/patchwork-image-vanilla': path.join(
+    APPRENTICE_PACKAGES,
+    'images/vanilla',
+  ),
   '@aprovan/patchwork-compiler': path.join(APPRENTICE_PACKAGES, 'compiler'),
   '@aprovan/patchwork': path.join(APPRENTICE_PACKAGES, 'patchwork'),
 };
@@ -24,7 +33,7 @@ export default defineConfig({
         server.middlewares.use('/npm', (req, res, next) => {
           // Strip query params (Vite adds ?import for dynamic imports)
           const urlPath = (req.url || '').split('?')[0];
-          
+
           // Parse package name and file path from URL
           // URL format: /@scope/package/file.js or /@scope/package@version/file.js
           const match = urlPath.match(/^\/(@[^/]+\/[^/@]+)(?:@[^/]+)?\/(.*)$/);
@@ -35,14 +44,14 @@ export default defineConfig({
 
           const [, packageName, filePath] = match;
           const localDir = LOCAL_NPM_PACKAGES[packageName];
-          
+
           if (!localDir) {
             next();
             return;
           }
 
           const fullPath = path.join(localDir, filePath);
-          
+
           if (!fs.existsSync(fullPath)) {
             res.statusCode = 404;
             res.end(`Not found: ${fullPath}`);
@@ -59,9 +68,12 @@ export default defineConfig({
             '.tsx': 'text/plain',
             '.css': 'text/css',
           };
-          res.setHeader('Content-Type', contentTypes[ext] || 'application/octet-stream');
+          res.setHeader(
+            'Content-Type',
+            contentTypes[ext] || 'application/octet-stream',
+          );
           res.setHeader('Access-Control-Allow-Origin', '*');
-          
+
           const content = fs.readFileSync(fullPath, 'utf-8');
           res.end(content);
         });
@@ -69,11 +81,18 @@ export default defineConfig({
         // Serve example app sources at /apps/...
         server.middlewares.use('/apps', (req, res, next) => {
           const urlPath = req.url || '';
-          const examplesDir = path.resolve(__dirname, '../../packages/examples/src');
+          const examplesDir = path.resolve(
+            __dirname,
+            '../../packages/examples/src',
+          );
           const fullPath = path.join(examplesDir, urlPath);
 
           // Only serve .tsx, .ts, and .json files as text
-          if (urlPath.endsWith('.tsx') || urlPath.endsWith('.ts') || urlPath.endsWith('.json')) {
+          if (
+            urlPath.endsWith('.tsx') ||
+            urlPath.endsWith('.ts') ||
+            urlPath.endsWith('.json')
+          ) {
             if (!fs.existsSync(fullPath)) {
               // Fall through to server proxy for manifest files
               next();
@@ -87,7 +106,7 @@ export default defineConfig({
               '.tsx': 'text/plain; charset=utf-8',
             };
             res.setHeader('Content-Type', contentTypes[ext] || 'text/plain');
-            
+
             const content = fs.readFileSync(fullPath, 'utf-8');
             res.end(content);
             return;
