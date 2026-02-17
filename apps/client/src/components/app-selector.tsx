@@ -17,7 +17,7 @@ export const AppSelector: React.FC<AppSelectorProps> = ({
 }) => (
   <div className="fixed top-0 flex items-center gap-2 pt-2 pl-2 bg-white z-10">
     <img
-      src="/logo.svg"
+      src="/logo.png"
       alt="Kossabos Logo"
       className="w-10 h-10"
     />

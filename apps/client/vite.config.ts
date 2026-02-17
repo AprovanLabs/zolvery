@@ -21,6 +21,10 @@ const LOCAL_NPM_PACKAGES: Record<string, string> = {
   ),
   '@aprovan/patchwork-compiler': path.join(APPRENTICE_PACKAGES, 'compiler'),
   '@aprovan/patchwork': path.join(APPRENTICE_PACKAGES, 'patchwork'),
+  '@kossabos/patchwork-image-boardgameio': path.join(
+    __dirname,
+    '../../packages/images/boardgameio',
+  ),
 };
 
 export default defineConfig({

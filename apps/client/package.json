@@ -10,6 +10,7 @@
     "dependencies": {
         "@heroicons/react": "^2.2.0",
         "@kossabos/core": "*",
+        "@kossabos/patchwork-image-boardgameio": "workspace:*",
         "@tailwindcss/typography": "^0.5.16",
         "@aprovan/patchwork-compiler": "workspace:*",
         "@aprovan/patchwork-image-shadcn": "workspace:*",
