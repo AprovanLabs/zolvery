@@ -10,10 +10,11 @@ export interface KossabosManifest {
   tags?: string[];
   servers?: string[];
   settings?: Array<{
-    key: string;
+    id: string;
     label: string;
-    type: string;
+    type?: string;
     default?: unknown;
+    options?: Array<{ value: string; label: string }>;
   }>;
 }
 

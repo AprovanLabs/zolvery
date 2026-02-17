@@ -1,0 +1,71 @@
+{
+  "name": "@kossabos/patchwork-image-boardgameio",
+  "version": "0.1.0",
+  "description": "Patchwork image: Boardgame.io with React",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "patchwork": {
+    "platform": "browser",
+    "dependencies": {
+      "react": "^18.0.0",
+      "react-dom": "^18.0.0"
+    },
+    "esbuild": {
+      "target": "es2020",
+      "format": "esm",
+      "jsx": "transform",
+      "jsxFactory": "React.createElement",
+      "jsxFragment": "React.Fragment"
+    },
+    "framework": {
+      "globals": {
+        "react": "React",
+        "react-dom": "ReactDOM",
+        "boardgame.io/client": "BoardgameClient",
+        "boardgame.io/react": "BoardgameReact",
+        "boardgame.io/ai": "BoardgameAI",
+        "boardgame.io/multiplayer": "BoardgameMultiplayer"
+      },
+      "preload": [
+        "https://esm.sh/react@18",
+        "https://esm.sh/react-dom@18/client",
+        "https://esm.sh/boardgame.io@0.50.2/client?external=react,react-dom",
+        "https://esm.sh/boardgame.io@0.50.2/react?external=react,react-dom",
+        "https://esm.sh/boardgame.io@0.50.2/ai?external=react,react-dom",
+        "https://esm.sh/boardgame.io@0.50.2/multiplayer?external=react,react-dom"
+      ],
+      "deps": {
+        "react": "18",
+        "react-dom": "18",
+        "boardgame.io": "0.50.2"
+      }
+    },
+    "aliases": {
+      "@/components/ui/*": "@packagedcn/react",
+      "@/lib/utils": "@packagedcn/react"
+    }
+  },
+  "dependencies": {
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.0.0",
+    "@types/react-dom": "^18.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.0.0"
+  }
+}

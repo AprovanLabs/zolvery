@@ -23,6 +23,7 @@ export interface UsePatchworkReturn {
     source: string,
     manifest: Manifest,
     target: HTMLElement,
+    inputs?: Record<string, unknown>,
   ) => Promise<MountedWidget>;
 }
 
@@ -65,13 +66,19 @@ export function usePatchwork(options: UsePatchworkOptions): UsePatchworkReturn {
   ]);
 
   const mount = useCallback(
-    async (source: string, manifest: Manifest, target: HTMLElement) => {
+    async (
+      source: string,
+      manifest: Manifest,
+      target: HTMLElement,
+      inputs?: Record<string, unknown>,
+    ) => {
       if (!compiler) throw new Error('Compiler not ready');
 
       const widget = await compiler.compile(source, manifest);
       const mounted = await compiler.mount(widget, {
         target,
         mode: 'embedded',
+        inputs,
       });
 
       mountedRef.current = mounted;
