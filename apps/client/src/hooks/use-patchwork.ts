@@ -57,7 +57,12 @@ export function usePatchwork(options: UsePatchworkOptions): UsePatchworkReturn {
         mountedRef.current.unmount();
       }
     };
-  }, [options.image, options.proxyUrl, options.cdnBaseUrl, options.widgetCdnBaseUrl]);
+  }, [
+    options.image,
+    options.proxyUrl,
+    options.cdnBaseUrl,
+    options.widgetCdnBaseUrl,
+  ]);
 
   const mount = useCallback(
     async (source: string, manifest: Manifest, target: HTMLElement) => {
