@@ -1,21 +1,27 @@
 import { useState, useEffect } from 'react';
 
+export interface GameSetting {
+  id: string;
+  label: string;
+  type?: string;
+  default?: unknown;
+  min?: number;
+  max?: number;
+  options?: Array<{ value: string; label: string }>;
+}
+
 export interface KossabosManifest {
   appId: string;
   name?: string;
+  description?: string;
   runnerTag: string;
   version: string;
   authorId?: string;
   visibility?: string;
   tags?: string[];
   servers?: string[];
-  settings?: Array<{
-    id: string;
-    label: string;
-    type?: string;
-    default?: unknown;
-    options?: Array<{ value: string; label: string }>;
-  }>;
+  players?: { min?: number; max?: number };
+  settings?: GameSetting[];
 }
 
 export interface UseWidgetSourceReturn {

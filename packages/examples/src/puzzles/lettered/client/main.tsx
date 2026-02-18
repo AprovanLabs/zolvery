@@ -1,4 +1,36 @@
-import { computed, createApp, inject, onMounted, onUnmounted, ref } from 'vue';
+import React, { useCallback, useEffect, useState } from 'react';
+
+type Feedback = 'correct' | 'wrong-position' | 'incorrect';
+
+interface GameState {
+  secret: string;
+  guesses: string[];
+  feedback: Feedback[][];
+  won: boolean;
+  gameOver: boolean;
+}
+
+interface BoardProps {
+  G: GameState;
+  ctx: { currentPlayer: string };
+  moves: { makeGuess: (word: string) => void; reset: () => void };
+  playerID?: string;
+}
+
+const MAX_GUESSES = 6;
+const WORD_LENGTH = 5;
+
+const COLORS = {
+  correct: 'oklch(72.3% 0.219 149.579)', // green
+  wrongPosition: 'oklch(79.5% 0.184 86.047)', // yellow
+  incorrect: 'oklch(55.1% 0.027 264.364)', // gray
+};
+
+const KEYBOARD_LAYOUT = [
+  ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
+  ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'],
+  ['Z', 'X', 'C', 'V', 'B', 'N', 'M'],
+];
 
 const WORD_LIST = [
   'aback',
@@ -2312,229 +2344,316 @@ const WORD_LIST = [
   'zonal',
 ];
 
-const generateFeedback = (guess, secret) => {
-  const feedback = [];
-  for (let i = 0; i < guess.length; i++) {
-    if (guess[i] === secret[i]) {
-      feedback.push('correct');
-    } else if (secret.includes(guess[i])) {
-      feedback.push('wrong-position');
-    } else {
-      feedback.push('incorrect');
+const generateFeedback = (guess: string, secret: string): Feedback[] => {
+  const feedback: Feedback[] = [];
+  const secretChars = secret.split('');
+  const guessChars = guess.split('');
+  const used = new Array(WORD_LENGTH).fill(false);
+
+  // First pass: mark correct positions
+  for (let i = 0; i < WORD_LENGTH; i++) {
+    if (guessChars[i] === secretChars[i]) {
+      feedback[i] = 'correct';
+      used[i] = true;
     }
   }
+
+  // Second pass: mark wrong positions and incorrect
+  for (let i = 0; i < WORD_LENGTH; i++) {
+    if (feedback[i]) continue;
+    const idx = secretChars.findIndex(
+      (c, j) => c === guessChars[i] && !used[j],
+    );
+    if (idx !== -1) {
+      feedback[i] = 'wrong-position';
+      used[idx] = true;
+    } else {
+      feedback[i] = 'incorrect';
+    }
+  }
+
   return feedback;
 };
 
 export const game = {
-  setup: ({ random }) => ({
-    secret: WORD_LIST[Math.floor(random.Number() * WORD_LIST.length)],
+  name: 'lettered',
+  setup: (): GameState => ({
+    secret: WORD_LIST[Math.floor(Math.random() * WORD_LIST.length)],
     guesses: [],
     feedback: [],
     won: false,
+    gameOver: false,
   }),
-
-  turn: {
-    minMoves: 1,
-    maxMoves: 1,
-  },
-
   moves: {
-    makeGuess: ({ G, events }, word) => {
+    makeGuess: ({ G }: { G: GameState }, word: string) => {
       const lowerWord = word.toLowerCase();
-      if (lowerWord.length !== 5) return;
+      if (lowerWord.length !== WORD_LENGTH) return;
+      if (!WORD_LIST.includes(lowerWord)) return;
+      if (G.gameOver) return;
 
       G.guesses.push(lowerWord);
       G.feedback.push(generateFeedback(lowerWord, G.secret));
 
-      console.log('g', G.secret, generateFeedback(lowerWord, G.secret));
-
       if (lowerWord === G.secret) {
         G.won = true;
-        events.endGame();
-      }
-
-      if (G.guesses.length >= 6 && !G.won) {
-        events.endGame();
+        G.gameOver = true;
+      } else if (G.guesses.length >= MAX_GUESSES) {
+        G.gameOver = true;
       }
     },
-  },
-
-  endIf: ({ G }) => {
-    if (G.won) return { winner: true };
-    if (G.guesses.length >= 6) return { winner: false };
+    reset: ({ G }: { G: GameState }) => {
+      G.secret = WORD_LIST[Math.floor(Math.random() * WORD_LIST.length)];
+      G.guesses = [];
+      G.feedback = [];
+      G.won = false;
+      G.gameOver = false;
+    },
   },
 };
 
-const KEYBOARD_LAYOUT = [
-  ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
-  ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'],
-  ['Z', 'X', 'C', 'V', 'B', 'N', 'M'],
-];
+export function app({ G, moves }: BoardProps) {
+  const [currentGuess, setCurrentGuess] = useState<string[]>(
+    Array(WORD_LENGTH).fill(''),
+  );
+  const [selectedBox, setSelectedBox] = useState(0);
 
-export const app = createApp({
-  setup() {
-    const G = inject('G');
-    const moves = inject('moves');
+  const over = G.gameOver;
 
-    const guesses = computed(() => G.value.guesses);
-    const feedback = computed(() => G.value.feedback);
-    const won = computed(() => G.value.won);
+  const isGuessComplete = currentGuess.every((letter: string) => letter !== '');
+  const isValidWord = WORD_LIST.includes(currentGuess.join('').toLowerCase());
+  const canSubmit = isGuessComplete && isValidWord && !over;
 
-    const currentGuess = ref(['', '', '', '', '']);
-    const selectedBox = ref(null);
-
-    const isValidWord = computed(() =>
-      WORD_LIST.includes(currentGuess.value.join('').toLowerCase()),
-    );
-
-    const isGuessComplete = computed(() =>
-      currentGuess.value.every((letter) => letter !== ''),
-    );
-
-    const canSubmit = computed(
-      () => isGuessComplete.value && isValidWord.value,
-    );
-
-    onMounted(() => {
-      selectedBox.value = 0;
-    });
-
-    const getKeyboardColor = (letter) => {
-      let bestColor = null;
-      guesses.value.forEach((guess, rowIndex) => {
+  // Get keyboard color based on feedback history
+  const getKeyboardStatus = useCallback(
+    (letter: string): Feedback | null => {
+      let best: Feedback | null = null;
+      G.guesses.forEach((guess, rowIndex) => {
         guess.split('').forEach((char, colIndex) => {
           if (char.toUpperCase() === letter) {
-            const currentFeedback = feedback.value[rowIndex][colIndex];
-            if (currentFeedback === 'correct') {
-              bestColor = 'bg-green-500';
-            } else if (
-              currentFeedback === 'wrong-position' &&
-              bestColor !== 'bg-green-500'
-            ) {
-              bestColor = 'bg-yellow-500';
-            } else if (currentFeedback === 'incorrect' && !bestColor) {
-              bestColor = 'bg-gray-500';
-            }
+            const fb = G.feedback[rowIndex][colIndex];
+            if (fb === 'correct') best = 'correct';
+            else if (fb === 'wrong-position' && best !== 'correct')
+              best = 'wrong-position';
+            else if (fb === 'incorrect' && !best) best = 'incorrect';
           }
         });
       });
-      return bestColor;
-    };
+      return best;
+    },
+    [G.guesses, G.feedback],
+  );
 
-    const handleKeyPress = (key) => {
-      if (won.value || selectedBox.value === null) return;
+  const handleKeyPress = useCallback(
+    (key: string) => {
+      if (over) return;
+      setCurrentGuess((prev: string[]) => {
+        const next = [...prev];
+        next[selectedBox] = key;
+        return next;
+      });
+      if (selectedBox < WORD_LENGTH - 1) {
+        setSelectedBox((prev: number) => prev + 1);
+      }
+    },
+    [over, selectedBox],
+  );
 
-      currentGuess.value[selectedBox.value] = key;
-      if (selectedBox.value < 4) selectedBox.value++;
-    };
+  const handleBackspace = useCallback(() => {
+    if (currentGuess[selectedBox]) {
+      setCurrentGuess((prev: string[]) => {
+        const next = [...prev];
+        next[selectedBox] = '';
+        return next;
+      });
+    } else if (selectedBox > 0) {
+      setSelectedBox((prev: number) => prev - 1);
+      setCurrentGuess((prev: string[]) => {
+        const next = [...prev];
+        next[selectedBox - 1] = '';
+        return next;
+      });
+    }
+  }, [selectedBox, currentGuess]);
 
-    const handleBackspace = () => {
-      if (selectedBox.value !== null) {
-        currentGuess.value[selectedBox.value] = '';
-        if (selectedBox.value > 0) selectedBox.value--;
+  const submitGuess = useCallback(() => {
+    if (canSubmit) {
+      moves.makeGuess(currentGuess.join('').toLowerCase());
+      setCurrentGuess(Array(WORD_LENGTH).fill(''));
+      setSelectedBox(0);
+    }
+  }, [canSubmit, currentGuess, moves]);
+
+  // Physical keyboard support
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (over) return;
+      if (e.key === 'Backspace') {
+        e.preventDefault();
+        handleBackspace();
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        submitGuess();
+      } else if (/^[a-zA-Z]$/.test(e.key)) {
+        handleKeyPress(e.key.toUpperCase());
       }
     };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [over, handleKeyPress, handleBackspace, submitGuess]);
 
-    const submitGuess = () => {
-      if (canSubmit.value) {
-        moves.makeGuess(currentGuess.value.join('').toLowerCase());
-        currentGuess.value = ['', '', '', '', ''];
-        selectedBox.value = 0;
-      }
-    };
+  const getKeyColor = (status: Feedback | null): string => {
+    switch (status) {
+      case 'correct':
+        return COLORS.correct;
+      case 'wrong-position':
+        return COLORS.wrongPosition;
+      case 'incorrect':
+        return COLORS.incorrect;
+      default:
+        return 'oklch(70% 0.01 264)';
+    }
+  };
 
-    return {
-      guesses,
-      feedback,
-      currentGuess,
-      won,
-      selectedBox,
-      isGuessComplete,
-      canSubmit,
-      submitGuess,
-      handleKeyPress,
-      handleBackspace,
-      KEYBOARD_LAYOUT,
-      getKeyboardColor,
-    };
-  },
-  template: `
-    <div class="flex min-h-screen justify-center bg-white">
-      <div class="w-full max-w-md p-8">
-        <div class="grid gap-4 pb-8">
-          <div 
-            v-for="(guess, rowIndex) in 6" 
-            :key="rowIndex"
-            class="grid grid-cols-5 gap-4"
+  const getCellStyle = (
+    rowIndex: number,
+    colIndex: number,
+  ): React.CSSProperties => {
+    if (G.guesses[rowIndex]) {
+      const fb = G.feedback[rowIndex][colIndex];
+      return {
+        backgroundColor:
+          fb === 'correct'
+            ? COLORS.correct
+            : fb === 'wrong-position'
+              ? COLORS.wrongPosition
+              : COLORS.incorrect,
+        borderColor:
+          fb === 'correct'
+            ? COLORS.correct
+            : fb === 'wrong-position'
+              ? COLORS.wrongPosition
+              : COLORS.incorrect,
+        color: '#fff',
+      };
+    }
+    return {};
+  };
+
+  return (
+    <div className="flex min-h-full w-full items-center justify-center bg-white p-4">
+      <div className="w-full max-w-sm space-y-4">
+        {/* Header */}
+        <div className="flex items-center justify-end">
+          <button
+            onClick={() => moves.reset()}
+            className="text-xs uppercase tracking-widest text-slate-400 hover:text-slate-700"
           >
-            <button
-              v-for="(letter, colIndex) in 5"
-              :key="colIndex"
-              @click="rowIndex === guesses.length ? selectedBox = colIndex : null"
-              class="w-full relative before:content-[''] before:float-left before:pb-[100%]"
-            >
-              <div
-                class="absolute inset-0 flex items-center justify-center rounded-lg border-2 text-2xl font-bold"
-                :class="[
-                  guesses[rowIndex] ? 
-                    feedback[rowIndex][colIndex] === 'correct' ? 'bg-green-500 text-white border-green-600' :
-                    feedback[rowIndex][colIndex] === 'wrong-position' ? 'bg-yellow-500 text-white border-yellow-600' :
-                    'bg-gray-500 text-white border-gray-600'
-                  : rowIndex === guesses.length ?
-                    selectedBox === colIndex ? 'border-gray-500 bg-gray-50 ring-2 ring-gray-300' :
-                    currentGuess[colIndex] ? 'border-gray-400 bg-gray-50 ring-2 ring-gray-200' : 'border-gray-300 ring-2 ring-gray-200'
-                  : 'border-gray-200'
-                ]"
-              >
-                {{ guesses[rowIndex] ? guesses[rowIndex][colIndex].toUpperCase() :
-                   rowIndex === guesses.length ? currentGuess[colIndex] || '' : '' }}
-              </div>
-            </button>
-          </div>
+            Reset
+          </button>
         </div>
 
-        <div class="mt-8">
-          <div v-for="(row, rowIndex) in KEYBOARD_LAYOUT" :key="rowIndex"
-               class="flex justify-center gap-1 mb-1.5">
-            <button
-              v-for="key in row"
-              :key="key"
-              @click="handleKeyPress(key)"
-              class="px-2 py-4 rounded font-semibold text-sm min-w-[2rem] text-white transition-colors"
-              :class="[getKeyboardColor(key) || 'bg-gray-400 hover:bg-gray-500']"
-            >
-              {{ key }}
-            </button>
+        {/* Game Grid */}
+        <div className="grid gap-1.5">
+          {Array.from({ length: MAX_GUESSES }).map((_, rowIndex) => (
+            <div key={rowIndex} className="grid grid-cols-5 gap-1.5">
+              {Array.from({ length: WORD_LENGTH }).map((_, colIndex) => {
+                const isCurrentRow = rowIndex === G.guesses.length;
+                const isSelected = isCurrentRow && colIndex === selectedBox;
+                const hasLetter = isCurrentRow && currentGuess[colIndex];
+                const disabled = !isCurrentRow || over;
+
+                return (
+                  <button
+                    key={colIndex}
+                    disabled={disabled}
+                    onClick={() => {
+                      if (isCurrentRow && !over) {
+                        setSelectedBox(colIndex);
+                      }
+                    }}
+                    className={`aspect-square rounded-xl border-2 text-lg font-bold uppercase transition-all duration-150
+                      ${G.guesses[rowIndex] ? 'text-white' : 'text-slate-700'}
+                      ${isSelected ? 'border-slate-500 bg-slate-50' : ''}
+                      ${hasLetter && !isSelected ? 'border-slate-300 bg-slate-50' : ''}
+                      ${!G.guesses[rowIndex] && !isCurrentRow ? 'border-slate-200' : ''}
+                      ${isCurrentRow && !hasLetter && !isSelected ? 'border-slate-200' : ''}
+                    `}
+                    style={getCellStyle(rowIndex, colIndex)}
+                  >
+                    {G.guesses[rowIndex]
+                      ? G.guesses[rowIndex][colIndex]
+                      : isCurrentRow
+                        ? currentGuess[colIndex]
+                        : ''}
+                  </button>
+                );
+              })}
+            </div>
+          ))}
+        </div>
+
+        {/* Status Message */}
+        {over && (
+          <div className="flex items-center justify-center py-2">
+            {G.won ? (
+              <span
+                className="text-xs uppercase tracking-widest"
+                style={{ color: COLORS.correct }}
+              >
+                You won!
+              </span>
+            ) : (
+              <span className="text-xs uppercase tracking-widest text-slate-500">
+                The word was: {G.secret.toUpperCase()}
+              </span>
+            )}
           </div>
-          <div class="flex justify-center gap-2">
+        )}
+
+        {/* Keyboard */}
+        <div className="space-y-1.5 pt-2">
+          {KEYBOARD_LAYOUT.map((row, rowIndex) => (
+            <div key={rowIndex} className="flex justify-center gap-1">
+              {row.map((key) => {
+                const status = getKeyboardStatus(key);
+                return (
+                  <button
+                    key={key}
+                    onClick={() => handleKeyPress(key)}
+                    disabled={over}
+                    className="min-w-[1.75rem] rounded-lg px-2 py-3 text-xs font-semibold text-white transition-all duration-150 active:scale-95 disabled:opacity-50"
+                    style={{ backgroundColor: getKeyColor(status) }}
+                  >
+                    {key}
+                  </button>
+                );
+              })}
+            </div>
+          ))}
+          <div className="flex justify-center gap-1.5 pt-1">
             <button
-              @click="handleBackspace"
-              class="px-4 py-4 rounded font-semibold text-sm bg-gray-400 hover:bg-gray-500 text-white"
+              onClick={handleBackspace}
+              disabled={over}
+              className="rounded-lg px-3 py-3 text-xs font-semibold text-white transition-all duration-150 active:scale-95 disabled:opacity-50"
+              style={{ backgroundColor: 'oklch(70% 0.01 264)' }}
             >
-              Backspace
+              ←
             </button>
             <button
-              @click="submitGuess"
-              class="px-4 py-4 rounded font-semibold text-sm text-white"
-              :class="[canSubmit ? 'bg-blue-500 hover:bg-blue-600' : 'bg-gray-300']"
-              :disabled="!canSubmit || won"
+              onClick={submitGuess}
+              disabled={!canSubmit}
+              className="rounded-lg px-4 py-3 text-xs font-semibold text-white transition-all duration-150 active:scale-95 disabled:opacity-50"
+              style={{
+                backgroundColor: canSubmit
+                  ? 'oklch(62.3% 0.214 259.815)'
+                  : 'oklch(60% 0.01 264)',
+              }}
             >
               Enter
             </button>
           </div>
         </div>
-
-        <div 
-          v-if="won"
-          v-motion
-          :initial="{ opacity: 0, y: 20 }"
-          :enter="{ opacity: 1, y: 0 }"
-          class="mt-4 text-center text-2xl font-bold text-green-600"
-        >
-          You won!
-        </div>
       </div>
     </div>
-  `,
-});
+  );
+}

@@ -1,0 +1,10 @@
+node_modules
+.turbo
+.next
+.cache
+**/dist/**
+**/build/**
+**/.next/**
+**/.cache/**
+packages/images/boardgameio/dist/**
+packages/images/boardgameio/build/**

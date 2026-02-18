@@ -7,6 +7,7 @@
   "authorId": "jsampson",
   "visibility": "public",
   "tags": ["game", "creative", "voting"],
+  "iconName": "icon.png",
   "servers": {
     "kossabos/games": {
       "version": "1.0.0",

@@ -1,19 +1,21 @@
 {
   "appId": "board-games/connect-4",
+  "name": "Connect 4",
+  "description": "Drop tokens to connect four in a row, column, or diagonal.",
+  "runnerTag": "boardgameio",
   "version": "0.0.1",
-  "runnerTag": "vue-boardgameio",
   "authorId": "jsampson",
+  "visibility": "public",
   "tags": ["game", "classics"],
-  "features": ["bots"],
+  "iconName": "logo.png",
   "settings": [
     {
-      "id": "num-players",
-      "label": "settings.num-players",
+      "id": "bot-count",
+      "label": "settings.bot-count.label",
+      "help": "settings.bot-count.help",
       "options": [
-        { "value": "1" },
-        { "value": "2" },
-        { "value": "3" },
-        { "value": "4" }
+        { "value": "0", "label": "settings.bot-count.options.none" },
+        { "value": "1", "label": "settings.bot-count.options.one" }
       ],
       "default": "1"
     }
