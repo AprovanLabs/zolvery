@@ -12,6 +12,8 @@
 
 **Test**: Start dev server, verify proxy routes are active in console output.
 
+**Status**: Complete
+
 ---
 
 ### P1.2 — Update Dev Scripts for Stitchery
