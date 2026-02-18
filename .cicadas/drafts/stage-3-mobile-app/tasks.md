@@ -3,11 +3,11 @@
 ## Mode B: Feature (Vertical Slices)
 
 ### Feature: Capacitor Shell
-- [ ] Add Capacitor deps and init Android project in `apps/mobile` <!-- id: 10 -->
-- [ ] Add `capacitor.config.ts` with `appId`, `appName`, and `webDir` pointing to the web build output <!-- id: 11 -->
-- [ ] Mirror Lahilo defaults in `android/app/build.gradle` (namespace/applicationId, versioning) <!-- id: 12 -->
-- [ ] Mirror Lahilo defaults in `AndroidManifest.xml` (deep link scheme, FileProvider, INTERNET) <!-- id: 13 -->
-- [ ] Add scripts: `mobile:build`, `mobile:sync`, `mobile:run`, `mobile:android:regen` (move `android/`, `cap add android`, restore) <!-- id: 14 -->
+- [x] Add Capacitor deps and init Android project in `apps/mobile` <!-- id: 10 -->
+- [x] Add `capacitor.config.ts` with `appId`, `appName`, and `webDir` pointing to the web build output <!-- id: 11 -->
+- [x] Mirror Lahilo defaults in `android/app/build.gradle` (namespace/applicationId, versioning) <!-- id: 12 -->
+- [x] Mirror Lahilo defaults in `AndroidManifest.xml` (deep link scheme, FileProvider, INTERNET) <!-- id: 13 -->
+- [x] Add scripts: `mobile:build`, `mobile:sync`, `mobile:run`, `mobile:android:regen` (move `android/`, `cap add android`, restore) <!-- id: 14 -->
 - [ ] Verify the app loads and can play a bundled game on emulator <!-- id: 15 -->
 
 ### Feature: Mobile Runtime Hardening

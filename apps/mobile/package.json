@@ -1,0 +1,18 @@
+{
+  "name": "@kossabos/mobile",
+  "private": true,
+  "version": "0.0.1",
+  "scripts": {
+    "build": "pnpm --filter @kossabos/client run build",
+    "sync:android": "pnpm --filter @kossabos/client run build && pnpm exec cap sync android",
+    "run:android": "pnpm exec cap run android",
+    "android:regen": "bash ./scripts/android-regen.sh"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.0.0",
+    "@capacitor/core": "^6.0.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.0.0"
+  }
+}
