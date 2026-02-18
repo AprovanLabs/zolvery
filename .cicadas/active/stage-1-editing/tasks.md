@@ -27,6 +27,8 @@
 
 **Test**: Run `pnpm dev`, verify Stitchery is running and accessible.
 
+**Status**: Complete
+
 ---
 
 ### P1.3 — Verify Edit API Pipeline

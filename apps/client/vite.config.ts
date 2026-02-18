@@ -7,24 +7,24 @@ import { defineConfig } from 'vite';
 // process.env.GITHUB_PAGES_CUSTOM_DOMAIN or GITHUB_ACTIONS
 const BASE_PATH = '/';
 
-// Apprentice packages directory (adjust if needed)
-const APPRENTICE_PACKAGES = path.resolve(
-  __dirname,
-  '../../../apprentice/packages',
-);
+// Local npm packages directory
+const NODE_MODULES_DIR = path.resolve(__dirname, '../..', 'node_modules');
 
 // Map npm package names to local directories
 const LOCAL_NPM_PACKAGES: Record<string, string> = {
   '@aprovan/patchwork-image-shadcn': path.join(
-    APPRENTICE_PACKAGES,
-    'images/shadcn',
+    NODE_MODULES_DIR,
+    '@aprovan/patchwork-image-shadcn',
   ),
-  '@aprovan/patchwork-image-vanilla': path.join(
-    APPRENTICE_PACKAGES,
-    'images/vanilla',
+  '@aprovan/patchwork-vanilla': path.join(
+    NODE_MODULES_DIR,
+    '@aprovan/patchwork-vanilla',
   ),
-  '@aprovan/patchwork-compiler': path.join(APPRENTICE_PACKAGES, 'compiler'),
-  '@aprovan/patchwork': path.join(APPRENTICE_PACKAGES, 'patchwork'),
+  '@aprovan/patchwork-compiler': path.join(
+    NODE_MODULES_DIR,
+    '@aprovan/patchwork-compiler',
+  ),
+  '@aprovan/patchwork': path.join(NODE_MODULES_DIR, '@aprovan/patchwork'),
   '@kossabos/patchwork-image-boardgameio': path.join(
     __dirname,
     '../../packages/images/boardgameio',
