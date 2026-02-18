@@ -4,7 +4,11 @@ interface Ctx {
   currentPlayer: string;
   numPlayers: number;
   playOrder: string[];
+  playerID?: string | null;
   phase?: string;
+  events?: {
+    setActivePlayers?: (opts: any) => void;
+  };
 }
 
 type Suit = 'hearts' | 'diamonds' | 'spades' | 'clubs';
@@ -36,6 +40,18 @@ interface GameState {
   currentPlayer: number;
   phase: Phase;
 }
+
+const updatePlayer = (
+  G: GameState,
+  idx: number,
+  updater: (player: Player) => void,
+) => {
+  const nextPlayers = [...G.players];
+  const updated = { ...nextPlayers[idx] };
+  updater(updated);
+  nextPlayers[idx] = updated;
+  G.players = nextPlayers;
+};
 
 const BOT_DELAY_MS = 1000;
 const BET_INCREMENT = 10;
@@ -131,81 +147,105 @@ export const game = {
   minPlayers: 1,
   maxPlayers: 4,
   setup: (ctx: { numPlayers?: number }): GameState => createInitialState(ctx),
+  // Moves validate themselves based on phase and playerID.
+  // Mark all players as active so anyone can make moves (validated in move logic).
+  turn: {
+    activePlayers: { all: '' },
+  },
   moves: {
-    bet: ({ G }: { G: GameState }, playerId: number, amount: number) => {
+    bet: ({ G, ctx }: { G: GameState; ctx: Ctx }, playerId: number, amount: number) => {
+      if (ctx.playerID !== null && ctx.playerID !== undefined && parseInt(ctx.playerID, 10) !== playerId) return;
       const player = G.players[playerId];
       if (amount > player.chips || G.phase !== 'betting') return;
-      player.chips -= amount;
-      player.bet += amount;
+      updatePlayer(G, playerId, (p) => {
+        p.chips -= amount;
+        p.bet += amount;
+      });
     },
     deal: ({ G }: { G: GameState }) => {
       if (G.phase !== 'betting') return;
       const deck = shuffle(createDeck());
       G.deck = deck;
-      for (const player of G.players) {
-        player.hand = [deck.pop()!, deck.pop()!];
-        player.score = calculateScore(player.hand);
-        player.result = null;
-      }
+      const nextPlayers = G.players.map((player) => {
+        const hand = [deck.pop()!, deck.pop()!];
+        return {
+          ...player,
+          hand,
+          score: calculateScore(hand),
+          result: null,
+        };
+      });
+      G.players = nextPlayers;
       G.dealerHand = [deck.pop()!, { ...deck.pop()!, hidden: true }];
       G.dealerScore = calculateScore(G.dealerHand);
       G.currentPlayer = 0;
       G.phase = 'playing';
     },
-    hit: ({ G }: { G: GameState }) => {
+    hit: ({ G, ctx }: { G: GameState; ctx: Ctx }) => {
       if (G.phase !== 'playing') return;
-      const player = G.players[G.currentPlayer];
-      player.hand.push(G.deck.pop()!);
-      player.score = calculateScore(player.hand);
-      if (player.score > 21) {
-        player.result = 'lose';
+      if (ctx.playerID !== null && ctx.playerID !== undefined && parseInt(ctx.playerID, 10) !== G.currentPlayer) return;
+      const card = G.deck.pop();
+      if (!card) return;
+      updatePlayer(G, G.currentPlayer, (p) => {
+        p.hand = [...p.hand, card];
+        p.score = calculateScore(p.hand);
+        if (p.score > 21) p.result = 'lose';
+      });
+      const current = G.players[G.currentPlayer];
+      if (current.result === 'lose' || current.score > 21) {
         G.currentPlayer++;
         if (G.currentPlayer >= G.players.length) {
           G.phase = 'dealer';
         }
       }
     },
-    stand: ({ G }: { G: GameState }) => {
+    stand: ({ G, ctx }: { G: GameState; ctx: Ctx }) => {
       if (G.phase !== 'playing') return;
+      if (ctx.playerID !== null && ctx.playerID !== undefined && parseInt(ctx.playerID, 10) !== G.currentPlayer) return;
       G.currentPlayer++;
       if (G.currentPlayer >= G.players.length) {
         G.phase = 'dealer';
       }
     },
-    double: ({ G }: { G: GameState }) => {
+    double: ({ G, ctx }: { G: GameState; ctx: Ctx }) => {
       if (G.phase !== 'playing') return;
+      if (ctx.playerID !== null && ctx.playerID !== undefined && parseInt(ctx.playerID, 10) !== G.currentPlayer) return;
       const player = G.players[G.currentPlayer];
       if (player.bet > player.chips) return;
-      player.chips -= player.bet;
-      player.bet *= 2;
-      player.hand.push(G.deck.pop()!);
-      player.score = calculateScore(player.hand);
-      if (player.score > 21) player.result = 'lose';
+      const card = G.deck.pop();
+      if (!card) return;
+      updatePlayer(G, G.currentPlayer, (p) => {
+        p.chips -= p.bet;
+        p.bet *= 2;
+        p.hand = [...p.hand, card];
+        p.score = calculateScore(p.hand);
+        if (p.score > 21) p.result = 'lose';
+      });
       G.currentPlayer++;
       if (G.currentPlayer >= G.players.length) {
         G.phase = 'dealer';
       }
     },
-    dealerPlay: ({ G }: { G: GameState }) => {
+    dealerPlay: ({ G, ctx }: { G: GameState; ctx: Ctx }) => {
       if (G.phase !== 'dealer') return;
+      if (ctx.playerID !== null && ctx.playerID !== undefined && ctx.playerID !== '0') return;
       G.dealerHand = G.dealerHand.map((c) => ({ ...c, hidden: false }));
       G.dealerScore = calculateScore(G.dealerHand);
       while (G.dealerScore < 17 && G.deck.length > 0) {
         G.dealerHand.push(G.deck.pop()!);
         G.dealerScore = calculateScore(G.dealerHand);
       }
-      for (const player of G.players) {
-        if (player.result === 'lose') continue;
+      const nextPlayers: Player[] = G.players.map((player) => {
+        if (player.result === 'lose') return player;
         if (G.dealerScore > 21 || player.score > G.dealerScore) {
-          player.result = 'win';
-          player.chips += player.bet * 2;
-        } else if (player.score === G.dealerScore) {
-          player.result = 'push';
-          player.chips += player.bet;
-        } else {
-          player.result = 'lose';
+          return { ...player, result: 'win' as const, chips: player.chips + player.bet * 2 };
         }
-      }
+        if (player.score === G.dealerScore) {
+          return { ...player, result: 'push' as const, chips: player.chips + player.bet };
+        }
+        return { ...player, result: 'lose' as const };
+      });
+      G.players = nextPlayers;
       G.phase = 'results';
     },
     nextRound: ({ G }: { G: GameState }) => {
@@ -214,12 +254,13 @@ export const game = {
       G.dealerScore = 0;
       G.currentPlayer = 0;
       G.phase = 'betting';
-      for (const player of G.players) {
-        player.hand = [];
-        player.score = 0;
-        player.bet = 0;
-        player.result = null;
-      }
+      G.players = G.players.map((player) => ({
+        ...player,
+        hand: [],
+        score: 0,
+        bet: 0,
+        result: null,
+      }));
     },
   },
   ai: {
@@ -403,13 +444,25 @@ export function app({ G, ctx, playerID, isMultiplayer, moves }: BoardProps) {
         <div className="space-y-4">
           {G.players.map((player, idx) => {
             const isActive = G.phase === 'playing' && G.currentPlayer === idx;
+            const isBusted = player.chips === 0 && player.bet === 0;
             return (
               <div
                 key={player.id}
-                className={`rounded-xl border-2 p-4 transition-all ${
-                  isActive ? 'border-slate-400 shadow-md' : 'border-slate-100'
+                className={`rounded-xl border-2 p-4 transition-all relative ${
+                  isBusted
+                    ? 'border-slate-200 bg-slate-50 opacity-60'
+                    : isActive
+                      ? 'border-slate-400 shadow-md'
+                      : 'border-slate-100'
                 }`}
               >
+                {isBusted && (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="rounded-lg bg-rose-500 px-3 py-1 text-sm font-bold text-white rotate-[-12deg] shadow-md">
+                      OUT
+                    </span>
+                  </div>
+                )}
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <div
@@ -482,21 +535,23 @@ export function app({ G, ctx, playerID, isMultiplayer, moves }: BoardProps) {
                   ${currentBet}
                 </span>
               </div>
-              <div className="grid grid-cols-2 gap-2">
+              <div className={myPlayerIndex === 0 ? 'grid grid-cols-2 gap-2' : ''}>
                 <button
                   onClick={() => moves.bet(myPlayerIndex, currentBet)}
                   disabled={!canBet || !myPlayer || myPlayer.bet > 0}
-                  className="rounded-lg bg-emerald-500 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-emerald-600 disabled:bg-slate-200 disabled:text-slate-400"
+                  className="w-full rounded-lg bg-emerald-500 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-emerald-600 disabled:bg-slate-200 disabled:text-slate-400"
                 >
                   Place Bet
                 </button>
-                <button
-                  onClick={() => moves.deal()}
-                  disabled={!allBetsPlaced}
-                  className="rounded-lg bg-slate-800 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-slate-900 disabled:bg-slate-200 disabled:text-slate-400"
-                >
-                  Deal
-                </button>
+                {myPlayerIndex === 0 && (
+                  <button
+                    onClick={() => moves.deal()}
+                    disabled={!allBetsPlaced}
+                    className="rounded-lg bg-slate-800 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-slate-900 disabled:bg-slate-200 disabled:text-slate-400"
+                  >
+                    Deal
+                  </button>
+                )}
               </div>
             </>
           )}

@@ -32,7 +32,9 @@ function verifyMessage(
   playerID: string,
 ): boolean {
   try {
-    const sigBytes = Uint8Array.from(atob(signedMessage), (c) => c.charCodeAt(0));
+    const sigBytes = Uint8Array.from(atob(signedMessage), (c) =>
+      c.charCodeAt(0),
+    );
     const keyBytes = Uint8Array.from(atob(publicKey), (c) => c.charCodeAt(0));
     if (sigBytes.length < 64 || keyBytes.length < 32) return false;
     const msgBytes = sigBytes.slice(0, -64);

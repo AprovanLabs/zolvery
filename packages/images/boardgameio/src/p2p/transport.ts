@@ -11,6 +11,13 @@ import type { ClientAction, ClientMetadata } from './types.js';
 declare global {
   interface Window {
     Peer?: new (id?: string, options?: object) => PeerInstance;
+    __peerConfig?: {
+      host?: string;
+      port?: number;
+      path?: string;
+      secure?: boolean;
+      iceServers?: RTCIceServer[];
+    };
   }
 }
 
@@ -28,7 +35,10 @@ interface PeerInstance {
     event: 'open' | 'connection' | 'error' | 'close',
     handler: (data?: unknown) => void,
   ): void;
-  connect(peerId: string, options?: { reliable?: boolean; serialization?: string }): DataConnection;
+  connect(
+    peerId: string,
+    options?: { reliable?: boolean; serialization?: string },
+  ): DataConnection;
   destroy(): void;
   id: string;
 }
@@ -107,7 +117,7 @@ export class P2PTransport {
     console.log('[P2PTransport] Options:', {
       isHost: opts.isHost,
     });
-    
+
     this.gameName = config.gameName;
     this.playerID = config.playerID;
     this.matchID = config.matchID;
@@ -152,21 +162,42 @@ export class P2PTransport {
       return;
     }
 
+    const globalPeerConfig = window.__peerConfig ?? {};
+    const iceServers =
+      globalPeerConfig.iceServers && globalPeerConfig.iceServers.length > 0
+        ? globalPeerConfig.iceServers
+        : DEFAULT_ICE_SERVERS;
+
     // Merge default ICE servers with any user-provided options
-    const peerConfig = {
-      config: {
-        iceServers: DEFAULT_ICE_SERVERS,
-      },
+    const baseConfig = {
+      host: globalPeerConfig.host,
+      port: globalPeerConfig.port,
+      path: globalPeerConfig.path,
+      secure: globalPeerConfig.secure,
       debug: 2, // Warnings and errors
-      ...this.peerOptions,
+      config: {
+        iceServers,
+      },
     };
 
-    console.log(`[P2PTransport] Connecting as ${this.isHost ? 'HOST' : 'CLIENT'}, hostID: ${this.hostID}`);
+    const peerConfig = {
+      ...baseConfig,
+      ...this.peerOptions,
+      config: {
+        ...baseConfig.config,
+        ...(this.peerOptions && (this.peerOptions as { config?: object }).config
+          ? (this.peerOptions as { config?: object }).config
+          : {}),
+      },
+    };
 
-    this.peer = new Peer(
-      this.isHost ? this.hostID : undefined,
-      peerConfig,
+    console.log(
+      `[P2PTransport] Connecting as ${
+        this.isHost ? 'HOST' : 'CLIENT'
+      }, hostID: ${this.hostID}`,
     );
+
+    this.peer = new Peer(this.isHost ? this.hostID : undefined, peerConfig);
 
     this.peer.on('open', (id) => {
       console.log(`[P2PTransport] Peer opened with ID: ${id}`);
@@ -177,7 +208,7 @@ export class P2PTransport {
           matchID: this.matchID,
         });
 
-        this.host.registerClient({
+        this.host.registerHostClient({
           metadata: this.metadata,
           send: (data) => this.notifyClient(data as TransportData),
         });
@@ -193,7 +224,10 @@ export class P2PTransport {
     });
 
     this.peer.on('connection', (conn) => {
-      console.log('[P2PTransport] Incoming connection from:', (conn as DataConnection & { peer?: string }).peer);
+      console.log(
+        '[P2PTransport] Incoming connection from:',
+        (conn as DataConnection & { peer?: string }).peer,
+      );
       const dataConn = conn as DataConnection;
       if (!this.host) return;
 
@@ -223,14 +257,16 @@ export class P2PTransport {
     this.peer.on('error', (err) => {
       const error = err as Error & { type?: string };
       console.error('[P2PTransport] Peer error:', error.type, error.message);
-      
+
       // Handle specific PeerJS error types
       if (error.type === 'peer-unavailable') {
-        console.error('[P2PTransport] Host peer not found. Is the host connected?');
+        console.error(
+          '[P2PTransport] Host peer not found. Is the host connected?',
+        );
       } else if (error.type === 'unavailable-id') {
         console.error('[P2PTransport] Peer ID already taken');
       }
-      
+
       this.onError?.(error);
     });
 
@@ -247,7 +283,11 @@ export class P2PTransport {
   private connectToHost(): void {
     if (!this.peer) return;
 
-    console.log(`[P2PTransport] Attempting connection to host (attempt ${this.retryCount + 1}/${this.maxRetries + 1})`);
+    console.log(
+      `[P2PTransport] Attempting connection to host (attempt ${
+        this.retryCount + 1
+      }/${this.maxRetries + 1})`,
+    );
 
     // Connect with reliable data channel
     this.connection = this.peer.connect(this.hostID, {
@@ -260,12 +300,20 @@ export class P2PTransport {
       if (!this.connected && this.connection) {
         this.retryCount++;
         if (this.retryCount <= this.maxRetries) {
-          console.warn(`[P2PTransport] Connection timeout, retrying (${this.retryCount}/${this.maxRetries})...`);
+          console.warn(
+            `[P2PTransport] Connection timeout, retrying (${this.retryCount}/${this.maxRetries})...`,
+          );
           this.connection.close();
           this.connectToHost();
         } else {
-          console.error('[P2PTransport] Max retries reached. Could not connect to host.');
-          this.onError?.(new Error('Could not connect to host after multiple attempts. Is the host online?'));
+          console.error(
+            '[P2PTransport] Max retries reached. Could not connect to host.',
+          );
+          this.onError?.(
+            new Error(
+              'Could not connect to host after multiple attempts. Is the host online?',
+            ),
+          );
         }
       }
     }, 10000);
@@ -293,7 +341,11 @@ export class P2PTransport {
     this.connection.on('error', (err) => {
       clearTimeout(connectionTimeout);
       const error = err as Error & { type?: string };
-      console.error('[P2PTransport] Connection error:', error.type, error.message);
+      console.error(
+        '[P2PTransport] Connection error:',
+        error.type,
+        error.message,
+      );
       this.onError?.(error);
     });
   }

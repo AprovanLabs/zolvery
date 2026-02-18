@@ -205,7 +205,7 @@ export function createGameMount(
           isHost: multiplayerConfig.isHost ?? playerID === '0',
         });
       }
-      
+
       return R.createElement(
         SettingsProvider,
         { settings: inputs },

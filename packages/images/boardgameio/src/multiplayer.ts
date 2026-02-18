@@ -9,14 +9,25 @@ export interface MultiplayerConfig {
 }
 
 export function getMultiplayer(config: MultiplayerConfig, game?: Game) {
-  const BoardgameMultiplayer = (window as { BoardgameMultiplayer?: {
-    Local?: (opts?: { bots?: Record<string, unknown>; storageKey?: string }) => unknown;
-  }}).BoardgameMultiplayer;
-  
-  const BoardgameAI = (window as { BoardgameAI?: {
-    MCTSBot?: unknown;
-    RandomBot?: unknown;
-  }}).BoardgameAI;
+  const BoardgameMultiplayer = (
+    window as {
+      BoardgameMultiplayer?: {
+        Local?: (opts?: {
+          bots?: Record<string, unknown>;
+          storageKey?: string;
+        }) => unknown;
+      };
+    }
+  ).BoardgameMultiplayer;
+
+  const BoardgameAI = (
+    window as {
+      BoardgameAI?: {
+        MCTSBot?: unknown;
+        RandomBot?: unknown;
+      };
+    }
+  ).BoardgameAI;
 
   if (config.isMultiplayer) {
     return undefined;
@@ -43,7 +54,8 @@ export function getMultiplayer(config: MultiplayerConfig, game?: Game) {
 
 export function generateMatchID(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  return Array.from({ length: 6 }, () =>
-    chars[Math.floor(Math.random() * chars.length)],
+  return Array.from(
+    { length: 6 },
+    () => chars[Math.floor(Math.random() * chars.length)],
   ).join('');
 }

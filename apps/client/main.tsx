@@ -9,6 +9,51 @@ import { GameLobby, type GameLobbyConfig } from './src/components/game-lobby';
 
 import './style.css';
 
+declare global {
+  interface Window {
+    __peerConfig?: {
+      host?: string;
+      port?: number;
+      path?: string;
+      secure?: boolean;
+      iceServers?: RTCIceServer[];
+    };
+  }
+}
+
+// Share PeerJS settings between the lobby and boardgame transport
+const peerHost = import.meta.env.VITE_PEER_HOST || window.location.hostname;
+const peerPort = Number(import.meta.env.VITE_PEER_PORT) || 9500;
+const peerPath = import.meta.env.VITE_PEER_PATH || '/';
+const peerSecure =
+  import.meta.env.VITE_PEER_SECURE === 'true' ||
+  (import.meta.env.VITE_PEER_SECURE === undefined &&
+    window.location.protocol === 'https:');
+const turnUrl = import.meta.env.VITE_PEER_TURN_URL;
+const turnUsername = import.meta.env.VITE_PEER_TURN_USERNAME;
+const turnCredential = import.meta.env.VITE_PEER_TURN_CREDENTIAL;
+
+const globalIceServers: RTCIceServer[] = [
+  { urls: 'stun:stun.l.google.com:19302' },
+  { urls: 'stun:stun1.l.google.com:19302' },
+];
+
+if (turnUrl) {
+  globalIceServers.push({
+    urls: turnUrl,
+    ...(turnUsername ? { username: turnUsername } : {}),
+    ...(turnCredential ? { credential: turnCredential } : {}),
+  });
+}
+
+window.__peerConfig = {
+  host: peerHost,
+  port: peerPort,
+  path: peerPath,
+  secure: peerSecure,
+  iceServers: globalIceServers,
+};
+
 type AppState =
   | { view: 'catalog' }
   | { view: 'setup'; game: GameEntry }
