@@ -20,10 +20,20 @@ When working on a branch:
 - **Rule**: Only implement the tasks assigned to your current feature branch partition.
 - **Rule**: If you discover that a task requires changing files outside your declared modules, STOP and notify the user.
 
-## 4. Reflect Before PR
-Before opening a PR for a task branch:
+## 4. Reflect Before Review
+Before requesting any human review of a task branch:
 - **Rule**: Run the Reflect operation — analyze `git diff` against active specs and update them.
-- **Rule**: Include Reflect findings in the PR description.
+- **Rule**: Capture Reflect findings in the local review notes.
+
+## 4.1 Local Review Notes
+When using local review instead of hosted PRs:
+- **Rule**: Prepare a review note that includes the task intent, a concise summary, the Reflect findings, and the comparison range.
+- **Rule**: Share the review note alongside the diff view (e.g., cgit or Gitea) rather than opening a hosted PR.
+
+## 4.2 Merge Gate
+Before merging a task branch back to its feature branch:
+- **Rule**: Ensure the local review packet is explicitly approved by a human reviewer.
+- **Rule**: If the review packet is missing or unapproved, STOP and request approval.
 
 ## 5. No Canon on Branches
 - **Rule**: Never write to `.cicadas/canon/` on any branch.

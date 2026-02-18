@@ -100,9 +100,23 @@ project-root/
 1. Create task branch from feature branch: `git checkout -b task/{feature}/{task-name}`
 2. Implement code.
 3. **Reflect**: Keep active specs current as code diverges from plan.
-4. Open a **PR** against the feature branch. Include Reflect findings in the PR description.
-5. Builder reviews and approves the PR.
-6. Merge the PR, delete the task branch.
+4. Prepare a **local review** packet for the feature branch. Include Reflect findings in the review notes.
+5. Builder reviews locally and approves the change.
+6. Merge the task branch, delete the task branch.
+
+### Local Review Packet
+When using local review tools (cgit, Gitea, or CLI), the Agent prepares a review packet that includes:
+- Task intent and scope
+- Summary of code changes
+- Reflect findings
+- Diff range to review (e.g., `feat/{name}..task/{name}/{task}`)
+
+The Builder reviews the packet and inspects the diff locally instead of a hosted PR.
+
+Local review helpers:
+- `python scripts/chorus/scripts/review.py --branch task/... --base feat/...`
+- `python scripts/chorus/scripts/approve.py --branch task/... --reviewer "Name" --decision approve`
+- `python scripts/chorus/scripts/merge_if_approved.py --branch task/... --into feat/...`
 
 ### Branch Hierarchy
 
@@ -229,7 +243,7 @@ These are reasoning + editing operations performed by the Agent, NOT scripts.
 1. Analyze `git diff` against the active specs.
 2. Update relevant docs in `.cicadas/active/` (e.g., `tech-design.md`, `approach.md`, `tasks.md`) to match code reality.
 3. If the change is significant enough to impact other feature branches, proceed to Signal.
-4. Include Reflect findings in the PR description.
+4. Include Reflect findings in the local review notes.
 
 ### Signal Assessment
 **Trigger**: After Reflect discovers a cross-branch impact.
@@ -257,8 +271,8 @@ These are reasoning + editing operations performed by the Agent, NOT scripts.
 | **Reflect** | Autonomous | Keeping specs current is mechanical. |
 | **Signal** | Autonomous | Agent assesses cross-branch impact. |
 | **Semantic Intent Check** | Autonomous | Conflict detection is informational. |
-| **PR creation** | Autonomous | Agent opens PRs with summaries and Reflect findings. |
-| **PR merge** | **Builder approval** | Code review is a human gate. |
+| **Local review packet** | Autonomous | Agent prepares review notes and diff range for local review. |
+| **Task merge** | **Builder approval** | Code review is a human gate. |
 | **Synthesis** | Autonomous (execution) | Agent produces canon, but... |
 | **Canon commit** | **Builder approval** | ...canon must be reviewed before committing. |
 | **Archive** | **Builder approval** | Archiving is irreversible. |
@@ -270,7 +284,7 @@ The Builder interacts via natural-language commands. The Agent handles all scrip
 - **"Initialize cicadas"** → Runs `init.py`. Sets up `.cicadas/` structure.
 - **"Kickoff {name}"** → Runs `kickoff.py`. Promotes drafts, registers initiative, creates initiative branch.
 - **"Start feature {name}"** → Semantic check + `branch.py`. Creates feature branch from initiative, registers, checks conflicts.
-- **"Implement task {X}"** → Creates task branch, implements, Reflects, opens PR with findings.
+- **"Implement task {X}"** → Creates task branch, implements, Reflects, prepares local review notes.
 - **"Signal {message}"** → Runs `signal.py`. Broadcasts change to initiative.
 - **"Complete feature {name}"** → Runs `update_index.py`. Merges feature branch into initiative branch.
 - **"Complete initiative {name}"** → Merges initiative to `main`, synthesizes canon, archives specs, commits.
