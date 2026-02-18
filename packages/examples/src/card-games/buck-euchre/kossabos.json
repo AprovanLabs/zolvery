@@ -8,6 +8,7 @@
   "authorId": "jsampson",
   "visibility": "public",
   "players": { "min": 4, "max": 4 },
+  "iconName": "logo.png",
   "settings": [
     {
       "id": "bot-count",

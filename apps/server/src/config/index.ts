@@ -10,6 +10,7 @@ config({
 
 export interface AppConfig {
   port: number;
+  peerPort: number;
   nodeEnv: string;
   environment: 'dev' | 'tst' | 'stg' | 'prd';
   logLevel: string;
@@ -52,6 +53,7 @@ const getConfig = (): AppConfig => {
 
   return {
     port: parseInt(process.env.PORT || '3000', 10),
+    peerPort: parseInt(process.env.PEER_PORT || '9500', 10),
     nodeEnv: process.env.NODE_ENV || 'development',
     environment: (process.env.ENVIRONMENT || 'dev') as EnvShortCode,
     version,

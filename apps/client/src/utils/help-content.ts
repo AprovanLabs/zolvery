@@ -7,11 +7,14 @@ export enum Locale {
 
 export type LocaleType = `${Locale}`;
 
-export const generateHelpContent = (app: KossabosApp, locale: LocaleType): string => {
+export const generateHelpContent = (
+  app: KossabosApp,
+  locale: LocaleType,
+): string => {
   if (locale === Locale.EN_US) {
     return `## Welcome to ${app.name}
 
-**Created by:** ${app.author.username}
+**Created by:** ${app.authorId}
 
 ### Getting Started
 This is an interactive game/application built with the Kossabos platform.
@@ -31,7 +34,7 @@ Contact the game author or check the game's documentation for specific gameplay 
   } else {
     return `## Bienvenido a ${app.name}
 
-**Creado por:** ${app.author.username}
+**Creado por:** ${app.authorId}
 
 ### Primeros Pasos
 Esta es una aplicación/juego interactivo construido con la plataforma Kossabos.

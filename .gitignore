@@ -12,3 +12,5 @@ _bmad
 .github/agents/bmd*
 
 pnpm-lock.yaml
+
+.cicadas

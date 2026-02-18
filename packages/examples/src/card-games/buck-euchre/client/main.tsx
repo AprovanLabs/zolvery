@@ -63,6 +63,7 @@ const CARDS_PER_HAND = 5;
 const PLAYER_COLORS = ['#16A34A', '#2563EB', '#F97316', '#DB2777'];
 const TURN_DELAY_MS = 500;
 const TURN_LABEL_MS = 1000;
+const BOT_PLAY_DELAY_MS = 700;
 
 const createDeck = (): Card[] => {
   const deck: Card[] = [];
@@ -254,19 +255,33 @@ export const game = {
     stages: {
       bidding: {
         moves: {
-          placeBid: ({ G, playerID }: { G: BuckEuchreState; playerID: string }, bidAmount: number) => {
+          placeBid: ({ G, playerID, events, ctx }: { G: BuckEuchreState; playerID: string; events: { endStage: () => void; endTurn: () => void }; ctx: { activePlayers?: Record<string, string> } }, bidAmount: number) => {
             if (bidAmount <= G.highestBid || bidAmount > CARDS_PER_HAND) return;
             const pid = parseInt(playerID);
             G.players[pid].bid = bidAmount;
             G.highestBid = bidAmount;
             G.highestBidder = pid;
+            events.endStage();
+            const activePlayers = ctx.activePlayers ? Object.keys(ctx.activePlayers) : [];
+            const remainingPlayers = Math.max(activePlayers.length - 1, 0);
+            if (remainingPlayers === 0 && G.highestBidder !== -1) {
+              G.bidding = false;
+              events.endTurn();
+            }
           },
           passBid: ({ G, playerID, events, ctx }: { G: BuckEuchreState; playerID: string; events: { endStage: () => void; endTurn: () => void }; ctx: { activePlayers?: Record<string, string> } }) => {
             const pid = parseInt(playerID);
             G.players[pid].bid = 0;
             events.endStage();
             const activePlayers = ctx.activePlayers ? Object.keys(ctx.activePlayers) : [];
-            if (activePlayers.length <= 1 && G.highestBidder !== -1) {
+            const remainingPlayers = Math.max(activePlayers.length - 1, 0);
+            if (remainingPlayers === 0 && G.highestBidder !== -1) {
+              G.bidding = false;
+              events.endTurn();
+            } else if (remainingPlayers === 0 && G.highestBidder === -1) {
+              G.highestBidder = G.leadPlayer;
+              G.highestBid = 1;
+              G.players[G.leadPlayer].bid = 1;
               G.bidding = false;
               events.endTurn();
             }
@@ -337,7 +352,7 @@ export const game = {
     play: { start: true, next: 'scoring' },
     scoring: {
       moves: {
-        startNewRound: ({ G, ctx, random, events }: { G: BuckEuchreState; ctx: { numPlayers: number }; random: { Shuffle: <T>(arr: T[]) => T[] }; events: { setPhase: (phase: string) => void } }) => {
+        startNewRound: ({ G, ctx, random, events }: { G: BuckEuchreState; ctx: { numPlayers: number }; random: { Shuffle: <T>(arr: T[]) => T[] }; events: { setPhase: (phase: string) => void; endTurn: () => void } }) => {
           G.players.forEach((player: Player, idx: number) => {
             if (idx === G.highestBidder) {
               player.score += player.tricks >= player.bid ? -player.bid : player.bid;
@@ -369,6 +384,7 @@ export const game = {
           G.highestBid = 0;
           G.highestBidder = -1;
           events.setPhase('play');
+          events.endTurn();
         }
       }
     }
@@ -430,6 +446,9 @@ interface CardDisplayProps {
   disabled?: boolean;
   size?: 'sm' | 'md';
   draggable?: boolean;
+  onDragStart?: () => void;
+  onDragMove?: (point: { x: number; y: number }) => void;
+  onDragEnd?: (point: { x: number; y: number; wasClick: boolean }) => void;
 }
 
 const CardDisplay: React.FC<CardDisplayProps> = ({
@@ -438,6 +457,9 @@ const CardDisplay: React.FC<CardDisplayProps> = ({
   disabled,
   size = 'md',
   draggable = false,
+  onDragStart,
+  onDragMove,
+  onDragEnd,
 }) => {
   const sizeClasses = size === 'sm' ? 'w-16 h-24' : 'w-24 h-32';
   const textSize = size === 'sm' ? 'text-sm' : 'text-xl';
@@ -456,6 +478,7 @@ const CardDisplay: React.FC<CardDisplayProps> = ({
     activePointerId.current = event.pointerId;
     setDragging(true);
     cardRef.current?.setPointerCapture(event.pointerId);
+    onDragStart?.();
   };
 
   useEffect(() => {
@@ -470,6 +493,7 @@ const CardDisplay: React.FC<CardDisplayProps> = ({
       const y = event.clientY - dragStart.current.y;
       dragOffsetRef.current = { x, y };
       setDragOffset({ x, y });
+      onDragMove?.({ x: event.clientX, y: event.clientY });
     };
 
     const handlePointerUp = (event: PointerEvent) => {
@@ -482,11 +506,13 @@ const CardDisplay: React.FC<CardDisplayProps> = ({
       }
       const { x, y } = dragOffsetRef.current;
       const distance = Math.hypot(x, y);
+      const wasClick = distance < 6;
       activePointerId.current = null;
       setDragging(false);
       setDragOffset({ x: 0, y: 0 });
       dragOffsetRef.current = { x: 0, y: 0 };
-      if (distance < 6 && onClick && !disabled) {
+      onDragEnd?.({ x: event.clientX, y: event.clientY, wasClick });
+      if (wasClick && onClick && !disabled) {
         onClick();
       }
     };
@@ -498,7 +524,7 @@ const CardDisplay: React.FC<CardDisplayProps> = ({
       window.removeEventListener('pointermove', handlePointerMove);
       window.removeEventListener('pointerup', handlePointerUp);
     };
-  }, [dragging, onClick, disabled]);
+  }, [dragging, onClick, disabled, onDragMove, onDragEnd]);
   
   return (
     <div
@@ -527,21 +553,41 @@ export function app({ G, ctx, moves, playerID }: BoardProps) {
   const [currentBid, setCurrentBid] = useState(1);
   const [isTurnTransitioning, setIsTurnTransitioning] = useState(false);
   const [turnLabel, setTurnLabel] = useState<string | null>(null);
+  const [displayTrickCards, setDisplayTrickCards] = useState<Card[]>(G.trickCards);
+  const [isDraggingCard, setIsDraggingCard] = useState(false);
+  const [isOverDropZone, setIsOverDropZone] = useState(false);
+  const dropZoneRef = useRef<HTMLDivElement>(null);
+  const displayTrickCardsRef = useRef<Card[]>(G.trickCards);
+  const botQueueRef = useRef<Card[][]>([]);
+  const botQueueTimerRef = useRef<number | null>(null);
+  const trickHoldTimerRef = useRef<number | null>(null);
   const pid = parseInt(playerID ?? '0');
   const currentPlayerId = ctx.currentPlayer;
   const isUserTurn = currentPlayerId === String(pid);
   
   const stage =
     ctx.activePlayers?.[String(pid)] ??
-    ctx.activePlayers?.[currentPlayerId] ??
     (ctx.activePlayers as Record<string, string> | undefined)?.all;
   const player = G.players[pid];
   
-  const canBid = stage === 'bidding' && isUserTurn;
-  const canSelectTrump =
-    stage === 'selectingTrump' && pid === G.highestBidder && isUserTurn;
-  const canPlayCard = stage === 'playingCard' && isUserTurn;
-  const canStartNewRound = ctx.phase === 'scoring';
+  // Active stages govern turn ownership; currentPlayer does not advance during active stages.
+  const canBid = stage === 'bidding';
+  const canSelectTrump = stage === 'selectingTrump' && pid === G.highestBidder;
+  const canPlayCard = stage === 'playingCard';
+  const canStartNewRound = ctx.phase === 'scoring' && currentPlayerId === String(pid);
+  const minBid = Math.min(G.highestBid + 1, CARDS_PER_HAND);
+  const hasValidBid = G.highestBid < CARDS_PER_HAND;
+
+  const flushBotQueue = () => {
+    if (botQueueTimerRef.current !== null) return;
+    const next = botQueueRef.current.shift();
+    if (!next) return;
+    botQueueTimerRef.current = window.setTimeout(() => {
+      setDisplayTrickCards(next);
+      botQueueTimerRef.current = null;
+      flushBotQueue();
+    }, BOT_PLAY_DELAY_MS);
+  };
 
   useEffect(() => {
     setIsTurnTransitioning(true);
@@ -561,6 +607,87 @@ export function app({ G, ctx, moves, playerID }: BoardProps) {
       clearTimeout(labelTimer);
     };
   }, [currentPlayerId, pid]);
+
+  useEffect(() => {
+    displayTrickCardsRef.current = displayTrickCards;
+  }, [displayTrickCards]);
+
+  useEffect(() => {
+    const next = G.trickCards;
+    const currentDisplay = displayTrickCardsRef.current;
+
+    if (trickHoldTimerRef.current !== null && next.length > 0) {
+      clearTimeout(trickHoldTimerRef.current);
+      trickHoldTimerRef.current = null;
+    }
+
+    if (next.length === 0) {
+      botQueueRef.current = [];
+      if (botQueueTimerRef.current !== null) {
+        clearTimeout(botQueueTimerRef.current);
+        botQueueTimerRef.current = null;
+      }
+      if (currentDisplay.length > 0 && trickHoldTimerRef.current === null) {
+        trickHoldTimerRef.current = window.setTimeout(() => {
+          setDisplayTrickCards([]);
+          trickHoldTimerRef.current = null;
+        }, BOT_PLAY_DELAY_MS);
+      } else {
+        setDisplayTrickCards([]);
+      }
+      return;
+    }
+
+    if (next.length <= currentDisplay.length) {
+      botQueueRef.current = [];
+      if (botQueueTimerRef.current !== null) {
+        clearTimeout(botQueueTimerRef.current);
+        botQueueTimerRef.current = null;
+      }
+      setDisplayTrickCards(next);
+      return;
+    }
+
+    const latestIndex = next.length - 1;
+    const latestPlayerId = (G.leadPlayer + latestIndex) % G.players.length;
+    const isBotPlay = latestPlayerId !== pid;
+
+    if (isBotPlay) {
+      botQueueRef.current.push([...next]);
+      flushBotQueue();
+    } else {
+      botQueueRef.current = [];
+      if (botQueueTimerRef.current !== null) {
+        clearTimeout(botQueueTimerRef.current);
+        botQueueTimerRef.current = null;
+      }
+      setDisplayTrickCards(next);
+    }
+  }, [G.trickCards, G.leadPlayer, G.players.length, pid]);
+
+  useEffect(() => {
+    return () => {
+      if (botQueueTimerRef.current !== null) {
+        clearTimeout(botQueueTimerRef.current);
+      }
+      if (trickHoldTimerRef.current !== null) {
+        clearTimeout(trickHoldTimerRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!canBid) return;
+    if (currentBid < minBid) {
+      setCurrentBid(minBid);
+    }
+  }, [canBid, currentBid, minBid]);
+
+  useEffect(() => {
+    if (canPlayCard) return;
+    setIsDraggingCard(false);
+    setIsOverDropZone(false);
+  }, [canPlayCard]);
   
   const canPlayThisCard = useMemo(() => (cardIndex: number): boolean => {
     if (!canPlayCard) return false;
@@ -571,8 +698,16 @@ export function app({ G, ctx, moves, playerID }: BoardProps) {
   }, [canPlayCard, G.trickCards, player.hand]);
   
   const handleBid = () => {
-    moves.placeBid(currentBid);
-    setCurrentBid(Math.min(currentBid + 1, 5));
+    if (!hasValidBid) return;
+    const bidToPlace = Math.max(currentBid, minBid);
+    moves.placeBid(bidToPlace);
+    setCurrentBid(Math.min(bidToPlace + 1, CARDS_PER_HAND));
+  };
+
+  const isPointInDropZone = (x: number, y: number): boolean => {
+    const rect = dropZoneRef.current?.getBoundingClientRect();
+    if (!rect) return false;
+    return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
   };
   
   return (
@@ -619,10 +754,24 @@ export function app({ G, ctx, moves, playerID }: BoardProps) {
       </div>
       
       {/* Trick Area */}
-      <div className="flex items-center justify-center w-full mb-8 min-h-32">
-        {G.trickCards.length > 0 ? (
+      <div className="relative flex items-center justify-center w-full mb-8 min-h-32">
+        {canPlayCard && (
+          <div
+            ref={dropZoneRef}
+            className={`pointer-events-none absolute inset-0 mx-auto flex max-w-xl items-center justify-center rounded-2xl border-2 border-dashed transition-all duration-200 ${
+              isDraggingCard ? 'opacity-100' : 'opacity-0'
+            } ${
+              isOverDropZone ? 'border-slate-900 bg-slate-50' : 'border-slate-200'
+            }`}
+          >
+            <span className={`text-xs font-semibold uppercase tracking-[0.2em] ${isOverDropZone ? 'text-slate-900' : 'text-slate-400'}`}>
+              Drop to play
+            </span>
+          </div>
+        )}
+        {displayTrickCards.length > 0 ? (
           <div className="flex items-center justify-center gap-4">
-            {G.trickCards.map((card, idx) => {
+            {displayTrickCards.map((card, idx) => {
               const playerId = (G.leadPlayer + idx) % G.players.length;
               return (
                 <div key={idx} className="flex flex-col items-center gap-1">
@@ -665,9 +814,25 @@ export function app({ G, ctx, moves, playerID }: BoardProps) {
             <CardDisplay
               key={idx}
               card={card}
-              disabled={canPlayCard && !canPlayThisCard(idx)}
+              disabled={!canPlayThisCard(idx)}
               onClick={() => canPlayThisCard(idx) && moves.playCard(idx)}
-              draggable={canPlayCard}
+              draggable={canPlayThisCard(idx)}
+              onDragStart={() => {
+                if (!canPlayThisCard(idx)) return;
+                setIsDraggingCard(true);
+              }}
+              onDragMove={({ x, y }) => {
+                if (!canPlayThisCard(idx)) return;
+                setIsOverDropZone(isPointInDropZone(x, y));
+              }}
+              onDragEnd={({ x, y, wasClick }) => {
+                setIsDraggingCard(false);
+                setIsOverDropZone(false);
+                if (wasClick) return;
+                if (canPlayThisCard(idx) && isPointInDropZone(x, y)) {
+                  moves.playCard(idx);
+                }
+              }}
             />
           ))}
         </div>
@@ -677,13 +842,30 @@ export function app({ G, ctx, moves, playerID }: BoardProps) {
           {canBid && (
             <div className="flex flex-col items-center w-full max-w-md gap-2 rounded-xl border border-slate-200 px-4 py-3">
               <div className="flex items-center justify-center w-full gap-4">
-                <input type="range" value={currentBid} onChange={e => setCurrentBid(parseInt(e.target.value))} min={G.highestBid + 1} max={5} className="w-full" />
+                <input
+                  type="range"
+                  value={currentBid}
+                  onChange={e => setCurrentBid(parseInt(e.target.value))}
+                  min={minBid}
+                  max={CARDS_PER_HAND}
+                  disabled={!hasValidBid}
+                  className="w-full disabled:opacity-40"
+                />
                 <span className="text-lg font-bold text-slate-800">{currentBid}</span>
               </div>
               <div className="flex gap-4">
-                <button onClick={handleBid} className="px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white bg-slate-900 rounded-md hover:bg-slate-800">Bid {currentBid}</button>
+                <button
+                  onClick={handleBid}
+                  disabled={!hasValidBid}
+                  className="px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white bg-slate-900 rounded-md hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  Bid {currentBid}
+                </button>
                 <button onClick={() => moves.passBid()} className="px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-600 border border-slate-300 rounded-md hover:bg-slate-50">Pass</button>
               </div>
+              {!hasValidBid && (
+                <div className="text-[11px] uppercase tracking-[0.2em] text-slate-400">Max bid reached</div>
+              )}
             </div>
           )}
           

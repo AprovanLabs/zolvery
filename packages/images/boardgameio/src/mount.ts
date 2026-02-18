@@ -9,9 +9,19 @@
  */
 
 import { SettingsProvider, useSettings, type GameSettings } from './context.js';
+import { createP2PTransport } from './p2p/index.js';
+import { ensurePeerJS } from './setup.js';
 
 // Re-export for convenience
 export { SettingsProvider, useSettings, type GameSettings } from './context.js';
+
+/** Multiplayer configuration passed via inputs */
+export interface MultiplayerInput {
+  matchID: string;
+  playerID: string;
+  credentials?: string;
+  isHost?: boolean;
+}
 
 export interface GameMountOptions {
   /** Number of players for the game */
@@ -61,7 +71,7 @@ declare global {
       RandomBot?: () => unknown;
     };
     BoardgameMultiplayer?: {
-      Local?: () => unknown;
+      Local?: (opts?: { bots?: Record<string, unknown> }) => unknown;
     };
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     React?: any;
@@ -148,16 +158,35 @@ export function createGameMount(
       }
     }
 
-    const multiplayer = BoardgameMultiplayer?.Local
-      ? BoardgameMultiplayer.Local(
-          Object.keys(botPlayers).length > 0 ? { bots: botPlayers } : undefined,
-        )
-      : undefined;
+    // Check for multiplayer configuration
+    const multiplayerConfig = inputs.multiplayer as
+      | MultiplayerInput
+      | undefined;
+    const isMultiplayer = !!multiplayerConfig?.matchID;
+    const playerID = multiplayerConfig?.playerID ?? defaultPlayerID;
+
+    // Use P2P transport for multiplayer, Local for single-player
+    let multiplayer: unknown;
+    if (isMultiplayer && multiplayerConfig) {
+      const isHost = multiplayerConfig.isHost ?? playerID === '0';
+      multiplayer = createP2PTransport({
+        isHost,
+      });
+    } else if (BoardgameMultiplayer?.Local) {
+      multiplayer = BoardgameMultiplayer.Local(
+        Object.keys(botPlayers).length > 0 ? { bots: botPlayers } : undefined,
+      );
+    }
+
+    // Wrap board component to inject isMultiplayer prop
+    const WrappedBoard: BoardComponent = (props: Record<string, unknown>) => {
+      return R.createElement(Board, { ...props, isMultiplayer });
+    };
 
     // Create the boardgame.io Client
     const GameClient = BoardgameReact.Client({
       game,
-      board: Board,
+      board: WrappedBoard,
       numPlayers,
       ...(multiplayer ? { multiplayer } : {}),
       // Bots are configured via Local transport when enabled.
@@ -165,10 +194,22 @@ export function createGameMount(
 
     // Wrapper that provides settings via context
     const GameWithSettings = () => {
+      // matchID and credentials are passed as props to the rendered component
+      const clientProps: Record<string, unknown> = { playerID };
+      if (isMultiplayer && multiplayerConfig) {
+        clientProps.matchID = multiplayerConfig.matchID;
+        clientProps.credentials = multiplayerConfig.credentials;
+        console.log('[boardgameio] Multiplayer props:', {
+          matchID: multiplayerConfig.matchID,
+          playerID,
+          isHost: multiplayerConfig.isHost ?? playerID === '0',
+        });
+      }
+      
       return R.createElement(
         SettingsProvider,
         { settings: inputs },
-        R.createElement(GameClient, { playerID: defaultPlayerID }),
+        R.createElement(GameClient, clientProps),
       );
     };
 
@@ -279,6 +320,14 @@ export async function mount(
         game.maxPlayers ??
         game.minPlayers ??
         2;
+
+      // Load PeerJS if multiplayer is requested
+      const multiplayerInput = inputs.multiplayer as
+        | MultiplayerInput
+        | undefined;
+      if (multiplayerInput?.matchID) {
+        await ensurePeerJS();
+      }
 
       const gameMount = createGameMount(game, Board, { numPlayers });
       return gameMount(container, inputs as GameSettings);

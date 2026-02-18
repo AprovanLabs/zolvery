@@ -2,14 +2,11 @@
   "appId": "classics/tic-tac-toe",
   "name": "Tic Tac Toe",
   "description": "A classic game of Tic Tac Toe, also known as Noughts and Crosses.",
-  "runnerTag": "vue-vanilla",
+  "runnerTag": "boardgameio",
   "version": "0.0.1",
   "authorId": "jsampson",
   "visibility": "public",
   "tags": ["game", "classics"],
-  "servers": {
-    "kossabos/games": "latest"
-  },
   "settings": [
     {
       "id": "cats-game",

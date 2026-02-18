@@ -5,6 +5,8 @@
   "version": "0.0.1",
   "authorId": "jsampson",
   "visibility": "public",
+  "runnerTag": "boardgameio",
+  "iconName": "icon.png",
   "settings": [
     {
       "id": "hardMode",

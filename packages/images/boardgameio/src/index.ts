@@ -26,7 +26,7 @@
  * ```
  */
 
-export { setup, cleanup, type SetupOptions } from './setup.js';
+export { setup, cleanup, ensurePeerJS, type SetupOptions } from './setup.js';
 export {
   mount,
   createGameMount,
@@ -36,6 +36,7 @@ export {
   type BoardgameGame,
   type BoardgameWidgetModule,
   type WidgetManifest,
+  type MultiplayerInput,
 } from './mount.js';
 export {
   SettingsProvider,
@@ -43,3 +44,18 @@ export {
   type GameSettings,
   type SettingsProviderProps,
 } from './context.js';
+export {
+  getMultiplayer,
+  generateMatchID,
+  type MultiplayerConfig,
+} from './multiplayer.js';
+export {
+  P2PTransport,
+  P2PHost,
+  P2PDB,
+  createP2PTransport,
+  generateCredentials,
+  generateKeyPair,
+  type P2PTransportOpts,
+  type TransportConfig,
+} from './p2p/index.js';

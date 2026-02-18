@@ -7,6 +7,7 @@ export interface WidgetPlayerProps {
   appId: string;
   manifest: KossabosManifest;
   source: string;
+  inputs?: Record<string, unknown>;
   className?: string;
 }
 
@@ -40,6 +41,7 @@ export function WidgetPlayer({
   appId,
   manifest,
   source,
+  inputs: inputsProp,
   className,
 }: WidgetPlayerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -54,7 +56,7 @@ export function WidgetPlayer({
   });
 
   const inputs = useMemo(() => {
-    return (manifest.settings ?? []).reduce(
+    const defaults = (manifest.settings ?? []).reduce(
       (acc, setting) => {
         if (setting.id && setting.default !== undefined) {
           acc[setting.id] = setting.default;
@@ -63,12 +65,13 @@ export function WidgetPlayer({
       },
       {} as Record<string, unknown>,
     );
-  }, [manifest.settings]);
+    return { ...defaults, ...inputsProp };
+  }, [manifest.settings, inputsProp]);
 
   // Convert KossabosManifest to Compiler Manifest
   const compilerManifest: Manifest = useMemo(
     () => ({
-      name: manifest.name ?? manifest.appId,
+      name: manifest.appId,
       version: manifest.version,
       platform: 'browser' as const,
       image: imageName,

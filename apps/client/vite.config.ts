@@ -91,27 +91,27 @@ export default defineConfig({
           );
           const fullPath = path.join(examplesDir, urlPath);
 
-          // Only serve .tsx, .ts, and .json files as text
-          if (
-            urlPath.endsWith('.tsx') ||
-            urlPath.endsWith('.ts') ||
-            urlPath.endsWith('.json')
-          ) {
+          // Serve source files and assets
+          const ext = path.extname(urlPath);
+          const contentTypes: Record<string, string> = {
+            '.json': 'application/json',
+            '.ts': 'text/plain; charset=utf-8',
+            '.tsx': 'text/plain; charset=utf-8',
+            '.svg': 'image/svg+xml',
+            '.png': 'image/png',
+            '.jpg': 'image/jpeg',
+            '.jpeg': 'image/jpeg',
+            '.webp': 'image/webp',
+          };
+
+          if (contentTypes[ext]) {
             if (!fs.existsSync(fullPath)) {
-              // Fall through to server proxy for manifest files
               next();
               return;
             }
 
-            const ext = path.extname(fullPath);
-            const contentTypes: Record<string, string> = {
-              '.json': 'application/json',
-              '.ts': 'text/plain; charset=utf-8',
-              '.tsx': 'text/plain; charset=utf-8',
-            };
-            res.setHeader('Content-Type', contentTypes[ext] || 'text/plain');
-
-            const content = fs.readFileSync(fullPath, 'utf-8');
+            res.setHeader('Content-Type', contentTypes[ext]);
+            const content = fs.readFileSync(fullPath);
             res.end(content);
             return;
           }

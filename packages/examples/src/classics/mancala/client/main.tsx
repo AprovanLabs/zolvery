@@ -1,269 +1,419 @@
-import React, { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown, ChevronUp, RotateCcw, Circle, HelpCircle } from "lucide-react";
+import React, { useEffect } from 'react';
 
-type Player = 1 | 2;
+type Player = 0 | 1;
 
 interface GameState {
   pits: number[];
   homes: [number, number];
-  currentPlayer: Player;
-  gameOver: boolean;
+  current: Player;
+  winner: Player | 'draw' | null;
+  botCount: 0 | 1;
 }
 
-const initialState: GameState = {
-  pits: [4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4],
-  homes: [0, 0],
-  currentPlayer: 1,
-  gameOver: false,
+interface BoardProps {
+  G: GameState;
+  ctx: { currentPlayer: string };
+  moves: { sow: (pitIndex: number) => void; reset: () => void };
+  playerID?: string;
+}
+
+const PITS_PER_SIDE = 6;
+const INITIAL_STONES = 4;
+const HUMAN: Player = 0;
+const BOT: Player = 1;
+const BOT_DELAY_MS = 600;
+
+const COLORS: Record<Player, string> = {
+  0: 'oklch(72.3% 0.219 149.579)', // green
+  1: 'oklch(62.3% 0.214 259.815)', // blue
 };
 
-export default function MancalaGame() {
-  const [game, setGame] = useState<GameState>(initialState);
-  const [showRules, setShowRules] = useState(false);
+const createPits = (): number[] =>
+  Array(PITS_PER_SIDE * 2).fill(INITIAL_STONES);
 
-  const player1Color = "bg-blue-500";
-  const player2Color = "bg-amber-500";
-  const player1ColorLight = "bg-blue-100 border-blue-300";
-  const player2ColorLight = "bg-amber-100 border-amber-300";
-  const player1HomeColor = "bg-blue-200 border-blue-400";
-  const player2HomeColor = "bg-amber-200 border-amber-400";
+const getPitOwner = (index: number): Player => (index < PITS_PER_SIDE ? 0 : 1);
 
-  const getCurrentPlayerColor = () => game.currentPlayer === 1 ? player1Color : player2Color;
-  const getCurrentPlayerName = () => `Player ${game.currentPlayer}`;
+// Simulate a move and return the resulting state
+const simulateMove = (
+  pits: number[],
+  homes: [number, number],
+  player: Player,
+  pitIndex: number,
+): { pits: number[]; homes: [number, number]; extraTurn: boolean } => {
+  const newPits = [...pits];
+  const newHomes: [number, number] = [...homes];
+  let stones = newPits[pitIndex];
+  newPits[pitIndex] = 0;
 
-  const getPitOwner = (index: number): Player => index < 6 ? 1 : 2;
+  let currentIndex = pitIndex;
+  let extraTurn = false;
 
-  const makeMove = (pitIndex: number) => {
-    if (game.gameOver) return;
-    
-    const pitOwner = getPitOwner(pitIndex);
-    if (pitOwner !== game.currentPlayer) return;
-    if (game.pits[pitIndex] === 0) return;
+  while (stones > 0) {
+    currentIndex++;
 
-    const newPits = [...game.pits];
-    const newHomes: [number, number] = [...game.homes];
-    let stones = newPits[pitIndex];
-    newPits[pitIndex] = 0;
-    
-    let currentIndex = pitIndex;
-    let lastInHome = false;
-
-    while (stones > 0) {
-      currentIndex++;
-      
-      if (game.currentPlayer === 1 && currentIndex === 6) {
-        newHomes[0]++;
-        stones--;
-        lastInHome = stones === 0;
-        if (stones === 0) break;
-        currentIndex++;
-      }
-      
-      if (game.currentPlayer === 2 && currentIndex === 12) {
-        newHomes[1]++;
-        stones--;
-        lastInHome = stones === 0;
-        if (stones === 0) break;
-      }
-
-      if (currentIndex >= 12) {
-        currentIndex = -1;
-        continue;
-      }
-
-      newPits[currentIndex]++;
+    // Player 0's home is after index 5
+    if (player === 0 && currentIndex === PITS_PER_SIDE) {
+      newHomes[0]++;
       stones--;
+      extraTurn = stones === 0;
+      if (stones === 0) break;
+      currentIndex++;
+    }
 
-      if (stones === 0 && newPits[currentIndex] === 1) {
-        const landedOwner = getPitOwner(currentIndex);
-        if (landedOwner === game.currentPlayer) {
-          const oppositeIndex = 11 - currentIndex;
-          if (newPits[oppositeIndex] > 0) {
-            const captured = newPits[oppositeIndex] + 1;
-            newPits[oppositeIndex] = 0;
-            newPits[currentIndex] = 0;
-            newHomes[game.currentPlayer - 1] += captured;
-          }
+    // Player 1's home is after index 11
+    if (player === 1 && currentIndex === PITS_PER_SIDE * 2) {
+      newHomes[1]++;
+      stones--;
+      extraTurn = stones === 0;
+      if (stones === 0) break;
+    }
+
+    if (currentIndex >= PITS_PER_SIDE * 2) {
+      currentIndex = -1;
+      continue;
+    }
+
+    newPits[currentIndex]++;
+    stones--;
+
+    // Capture logic
+    if (stones === 0 && newPits[currentIndex] === 1) {
+      const landedOwner = getPitOwner(currentIndex);
+      if (landedOwner === player) {
+        const oppositeIndex = PITS_PER_SIDE * 2 - 1 - currentIndex;
+        if (newPits[oppositeIndex] > 0) {
+          const captured = newPits[oppositeIndex] + 1;
+          newPits[oppositeIndex] = 0;
+          newPits[currentIndex] = 0;
+          newHomes[player] += captured;
         }
       }
     }
+  }
 
-    const player1Empty = newPits.slice(0, 6).every(p => p === 0);
-    const player2Empty = newPits.slice(6, 12).every(p => p === 0);
-    const gameOver = player1Empty || player2Empty;
+  return { pits: newPits, homes: newHomes, extraTurn };
+};
 
-    if (gameOver) {
-      newHomes[0] += newPits.slice(0, 6).reduce((a, b) => a + b, 0);
-      newHomes[1] += newPits.slice(6, 12).reduce((a, b) => a + b, 0);
-      for (let i = 0; i < 12; i++) newPits[i] = 0;
+// Get valid moves for a player
+const getValidMoves = (pits: number[], player: Player): number[] => {
+  const start = player === 0 ? 0 : PITS_PER_SIDE;
+  const end = start + PITS_PER_SIDE;
+  const moves: number[] = [];
+  for (let i = start; i < end; i++) {
+    if (pits[i] > 0) moves.push(i);
+  }
+  return moves;
+};
+
+// Check if game is over
+const checkGameOver = (
+  pits: number[],
+): boolean => {
+  const p0Empty = pits.slice(0, PITS_PER_SIDE).every((p) => p === 0);
+  const p1Empty = pits.slice(PITS_PER_SIDE).every((p) => p === 0);
+  return p0Empty || p1Empty;
+};
+
+// Evaluate board score for a player (higher is better)
+const evaluateBoard = (homes: [number, number], player: Player): number => {
+  return homes[player] - homes[1 - player];
+};
+
+// Score a move for bot AI
+const scoreMove = (
+  pits: number[],
+  homes: [number, number],
+  player: Player,
+  pitIndex: number,
+): number => {
+  const result = simulateMove(pits, homes, player, pitIndex);
+  let score = evaluateBoard(result.homes, player);
+
+  // Bonus for extra turn
+  if (result.extraTurn) score += 5;
+
+  // Bonus for captures (compare to current)
+  const captureGain = result.homes[player] - homes[player];
+  if (captureGain > 1) score += captureGain * 2;
+
+  // Penalize if opponent can make a big capture next
+  if (!result.extraTurn && !checkGameOver(result.pits)) {
+    const oppMoves = getValidMoves(result.pits, 1 - player as Player);
+    for (const oppMove of oppMoves) {
+      const oppResult = simulateMove(result.pits, result.homes, 1 - player as Player, oppMove);
+      const oppGain = oppResult.homes[1 - player] - result.homes[1 - player];
+      if (oppGain > 3) score -= oppGain;
     }
+  }
 
-    const nextPlayer: Player = lastInHome && !gameOver ? game.currentPlayer : (game.currentPlayer === 1 ? 2 : 1);
+  return score;
+};
 
-    setGame({
-      pits: newPits,
-      homes: newHomes,
-      currentPlayer: nextPlayer,
-      gameOver,
-    });
+// Bot move selection
+const getBotMove = (pits: number[], homes: [number, number]): number => {
+  const validMoves = getValidMoves(pits, BOT);
+  if (validMoves.length === 0) return -1;
+
+  let bestMove = validMoves[0];
+  let bestScore = -Infinity;
+
+  for (const move of validMoves) {
+    const score = scoreMove(pits, homes, BOT, move);
+    if (score > bestScore) {
+      bestScore = score;
+      bestMove = move;
+    }
+  }
+
+  return bestMove;
+};
+
+export const game = {
+  name: 'mancala',
+  setup: (): GameState => ({
+    pits: createPits(),
+    homes: [0, 0],
+    current: HUMAN,
+    winner: null,
+    botCount: 1,
+  }),
+  moves: {
+    sow: ({ G }: { G: GameState }, pitIndex: number) => {
+      if (G.winner !== null) return;
+      if (getPitOwner(pitIndex) !== G.current) return;
+      if (G.pits[pitIndex] === 0) return;
+
+      const result = simulateMove(G.pits, G.homes, G.current, pitIndex);
+      G.pits = result.pits;
+      G.homes = result.homes;
+
+      const gameOver = checkGameOver(G.pits);
+
+      if (gameOver) {
+        // Collect remaining stones
+        G.homes[0] += G.pits.slice(0, PITS_PER_SIDE).reduce((a, b) => a + b, 0);
+        G.homes[1] += G.pits.slice(PITS_PER_SIDE).reduce((a, b) => a + b, 0);
+        G.pits = G.pits.map(() => 0);
+
+        if (G.homes[0] > G.homes[1]) G.winner = 0;
+        else if (G.homes[1] > G.homes[0]) G.winner = 1;
+        else G.winner = 'draw';
+      } else {
+        G.current = result.extraTurn ? G.current : ((1 - G.current) as Player);
+      }
+    },
+    reset: ({ G }: { G: GameState }) => {
+      G.pits = createPits();
+      G.homes = [0, 0];
+      G.current = HUMAN;
+      G.winner = null;
+    },
+  },
+  ai: {
+    enumerate: (G: GameState) =>
+      G.winner !== null
+        ? []
+        : getValidMoves(G.pits, G.current).map((pit) => ({
+            move: 'sow',
+            args: [pit],
+          })),
+  },
+};
+
+export function app({ G, moves }: BoardProps) {
+  const myTurn = G.current === HUMAN;
+  const over = G.winner !== null;
+  const hasBot = G.botCount === 1;
+
+  // Bot move
+  useEffect(() => {
+    if (over || myTurn || !hasBot) return;
+
+    const timer = setTimeout(() => {
+      const pick = getBotMove(G.pits, G.homes);
+      if (pick !== -1) moves.sow(pick);
+    }, BOT_DELAY_MS);
+
+    return () => clearTimeout(timer);
+  }, [G.pits, G.current, over, myTurn, hasBot, moves]);
+
+  const renderStones = (count: number, compact: boolean = false) => {
+    if (count === 0) return null;
+    const size = compact ? 'h-1.5 w-1.5' : 'h-2 w-2';
+    return (
+      <div className="flex flex-wrap gap-0.5 justify-center items-center">
+        {Array.from({ length: Math.min(count, 24) }, (_, i) => (
+          <div
+            key={i}
+            className={`${size} rounded-full bg-slate-700 transition-all duration-200`}
+          />
+        ))}
+        {count > 24 && (
+          <span className="text-[10px] text-slate-500">+{count - 24}</span>
+        )}
+      </div>
+    );
   };
 
-  const resetGame = () => setGame(initialState);
+  const Pit = ({
+    index,
+    stones,
+    owner,
+  }: {
+    index: number;
+    stones: number;
+    owner: Player;
+  }) => {
+    const isClickable =
+      owner === HUMAN && myTurn && stones > 0 && !over && (!hasBot || myTurn);
+    const isActive = owner === G.current && !over;
 
-  const renderStones = (count: number, isHome: boolean = false) => {
-    const stones = [];
-    for (let i = 0; i < count; i++) {
-      stones.push(
-        <div
-          key={i}
-          className={`${isHome ? 'w-3 h-3' : 'w-2.5 h-2.5'} rounded-full bg-stone-600 shadow-sm
-            transition-all duration-300 ease-out`}
-          style={{ 
-            animationDelay: `${i * 20}ms`,
-          }}
-        />
-      );
-    }
-    return stones;
-  };
-
-  const Pit = ({ index, stones, owner }: { index: number; stones: number; owner: Player }) => {
-    const isClickable = owner === game.currentPlayer && stones > 0 && !game.gameOver;
-    
     return (
       <button
-        onClick={() => makeMove(index)}
+        onClick={() => moves.sow(index)}
         disabled={!isClickable}
-        className={`w-14 h-20 rounded-xl border-2 border-gray-200 bg-white flex items-center justify-center
-          ${isClickable ? 'hover:scale-110 hover:border-gray-400 hover:shadow-lg cursor-pointer' : 'cursor-default opacity-75'}
-          transition-all duration-300 ease-out`}
+        className={`relative flex aspect-[3/4] w-full flex-col items-center justify-center rounded-xl border-2 transition-all duration-200
+          ${isClickable ? 'cursor-pointer hover:scale-105 hover:border-slate-400' : 'cursor-default'}
+          ${isActive && stones > 0 ? 'border-slate-300 bg-slate-50' : 'border-slate-200 bg-white'}
+        `}
       >
-        <div className="flex flex-wrap gap-0.5 justify-center items-center p-1.5 max-w-[90%]">
+        <div className="flex-1 flex items-center justify-center p-1">
           {renderStones(stones)}
         </div>
+        <span className="text-xs font-medium text-slate-500 pb-1">{stones}</span>
       </button>
     );
   };
 
   const Home = ({ player, stones }: { player: Player; stones: number }) => {
-    const borderColor = player === 1 ? "border-blue-300" : "border-amber-300";
-    const label = player === 1 ? "P1" : "P2";
-    
+    const isWinning =
+      over && G.winner === player;
+
     return (
-      <div className={`w-20 h-44 rounded-2xl bg-gray-50 ${borderColor} border-2 flex flex-col items-center justify-center p-2 relative
-        transition-all duration-300 hover:shadow-md`}>
-        <Badge variant="outline" className="absolute -top-2 text-xs bg-white">
-          {label}
-        </Badge>
-        <div className="flex-1 flex flex-wrap gap-1 justify-center items-center content-center p-1 overflow-hidden">
+      <div
+        className={`flex flex-col items-center justify-center rounded-2xl border-2 p-2 transition-all duration-300
+          ${isWinning ? 'scale-105 border-slate-900' : 'border-slate-200'}
+        `}
+        style={{
+          backgroundColor: over && G.winner === player ? COLORS[player] + '20' : undefined,
+        }}
+      >
+        <div
+          className="mb-1 h-3 w-6 rounded-full"
+          style={{ backgroundColor: COLORS[player] }}
+        />
+        <div className="flex-1 flex items-center justify-center p-1 min-h-[40px]">
           {renderStones(stones, true)}
         </div>
-        <span className="text-lg font-bold text-gray-600 mt-1">{stones}</span>
+        <span className="text-lg font-bold text-slate-700">{stones}</span>
       </div>
     );
   };
 
-  const getWinner = () => {
-    if (!game.gameOver) return null;
-    if (game.homes[0] > game.homes[1]) return "Player 1";
-    if (game.homes[1] > game.homes[0]) return "Player 2";
-    return "Tie";
-  };
-
   return (
-    <div className="p-6 max-w-3xl">
-      <Card className="overflow-hidden">
-        <div className="bg-white border-b p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <h1 className="text-xl font-semibold text-gray-800">Mancala</h1>
-              {!game.gameOver && (
-                <div className="flex items-center gap-2 text-sm text-gray-500">
-                  <div className={`w-3 h-3 rounded-full ${getCurrentPlayerColor()} transition-colors duration-300 animate-pulse`} />
-                  <span>{getCurrentPlayerName()}</span>
-                </div>
-              )}
-            </div>
-            {game.gameOver && (
-              <Badge variant="outline" className="text-sm px-3 py-1">
-                {getWinner() === "Tie" ? "It's a Tie!" : `${getWinner()} Wins!`}
-              </Badge>
-            )}
-            <Button variant="ghost" size="sm" onClick={resetGame} className="text-gray-500 hover:text-gray-700">
-              <RotateCcw className="w-4 h-4 mr-1" />
-              Reset
-            </Button>
+    <div className="flex min-h-full w-full items-center justify-center bg-white p-4">
+      <div className="w-full max-w-sm space-y-4">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-xs uppercase tracking-widest text-slate-400">
+              Turn
+            </span>
+            <div
+              className="h-4 w-8 rounded-full transition-colors duration-300"
+              style={{ backgroundColor: COLORS[G.current] }}
+            />
           </div>
+          <button
+            onClick={() => moves.reset()}
+            className="text-xs uppercase tracking-widest text-slate-400 hover:text-slate-700"
+          >
+            Reset
+          </button>
         </div>
 
-        <CardContent className="p-6">
-          {/* Game Board */}
-          <div className="flex items-center justify-center gap-4 mb-6">
-            {/* Player 2's Home (left side) */}
-            <Home player={2} stones={game.homes[1]} />
+        {/* Board - Vertical Layout for Mobile */}
+        <div className="rounded-2xl border-2 border-slate-200 bg-slate-50 p-3 space-y-3">
+          {/* Bot's Home (top) */}
+          <Home player={1} stones={G.homes[1]} />
 
-            {/* Pits */}
-            <div className="flex flex-col gap-8">
-              {/* Player 2's pits (top row, right to left) */}
-              <div className="flex gap-3">
-                {[11, 10, 9, 8, 7, 6].map((i) => (
-                  <Pit key={i} index={i} stones={game.pits[i]} owner={2} />
-                ))}
-              </div>
-
-              {/* Player 1's pits (bottom row, left to right) */}
-              <div className="flex gap-3">
-                {[0, 1, 2, 3, 4, 5].map((i) => (
-                  <Pit key={i} index={i} stones={game.pits[i]} owner={1} />
-                ))}
-              </div>
-            </div>
-
-            {/* Player 1's Home (right side) */}
-            <Home player={1} stones={game.homes[0]} />
+          {/* Bot's pits (top row, right to left visually but displayed left to right) */}
+          <div className="grid grid-cols-6 gap-1.5">
+            {[11, 10, 9, 8, 7, 6].map((i) => (
+              <Pit key={i} index={i} stones={G.pits[i]} owner={1} />
+            ))}
           </div>
 
-          {/* How to Play - Collapsible */}
-          <Collapsible open={showRules} onOpenChange={setShowRules}>
-            <CollapsibleTrigger asChild>
-              <Button variant="ghost" className="w-full flex items-center justify-center gap-2 text-gray-600 hover:text-gray-800">
-                <HelpCircle className="w-4 h-4" />
-                How to Play
-                {showRules ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-              </Button>
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-              <div className="mt-3 p-4 bg-gray-50 rounded-lg">
-                <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
-                  <div className="flex items-start gap-2">
-                    <Badge variant="outline" className="mt-0.5">1</Badge>
-                    <span>Click a pit on your side to pick up stones and distribute them counter-clockwise</span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <Badge variant="outline" className="mt-0.5">2</Badge>
-                    <span>Drop one stone in each pit, including your home, but skip opponent's home</span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <Badge variant="outline" className="mt-0.5">3</Badge>
-                    <span>Land in your home to get another turn</span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <Badge variant="outline" className="mt-0.5">4</Badge>
-                    <span>Land in an empty pit on your side to capture opposite stones</span>
-                  </div>
-                </div>
-                <p className="text-center text-xs text-gray-500 mt-3">
-                  Game ends when one side is empty. Most stones in home wins!
-                </p>
-              </div>
-            </CollapsibleContent>
-          </Collapsible>
-        </CardContent>
-      </Card>
+          {/* Divider */}
+          <div className="flex items-center gap-2 py-1">
+            <div className="flex-1 h-px bg-slate-200" />
+            <span className="text-[10px] uppercase tracking-widest text-slate-300">
+              ↺ flow
+            </span>
+            <div className="flex-1 h-px bg-slate-200" />
+          </div>
+
+          {/* Human's pits (bottom row, left to right) */}
+          <div className="grid grid-cols-6 gap-1.5">
+            {[0, 1, 2, 3, 4, 5].map((i) => (
+              <Pit key={i} index={i} stones={G.pits[i]} owner={0} />
+            ))}
+          </div>
+
+          {/* Human's Home (bottom) */}
+          <Home player={0} stones={G.homes[0]} />
+        </div>
+
+        {/* Status */}
+        {over && (
+          <div className="flex items-center justify-center gap-2 text-sm text-slate-500">
+            {G.winner === 'draw' ? (
+              <span className="text-xs uppercase tracking-widest text-slate-400">
+                Draw
+              </span>
+            ) : (
+              <>
+                <span className="text-xs uppercase tracking-widest text-slate-400">
+                  Winner
+                </span>
+                <div
+                  className="h-4 w-8 rounded-full"
+                  style={{ backgroundColor: COLORS[G.winner as Player] }}
+                />
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Rules (collapsed by default) */}
+        <details className="group">
+          <summary className="flex cursor-pointer items-center justify-center gap-1 text-xs uppercase tracking-widest text-slate-400 hover:text-slate-600">
+            <span>How to play</span>
+            <svg
+              className="h-3 w-3 transition-transform group-open:rotate-180"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </summary>
+          <div className="mt-3 space-y-2 text-xs text-slate-500">
+            <p>
+              <span className="font-medium text-slate-600">Goal:</span> Collect the most stones in your home.
+            </p>
+            <p>
+              <span className="font-medium text-slate-600">Play:</span> Tap a pit on your side to sow stones counter-clockwise.
+            </p>
+            <p>
+              <span className="font-medium text-slate-600">Extra turn:</span> Land your last stone in your home.
+            </p>
+            <p>
+              <span className="font-medium text-slate-600">Capture:</span> Land in an empty pit on your side to capture opposite stones.
+            </p>
+          </div>
+        </details>
+      </div>
     </div>
   );
 }
