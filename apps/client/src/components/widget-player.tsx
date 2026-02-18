@@ -15,8 +15,11 @@ export interface WidgetPlayerProps {
 const IMAGE_MAP: Record<string, string> = {
   shadcn: '@aprovan/patchwork-image-shadcn',
   vanilla: '@aprovan/patchwork-vanilla',
-  boardgameio: '@kossabos/patchwork-image-boardgameio',
+  boardgameio: '@kossabos/patchwork-image-boardgameio@0.1.0',
 };
+
+// Use local npm serving in dev, public CDN in production
+const CDN_BASE_URL = import.meta.env.DEV ? '/npm' : 'https://esm.sh';
 
 const normalizeInputType = (settingType?: string): InputSpec['type'] => {
   switch (settingType) {
@@ -51,7 +54,7 @@ export function WidgetPlayer({
 
   const { isReady, error: compilerError, mount } = usePatchwork({
     image: imageName,
-    cdnBaseUrl: '/npm',
+    cdnBaseUrl: CDN_BASE_URL,
     widgetCdnBaseUrl: 'https://esm.sh',
   });
 

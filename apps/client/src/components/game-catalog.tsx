@@ -60,7 +60,7 @@ export function GameCatalog({
     <div className="h-full overflow-auto">
       <div className="p-4 space-y-6 max-w-lg mx-auto">
         <header className="text-center space-y-1">
-          <img src="/logo.png" alt="Kossabos Logo" className="w-12 h-12 mx-auto" />
+          <img src={`${import.meta.env.BASE_URL}logo.png`} alt="Kossabos Logo" className="w-12 h-12 mx-auto" />
         </header>
 
         {categories.map((category) => (

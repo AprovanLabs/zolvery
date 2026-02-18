@@ -5,7 +5,10 @@
     "version": "0.0.1",
     "scripts": {
         "dev": "vite --port 3700 --open",
-        "build": "tsc && vite build"
+        "prebuild": "node scripts/embed-examples.js",
+        "build": "vite build",
+        "build:check": "tsc && vite build",
+        "build:clean": "rm -rf public/apps && npm run build"
     },
     "dependencies": {
         "@heroicons/react": "^2.2.0",

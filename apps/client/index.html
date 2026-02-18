@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <base href="/" />
     <title>Kossabos</title>
     <meta charset="utf-8" />
     <meta name="theme-color" content="#000000" />
@@ -9,7 +8,7 @@
     <meta name="viewport"
       content="viewport-fit=cover, width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0" />
     <meta name="description" content="Kossabos" />  
-    <link rel="icon" href="/favicon.ico" />
+    <link rel="icon" href="favicon.ico" />
     <link rel="manifest" href="manifest.json" />
   </head>
 
@@ -19,11 +18,11 @@
     <script>
       window.global = window;
     </script>
-    <script type="module" src="/main.tsx"></script>
+    <script type="module" src="./main.tsx"></script>
 
     <script>
       if ('serviceWorker' in navigator) {
-        window.onload = () => navigator.serviceWorker.register('/sw.js');
+        window.onload = () => navigator.serviceWorker.register('sw.js');
       }
     </script>
   </body>
