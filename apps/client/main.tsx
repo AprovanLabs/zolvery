@@ -61,9 +61,15 @@ type AppState =
   | { view: 'playing'; config: GameConfig; lobbyConfig?: GameLobbyConfig };
 
 function parseJoinUrl(): { gameId: string; matchCode: string } | null {
-  const match = window.location.pathname.match(/^\/apps\/(.+)\/join\/([A-Z0-9]+)$/i);
-  if (match) {
-    return { gameId: match[1], matchCode: match[2].toUpperCase() };
+  // Check hash-based route first (preferred for static hosting)
+  const hashMatch = window.location.hash.match(/^#\/apps\/(.+)\/join\/([A-Z0-9]+)$/i);
+  if (hashMatch) {
+    return { gameId: hashMatch[1], matchCode: hashMatch[2].toUpperCase() };
+  }
+  // Fallback to pathname-based route (works with server-side routing or 404.html redirect)
+  const pathMatch = window.location.pathname.match(/^\/apps\/(.+)\/join\/([A-Z0-9]+)$/i);
+  if (pathMatch) {
+    return { gameId: pathMatch[1], matchCode: pathMatch[2].toUpperCase() };
   }
   return null;
 }

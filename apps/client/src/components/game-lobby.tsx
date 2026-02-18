@@ -140,7 +140,8 @@ export function GameLobby({ gameId, initialMode, initialCode, onStart, onCancel 
   };
 
   const copyInviteLink = async () => {
-    const inviteLink = `${window.location.origin}/apps/${gameId}/join/${matchID}`;
+    // Use hash-based route for static site compatibility
+    const inviteLink = `${window.location.origin}/#/apps/${gameId}/join/${matchID}`;
     try {
       await navigator.clipboard.writeText(inviteLink);
       setCopied('link');

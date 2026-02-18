@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Redirecting...</title>
+    <script>
+      // Redirect path-based routes to hash-based routes for static site compatibility
+      // This handles cases where users navigate directly to a deep link
+      var path = window.location.pathname;
+      var hash = window.location.hash;
+      var search = window.location.search;
+
+      // Only redirect if we have a path that looks like a route (not a static file)
+      if (path && path !== '/' && !path.match(/\.[a-z0-9]+$/i)) {
+        // Convert pathname to hash route
+        window.location.replace(
+          window.location.origin +
+            '/#' +
+            path +
+            search +
+            (hash ? hash.substring(1) : ''),
+        );
+      } else {
+        // For other 404s, redirect to home
+        window.location.replace(window.location.origin + '/');
+      }
+    </script>
+  </head>
+  <body>
+    <noscript>
+      <p>Redirecting to <a href="/">home</a>...</p>
+    </noscript>
+  </body>
+</html>
