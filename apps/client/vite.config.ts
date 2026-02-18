@@ -137,6 +137,15 @@ export default defineConfig({
         target: 'http://localhost:3701',
         rewrite: (path) => path.replace(/^\/apps/, ''),
       },
+      // Proxy edit API to Stitchery service
+      '/api/edit': {
+        target: 'http://127.0.0.1:6434',
+        changeOrigin: true,
+      },
+      '/api/chat': {
+        target: 'http://127.0.0.1:6434',
+        changeOrigin: true,
+      },
     },
   },
   resolve: {
