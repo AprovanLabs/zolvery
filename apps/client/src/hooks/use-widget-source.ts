@@ -42,10 +42,11 @@ export function useWidgetSource(appId: string | null): UseWidgetSourceReturn {
 
     setIsLoading(true);
     setError(null);
+    const base = import.meta.env.BASE_URL;
 
     Promise.all([
-      fetch(`/apps/${appId}/kossabos.json`).then((r) => r.json()),
-      fetch(`/apps/${appId}/client/main.tsx`).then((r) => r.text()),
+      fetch(`${base}apps/${appId}/kossabos.json`).then((r) => r.json()),
+      fetch(`${base}apps/${appId}/client/main.tsx`).then((r) => r.text()),
     ])
       .then(([m, s]) => {
         setManifest(m);

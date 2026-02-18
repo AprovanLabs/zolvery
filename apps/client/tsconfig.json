@@ -13,9 +13,10 @@
     "experimentalDecorators": true,
     "useDefineForClassFields": true,
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
+    "skipLibCheck": true,
     "paths": {
-      "@kossabos/core": ["../../packages/core/src"],
-      "@kossabos/vue": ["../../packages/vue/src"],
+      "@kossabos/core": ["../../packages/core/src"]
     }
-  }
+  },
+  "exclude": ["public/apps"]
 }

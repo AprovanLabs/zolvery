@@ -3,6 +3,15 @@ import fs from 'fs';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 
+// GitHub Pages base path
+// With custom domain: use '/'
+// Without custom domain (project pages): use '/repo-name/'
+const BASE_PATH = process.env.GITHUB_PAGES_CUSTOM_DOMAIN
+  ? '/'
+  : process.env.GITHUB_ACTIONS
+  ? '/kossabos/'
+  : '/';
+
 // Apprentice packages directory (adjust if needed)
 const APPRENTICE_PACKAGES = path.resolve(
   __dirname,
@@ -28,6 +37,7 @@ const LOCAL_NPM_PACKAGES: Record<string, string> = {
 };
 
 export default defineConfig({
+  base: BASE_PATH,
   plugins: [
     react(),
     {

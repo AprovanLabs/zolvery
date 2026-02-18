@@ -30,23 +30,24 @@ export function useGamesCatalog() {
 
   useEffect(() => {
     setIsLoading(true);
+    const base = import.meta.env.BASE_URL;
 
-    fetch('/apps/apps.json')
+    fetch(`${base}apps/apps.json`)
       .then((r) => r.json())
       .then(async (appList: Array<{ appId: string }>) => {
         const manifests = await Promise.all(
           appList.map(async ({ appId }) => {
             try {
-              const manifest = await fetch(`/apps/${appId}/kossabos.json`).then(
-                (r) => r.json(),
-              );
+              const manifest = await fetch(
+                `${base}apps/${appId}/kossabos.json`,
+              ).then((r) => r.json());
               const category = appId.split('/')[0];
               const logoName = manifest.iconName ?? 'icon.svg';
               return {
                 ...manifest,
                 appId,
                 category,
-                iconUrl: `/apps/${appId}/${logoName}`,
+                iconUrl: `${base}apps/${appId}/${logoName}`,
               } as GameEntry;
             } catch {
               return null;

@@ -30,7 +30,7 @@ interface Player {
   result: 'win' | 'lose' | 'push' | null;
 }
 
-type Phase = 'betting' | 'playing' | 'dealer' | 'results';
+type Phase = 'betting' | 'playing' | 'dealer' | 'results' | 'gameOver';
 
 interface GameState {
   deck: Card[];
@@ -121,6 +121,20 @@ const calculateScore = (hand: Card[]): number => {
   return score;
 };
 
+const isPlayerOut = (player: Player): boolean =>
+  player.chips === 0 && player.bet === 0;
+
+const areAllHumansOut = (players: Player[]): boolean =>
+  players.filter((p) => !p.isBot).every(isPlayerOut);
+
+const findNextActivePlayer = (players: Player[], startIdx: number): number => {
+  let idx = startIdx;
+  while (idx < players.length && isPlayerOut(players[idx])) {
+    idx++;
+  }
+  return idx;
+};
+
 const createInitialState = (ctx: { numPlayers?: number }): GameState => {
   const numPlayers = ctx.numPlayers ?? DEFAULT_NUM_PLAYERS;
   const players: Player[] = Array.from({ length: numPlayers }, (_, i) => ({
@@ -167,6 +181,10 @@ export const game = {
       const deck = shuffle(createDeck());
       G.deck = deck;
       const nextPlayers = G.players.map((player) => {
+        // Skip dealing to players who are out
+        if (isPlayerOut(player)) {
+          return { ...player, hand: [], score: 0, result: null };
+        }
         const hand = [deck.pop()!, deck.pop()!];
         return {
           ...player,
@@ -178,8 +196,9 @@ export const game = {
       G.players = nextPlayers;
       G.dealerHand = [deck.pop()!, { ...deck.pop()!, hidden: true }];
       G.dealerScore = calculateScore(G.dealerHand);
-      G.currentPlayer = 0;
-      G.phase = 'playing';
+      // Find first active player (skip any that are out)
+      G.currentPlayer = findNextActivePlayer(nextPlayers, 0);
+      G.phase = G.currentPlayer >= nextPlayers.length ? 'dealer' : 'playing';
     },
     hit: ({ G, ctx }: { G: GameState; ctx: Ctx }) => {
       if (G.phase !== 'playing') return;
@@ -193,7 +212,7 @@ export const game = {
       });
       const current = G.players[G.currentPlayer];
       if (current.result === 'lose' || current.score > 21) {
-        G.currentPlayer++;
+        G.currentPlayer = findNextActivePlayer(G.players, G.currentPlayer + 1);
         if (G.currentPlayer >= G.players.length) {
           G.phase = 'dealer';
         }
@@ -202,7 +221,7 @@ export const game = {
     stand: ({ G, ctx }: { G: GameState; ctx: Ctx }) => {
       if (G.phase !== 'playing') return;
       if (ctx.playerID !== null && ctx.playerID !== undefined && parseInt(ctx.playerID, 10) !== G.currentPlayer) return;
-      G.currentPlayer++;
+      G.currentPlayer = findNextActivePlayer(G.players, G.currentPlayer + 1);
       if (G.currentPlayer >= G.players.length) {
         G.phase = 'dealer';
       }
@@ -221,7 +240,7 @@ export const game = {
         p.score = calculateScore(p.hand);
         if (p.score > 21) p.result = 'lose';
       });
-      G.currentPlayer++;
+      G.currentPlayer = findNextActivePlayer(G.players, G.currentPlayer + 1);
       if (G.currentPlayer >= G.players.length) {
         G.phase = 'dealer';
       }
@@ -249,6 +268,11 @@ export const game = {
       G.phase = 'results';
     },
     nextRound: ({ G }: { G: GameState }) => {
+      // Check if all human players are out
+      if (areAllHumansOut(G.players)) {
+        G.phase = 'gameOver';
+        return;
+      }
       G.deck = [];
       G.dealerHand = [];
       G.dealerScore = 0;
@@ -258,6 +282,21 @@ export const game = {
         ...player,
         hand: [],
         score: 0,
+        bet: 0,
+        result: null,
+      }));
+    },
+    newGame: ({ G }: { G: GameState }) => {
+      G.deck = [];
+      G.dealerHand = [];
+      G.dealerScore = 0;
+      G.currentPlayer = 0;
+      G.phase = 'betting';
+      G.players = G.players.map((player) => ({
+        ...player,
+        hand: [],
+        score: 0,
+        chips: INITIAL_CHIPS,
         bet: 0,
         result: null,
       }));
@@ -292,6 +331,7 @@ interface BoardProps {
     double: () => void;
     dealerPlay: () => void;
     nextRound: () => void;
+    newGame: () => void;
   };
 }
 
@@ -353,8 +393,9 @@ export function app({ G, ctx, playerID, isMultiplayer, moves }: BoardProps) {
   const [currentBet, setCurrentBet] = useState(BET_INCREMENT);
   const myPlayerIndex = playerID !== null ? parseInt(playerID, 10) : 0;
   const myPlayer = G.players[myPlayerIndex];
-  const isMyTurn = G.phase === 'playing' && G.currentPlayer === myPlayerIndex;
-  const canBet = G.phase === 'betting' && myPlayer && myPlayer.chips >= currentBet;
+  const amIOut = myPlayer && isPlayerOut(myPlayer);
+  const isMyTurn = G.phase === 'playing' && G.currentPlayer === myPlayerIndex && !amIOut;
+  const canBet = G.phase === 'betting' && myPlayer && myPlayer.chips >= currentBet && !amIOut;
 
   // Bot betting during betting phase (single player only)
   useEffect(() => {
@@ -528,7 +569,7 @@ export function app({ G, ctx, playerID, isMultiplayer, moves }: BoardProps) {
                   step={BET_INCREMENT}
                   value={currentBet}
                   onChange={(e) => setCurrentBet(Number(e.target.value))}
-                  disabled={!myPlayer || myPlayer.bet > 0}
+                  disabled={!myPlayer || myPlayer.bet > 0 || amIOut}
                   className="flex-1 accent-emerald-500"
                 />
                 <span className="text-sm font-mono text-slate-600 w-12">
@@ -538,10 +579,10 @@ export function app({ G, ctx, playerID, isMultiplayer, moves }: BoardProps) {
               <div className={myPlayerIndex === 0 ? 'grid grid-cols-2 gap-2' : ''}>
                 <button
                   onClick={() => moves.bet(myPlayerIndex, currentBet)}
-                  disabled={!canBet || !myPlayer || myPlayer.bet > 0}
+                  disabled={!canBet || !myPlayer || myPlayer.bet > 0 || amIOut}
                   className="w-full rounded-lg bg-emerald-500 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-emerald-600 disabled:bg-slate-200 disabled:text-slate-400"
                 >
-                  Place Bet
+                  {amIOut ? 'Out' : 'Place Bet'}
                 </button>
                 {myPlayerIndex === 0 && (
                   <button
@@ -557,29 +598,35 @@ export function app({ G, ctx, playerID, isMultiplayer, moves }: BoardProps) {
           )}
 
           {G.phase === 'playing' && (
-            <div className="grid grid-cols-3 gap-2">
-              <button
-                onClick={() => moves.hit()}
-                disabled={!isMyTurn}
-                className="rounded-lg bg-slate-800 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-slate-900 disabled:bg-slate-200 disabled:text-slate-400"
-              >
-                Hit
-              </button>
-              <button
-                onClick={() => moves.stand()}
-                disabled={!isMyTurn}
-                className="rounded-lg border-2 border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-600 transition-colors hover:border-slate-400 disabled:border-slate-100 disabled:text-slate-300"
-              >
-                Stand
-              </button>
-              <button
-                onClick={() => moves.double()}
-                disabled={!isMyTurn || !myPlayer || myPlayer.bet > myPlayer.chips}
-                className="rounded-lg border-2 border-amber-400 px-4 py-2.5 text-sm font-medium text-amber-600 transition-colors hover:bg-amber-50 disabled:border-slate-100 disabled:text-slate-300"
-              >
-                Double
-              </button>
-            </div>
+            amIOut ? (
+              <div className="text-center text-sm text-slate-400">
+                You are out of chips
+              </div>
+            ) : (
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  onClick={() => moves.hit()}
+                  disabled={!isMyTurn}
+                  className="rounded-lg bg-slate-800 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-slate-900 disabled:bg-slate-200 disabled:text-slate-400"
+                >
+                  Hit
+                </button>
+                <button
+                  onClick={() => moves.stand()}
+                  disabled={!isMyTurn}
+                  className="rounded-lg border-2 border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-600 transition-colors hover:border-slate-400 disabled:border-slate-100 disabled:text-slate-300"
+                >
+                  Stand
+                </button>
+                <button
+                  onClick={() => moves.double()}
+                  disabled={!isMyTurn || !myPlayer || myPlayer.bet > myPlayer.chips}
+                  className="rounded-lg border-2 border-amber-400 px-4 py-2.5 text-sm font-medium text-amber-600 transition-colors hover:bg-amber-50 disabled:border-slate-100 disabled:text-slate-300"
+                >
+                  Double
+                </button>
+              </div>
+            )
           )}
 
           {G.phase === 'results' && (
@@ -594,6 +641,21 @@ export function app({ G, ctx, playerID, isMultiplayer, moves }: BoardProps) {
           {G.phase === 'dealer' && (
             <div className="text-center text-sm text-slate-400">
               Dealer playing...
+            </div>
+          )}
+
+          {G.phase === 'gameOver' && (
+            <div className="flex flex-col items-center gap-4 py-6">
+              <div className="text-center">
+                <span className="text-2xl font-bold text-slate-800">Game Over</span>
+                <p className="text-sm text-slate-500 mt-1">You ran out of chips!</p>
+              </div>
+              <button
+                onClick={() => moves.newGame()}
+                className="w-full rounded-lg bg-emerald-500 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-emerald-600"
+              >
+                New Game
+              </button>
             </div>
           )}
         </div>

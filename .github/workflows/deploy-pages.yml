@@ -1,22 +1,25 @@
-name: Publish Packages to NPM
+name: Deploy to GitHub Pages
 
 on:
   push:
     branches: [main]
-    paths:
-      - 'packages/images/**'
   workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: 'pages'
+  cancel-in-progress: false
 
 env:
   HUSKY: 0
 
 jobs:
-  publish:
-    name: Publish
+  build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write
     steps:
       - name: Checkout kossabos
         uses: actions/checkout@v4
@@ -39,19 +42,30 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          registry-url: 'https://registry.npmjs.org'
 
       - name: Install dependencies
         working-directory: kossabos
         run: pnpm install
 
-      - name: Build packages
+      - name: Build client
         working-directory: kossabos
-        run: pnpx turbo run build --filter=@kossabos/patchwork-image-boardgameio
+        run: pnpm run app:build
 
-      - name: Publish @kossabos/patchwork-image-boardgameio
-        working-directory: kossabos
-        run: pnpm publish --filter @kossabos/patchwork-image-boardgameio --no-git-checks --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        continue-on-error: true
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: kossabos/apps/client/dist
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
