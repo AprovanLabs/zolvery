@@ -8,5 +8,16 @@
       "created_at": "2026-02-18T18:13:06.503471+00:00"
     }
   },
-  "branches": {}
+  "branches": {
+    "feat/service-infrastructure": {
+      "intent": "Set up backend services for LLM-powered editing",
+      "modules": [
+        "apps/client/vite.config.ts",
+        "scripts/"
+      ],
+      "owner": "unknown",
+      "created_at": "2026-02-18T18:14:17.470766+00:00",
+      "initiative": "stage-1-editing"
+    }
+  }
 }
