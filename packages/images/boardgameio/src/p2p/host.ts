@@ -1,4 +1,10 @@
-import type { ChatMessage, CredentialedActionShape, Game, Server, State } from 'boardgame.io';
+import type {
+  ChatMessage,
+  CredentialedActionShape,
+  Game,
+  Server,
+  State,
+} from 'boardgame.io';
 import { P2PDB } from './db.js';
 import { authenticate } from './authentication.js';
 import type { Client, ClientAction } from './types.js';
@@ -8,6 +14,7 @@ type ChatArgs = [string, ChatMessage, string | undefined];
 
 export class P2PHost {
   private clients = new Map<Client, Client>();
+  private hostClient: Client | null = null;
   private matchID: string;
   private db: P2PDB;
   private game: Game;
@@ -48,6 +55,12 @@ export class P2PHost {
   }
 
   private createInitialState(): State {
+    // Mark all players as active in Stage.NULL ('') so they can all make moves
+    const activePlayers: Record<string, string> = {};
+    for (let i = 0; i < this.numPlayers; i++) {
+      activePlayers[String(i)] = '';
+    }
+
     const ctx = {
       numPlayers: this.numPlayers,
       turn: 1,
@@ -55,7 +68,7 @@ export class P2PHost {
       playOrder: Array.from({ length: this.numPlayers }, (_, i) => String(i)),
       playOrderPos: 0,
       phase: '',
-      activePlayers: null,
+      activePlayers,
     };
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -73,10 +86,28 @@ export class P2PHost {
 
   public registerClient(client: Client): void {
     if (!authenticate(this.matchID, client.metadata, this.db)) {
+      console.log(
+        '[P2PHost] Client auth failed for playerID:',
+        client.metadata.playerID,
+      );
       return;
     }
 
+    console.log(
+      '[P2PHost] Registered client for playerID:',
+      client.metadata.playerID,
+    );
     this.clients.set(client, client);
+    this.syncClient(client);
+  }
+
+  public registerHostClient(client: Client): void {
+    // Host client is always trusted, skip auth
+    console.log(
+      '[P2PHost] Registered host client for playerID:',
+      client.metadata.playerID,
+    );
+    this.hostClient = client;
     this.syncClient(client);
   }
 
@@ -125,15 +156,34 @@ export class P2PHost {
     const moveArgs = action.payload?.args ?? [];
     const playerID = action.payload?.playerID;
 
+    console.log('[P2PHost] handleUpdate:', { moveName, moveArgs, playerID });
+
     if (moveName && this.game.moves?.[moveName]) {
       const move = this.game.moves[moveName];
       const ctx = { ...currentState.ctx, playerID };
-      const G = { ...currentState.G };
-      
+      // Deep clone G to avoid frozen state issues
+      const G = JSON.parse(JSON.stringify(currentState.G));
+
+      console.log(
+        '[P2PHost] Before move, G.players:',
+        G.players?.map((p: { id: number; bet: number }) => ({
+          id: p.id,
+          bet: p.bet,
+        })),
+      );
+
       if (typeof move === 'function') {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         move({ G, ctx } as any, ...moveArgs);
       }
+
+      console.log(
+        '[P2PHost] After move, G.players:',
+        G.players?.map((p: { id: number; bet: number }) => ({
+          id: p.id,
+          bet: p.bet,
+        })),
+      );
 
       const newState: State = {
         ...currentState,
@@ -143,12 +193,36 @@ export class P2PHost {
 
       this.state = newState;
       this.db.setState(this.matchID, newState);
+      console.log(
+        '[P2PHost] State updated, broadcasting to',
+        this.clients.size,
+        'clients',
+      );
       this.broadcastState();
+    } else {
+      console.log(
+        '[P2PHost] Move not found:',
+        moveName,
+        'Available:',
+        Object.keys(this.game.moves || {}),
+      );
     }
   }
 
   private broadcastState(): void {
     const { state, log } = this.db.fetch(this.matchID);
+
+    // Notify host client first
+    if (this.hostClient) {
+      const playerID = this.hostClient.metadata.playerID;
+      const filteredState = this.filterStateForPlayer(state, playerID);
+      this.hostClient.send({
+        type: 'sync',
+        args: [this.matchID, { state: filteredState, log }],
+      });
+    }
+
+    // Notify remote clients
     for (const client of this.clients.values()) {
       const playerID = client.metadata.playerID;
       const filteredState = this.filterStateForPlayer(state, playerID);
@@ -160,6 +234,9 @@ export class P2PHost {
   }
 
   private broadcastChat(args: ChatArgs): void {
+    if (this.hostClient) {
+      this.hostClient.send({ type: 'chat', args });
+    }
     for (const client of this.clients.values()) {
       client.send({ type: 'chat', args });
     }
