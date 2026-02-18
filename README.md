@@ -1,4 +1,4 @@
-# Kossabos
+# kossabos
 
 ![Kossabos](apps/client/public/logo.png)
 <br /> <a href="https://aprovan.com">
