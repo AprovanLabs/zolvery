@@ -13,7 +13,5 @@ _bmad
 
 pnpm-lock.yaml
 
-.cicadas
-
 # Generated during build
 apps/client/public/apps
