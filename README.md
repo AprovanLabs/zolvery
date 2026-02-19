@@ -11,6 +11,10 @@
 
 Games!
 
+## About
+
+Kossabos is the game development platform behind [Zolvery](https://zolvery.com), a free platform for playing community-built games.
+
 ## Developing Locally
 
 The project is maintained as one monorepo containing the following packages:
