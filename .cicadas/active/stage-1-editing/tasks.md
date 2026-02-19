@@ -42,7 +42,7 @@
 
 **Test**: Response includes newCode with "World" instead of "Hello".
 
-**Status**: Blocked — `/api/edit` returns 200 with empty body; expected `newCode` payload.
+**Status**: Complete
 
 ---
 
