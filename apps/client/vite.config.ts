@@ -7,24 +7,8 @@ import { defineConfig } from 'vite';
 // process.env.GITHUB_PAGES_CUSTOM_DOMAIN or GITHUB_ACTIONS
 const BASE_PATH = '/';
 
-// Apprentice packages directory (adjust if needed)
-const APPRENTICE_PACKAGES = path.resolve(
-  __dirname,
-  '../../../apprentice/packages',
-);
-
 // Map npm package names to local directories
 const LOCAL_NPM_PACKAGES: Record<string, string> = {
-  '@aprovan/patchwork-image-shadcn': path.join(
-    APPRENTICE_PACKAGES,
-    'images/shadcn',
-  ),
-  '@aprovan/patchwork-image-vanilla': path.join(
-    APPRENTICE_PACKAGES,
-    'images/vanilla',
-  ),
-  '@aprovan/patchwork-compiler': path.join(APPRENTICE_PACKAGES, 'compiler'),
-  '@aprovan/patchwork': path.join(APPRENTICE_PACKAGES, 'patchwork'),
   '@kossabos/patchwork-image-boardgameio': path.join(
     __dirname,
     '../../packages/images/boardgameio',

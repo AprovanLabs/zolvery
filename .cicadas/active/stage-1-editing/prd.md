@@ -37,7 +37,7 @@ Kossabos currently supports **running** widgets (games) through the Patchwork co
 
 ## Constraints
 
-- Must use existing `@aprovan/patchwork-editor` components from apprentice
+- Must use existing `@aprovan/patchwork-editor` components from NPM
 - Must run Stitchery service locally for edit requests (no external API dependency)
 - Save only to local filesystem (examples package) — no cloud storage
 - Edits must work with the existing `@kossabos/patchwork-image-boardgameio` image

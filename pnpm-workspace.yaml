@@ -4,7 +4,3 @@ packages:
   - 'scripts/**'
   - '!**/build/**'
   - '!**/dist/**'
-
-  # Patchwork packages
-  - '../apprentice/packages/*'
-  - '../apprentice/packages/images/*'
