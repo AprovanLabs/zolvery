@@ -11,6 +11,7 @@
     "dev": "./scripts/start-local.sh && $_ npm run expose & $_ npm run watch",
     "dev:api": "./scripts/start-local.sh && pnpx turbo watch dev --filter=@kossabos/server",
     "dev:public": "./scripts/start-local.sh $_ npm run expose:public & $_ npm run watch",
+    "dev:stitchery": "STITCHERY_PORT=6434 pnpm dlx @aprovan/stitchery serve",
     "app:build": "pnpx turbo run build --filter=@kossabos/client",
     "core:build": "pnpx turbo run build --filter=@kossabos/core",
     "core:test": "pnpx turbo run test --filter=@kossabos/core",

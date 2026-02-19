@@ -238,7 +238,7 @@ apps/
 |---------|------|---------------|
 | Kossabos Client | 3700 | `pnpm -C apps/client dev` |
 | Kossabos Server | 3000 | `pnpm -C apps/server dev` |
-| Stitchery | 6434 | `pnpm -C {apprentice} stitchery serve` |
+| Stitchery | 6434 | `STITCHERY_PORT=6434 pnpm dlx @aprovan/stitchery serve` |
 | Copilot Proxy | 6433 | Required for LLM calls |
 
 ## Multi-File Editing
