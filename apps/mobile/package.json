@@ -6,13 +6,19 @@
     "build": "pnpm --filter @kossabos/client run build",
     "sync:android": "pnpm --filter @kossabos/client run build && pnpm exec cap sync android",
     "run:android": "pnpm exec cap run android",
-    "android:regen": "bash ./scripts/android-regen.sh"
+    "android:regen": "bash ./scripts/android-regen.sh",
+    "assets": "pnpm exec capacitor-assets generate --iconBackgroundColor '#E1477E' --splashBackgroundColor '#E1477E' --android"
   },
   "dependencies": {
     "@capacitor/android": "^6.0.0",
-    "@capacitor/core": "^6.0.0"
+    "@capacitor/app": "^6.0.0",
+    "@capacitor/browser": "^6.0.0",
+    "@capacitor/core": "^6.0.0",
+    "@capacitor/preferences": "^6.0.0",
+    "@capacitor/status-bar": "^6.0.0"
   },
   "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
     "@capacitor/cli": "^6.0.0"
   }
 }

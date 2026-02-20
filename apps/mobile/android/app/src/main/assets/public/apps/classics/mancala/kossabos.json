@@ -1,0 +1,13 @@
+{
+  "appId": "classics/mancala",
+  "name": "Mancala",
+  "description": "A two-player turn-based strategy board games played with small stones",
+  "runnerTag": "boardgameio",
+  "links": ["https://en.wikipedia.org/wiki/Mancala"],
+  "version": "0.0.1",
+  "authorId": "jsampson",
+  "visibility": "public",
+  "tags": ["game", "classics"],
+  "servers": ["kossabos/games"],
+  "iconName": "icon.png"
+}

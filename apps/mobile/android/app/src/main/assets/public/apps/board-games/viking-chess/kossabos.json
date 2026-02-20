@@ -1,0 +1,25 @@
+{
+  "appId": "board-games/viking-chess",
+  "description": "Hnefatafl (sometimes now referred to as Viking chess) was a popular game in medieval Scandinavia and was mentioned in several of the Norse sagas",
+  "links": {
+    "homepage": "https://en.wikipedia.org/wiki/Tafl_games#Hnefatafl"
+  },
+  "version": "0.0.1",
+  "runnerTag": "vue-boardgameio",
+  "authorId": "jsampson",
+  "tags": ["game", "classics"],
+  "features": ["bots"],
+  "settings": [
+    {
+      "id": "num-players",
+      "label": "settings.num-players",
+      "options": [
+        { "value": "1" },
+        { "value": "2" },
+        { "value": "3" },
+        { "value": "4" }
+      ],
+      "default": "1"
+    }
+  ]
+}

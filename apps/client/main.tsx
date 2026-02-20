@@ -21,14 +21,26 @@ declare global {
   }
 }
 
+// Detect mobile (Capacitor) environment
+const isMobileApp = (): boolean => {
+  // Check for Capacitor's custom schemes or if window.Capacitor exists
+  const protocol = window.location.protocol;
+  return (
+    protocol === 'capacitor:' ||
+    protocol === 'ionic:' ||
+    (typeof (window as { Capacitor?: unknown }).Capacitor !== 'undefined')
+  );
+};
+
 // Share PeerJS settings between the lobby and boardgame transport
-const peerHost = import.meta.env.VITE_PEER_HOST || window.location.hostname;
-const peerPort = Number(import.meta.env.VITE_PEER_PORT) || 9500;
+// On mobile, default to the public PeerJS server if not configured
+const peerHost = import.meta.env.VITE_PEER_HOST || (isMobileApp() ? '0.peerjs.com' : window.location.hostname);
+const peerPort = Number(import.meta.env.VITE_PEER_PORT) || (isMobileApp() ? 443 : 9500);
 const peerPath = import.meta.env.VITE_PEER_PATH || '/';
 const peerSecure =
   import.meta.env.VITE_PEER_SECURE === 'true' ||
   (import.meta.env.VITE_PEER_SECURE === undefined &&
-    window.location.protocol === 'https:');
+    (isMobileApp() || window.location.protocol === 'https:'));
 const turnUrl = import.meta.env.VITE_PEER_TURN_URL;
 const turnUsername = import.meta.env.VITE_PEER_TURN_USERNAME;
 const turnCredential = import.meta.env.VITE_PEER_TURN_CREDENTIAL;

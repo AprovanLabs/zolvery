@@ -1,0 +1,143 @@
+name: Build Android
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'apps/client/**'
+      - 'apps/mobile/**'
+      - 'packages/**'
+      - '.github/workflows/build-android.yml'
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'Build type'
+        required: true
+        default: 'debug'
+        type: choice
+        options:
+          - debug
+          - release
+
+env:
+  HUSKY: 0
+  JAVA_VERSION: '17'
+  NODE_VERSION: '20'
+
+jobs:
+  build-android:
+    name: Build Android AAB
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 9
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate production .env
+        working-directory: apps/client
+        run: |
+          cat > .env << EOF
+          VITE_PEER_HOST=${{ vars.VITE_PEER_HOST || '0.peerjs.com' }}
+          VITE_PEER_PORT=${{ vars.VITE_PEER_PORT || '443' }}
+          VITE_PEER_PATH=${{ vars.VITE_PEER_PATH || '/' }}
+          VITE_PEER_SECURE=${{ vars.VITE_PEER_SECURE || 'true' }}
+          EOF
+
+      - name: Build client
+        run: pnpm --filter @kossabos/client run build
+
+      - name: Remove existing Android directory
+        working-directory: apps/mobile
+        run: rm -rf android
+
+      - name: Regenerate Android project
+        working-directory: apps/mobile
+        run: pnpm exec cap add android
+
+      - name: Generate app assets
+        working-directory: apps/mobile
+        run: pnpm run assets
+
+      - name: Sync Android project
+        working-directory: apps/mobile
+        run: pnpm exec cap sync android
+
+      - name: Build debug APK
+        if: github.event.inputs.build_type != 'release'
+        working-directory: apps/mobile/android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Upload debug APK
+        if: github.event.inputs.build_type != 'release'
+        uses: actions/upload-artifact@v4
+        with:
+          name: kossabos-debug-${{ github.sha }}
+          path: apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 14
+
+      - name: Decode keystore
+        if: github.event.inputs.build_type == 'release'
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > apps/mobile/android/keystore.jks
+
+      - name: Build release AAB
+        if: github.event.inputs.build_type == 'release'
+        working-directory: apps/mobile/android
+        run: |
+          chmod +x gradlew
+          ./gradlew bundleRelease
+        env:
+          KEYSTORE_FILE: ${{ github.workspace }}/apps/mobile/android/keystore.jks
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+
+      - name: Rename AAB artifact
+        if: github.event.inputs.build_type == 'release'
+        run: |
+          VERSION=$(node -p "require('./apps/mobile/package.json').version")
+          mv apps/mobile/android/app/build/outputs/bundle/release/app-release.aab \
+             apps/mobile/android/app/build/outputs/bundle/release/kossabos-${VERSION}-${{ github.sha }}.aab
+
+      - name: Upload release AAB
+        if: github.event.inputs.build_type == 'release'
+        uses: actions/upload-artifact@v4
+        with:
+          name: kossabos-release-${{ github.sha }}
+          path: apps/mobile/android/app/build/outputs/bundle/release/*.aab
+          retention-days: 30

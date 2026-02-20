@@ -1,0 +1,26 @@
+{
+  "appId": "dice-games/yatzy",
+  "name": "Yatzy",
+  "description": "Yatzy is a dice game where the object of the game is to score points by rolling five dice to make certain combinations.",
+  "links": {
+    "homepage": "https://en.wikipedia.org/wiki/Yatzy"
+  },
+  "version": "0.0.1",
+  "runnerTag": "boardgameio",
+  "authorId": "jsampson",
+  "tags": ["game", "classics"],
+  "iconName": "icon.png",
+  "settings": [
+    {
+      "id": "num-players",
+      "label": "settings.num-players",
+      "options": [
+        { "value": "1" },
+        { "value": "2" },
+        { "value": "3" },
+        { "value": "4" }
+      ],
+      "default": "1"
+    }
+  ]
+}

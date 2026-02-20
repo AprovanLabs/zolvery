@@ -1,0 +1,32 @@
+{
+  "appId": "card-games/buck-euchre",
+  "name": "Buck Euchre",
+  "description": "A trick-taking card game for 4 players with bidding and trump selection",
+  "tags": ["card-game", "classic", "euchre"],
+  "version": "1.0.0",
+  "runnerTag": "boardgameio",
+  "authorId": "jsampson",
+  "visibility": "public",
+  "players": { "min": 4, "max": 4 },
+  "iconName": "logo.png",
+  "settings": [
+    {
+      "id": "bot-count",
+      "label": "Number of Bots",
+      "type": "number",
+      "min": 0,
+      "max": 3,
+      "default": 3
+    },
+    {
+      "id": "bot-difficulty",
+      "label": "Bot Difficulty",
+      "options": [
+        { "value": "easy", "label": "Easy" },
+        { "value": "medium", "label": "Medium" },
+        { "value": "hard", "label": "Hard" }
+      ],
+      "default": "medium"
+    }
+  ]
+}

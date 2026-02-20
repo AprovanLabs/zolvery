@@ -14,11 +14,24 @@ fi
 pnpm exec cap add android
 
 if [ -d "$backup_dir" ]; then
+  # Restore customized build.gradle
   if [ -f "$backup_dir/app/build.gradle" ]; then
     cp "$backup_dir/app/build.gradle" "${root_dir}/android/app/build.gradle"
   fi
+  # Restore customized AndroidManifest.xml
   if [ -f "$backup_dir/app/src/main/AndroidManifest.xml" ]; then
     cp "$backup_dir/app/src/main/AndroidManifest.xml" "${root_dir}/android/app/src/main/AndroidManifest.xml"
   fi
+  # Restore customized res files
+  if [ -d "$backup_dir/app/src/main/res" ]; then
+    cp -r "$backup_dir/app/src/main/res/values" "${root_dir}/android/app/src/main/res/" 2>/dev/null || true
+    cp -r "$backup_dir/app/src/main/res/xml" "${root_dir}/android/app/src/main/res/" 2>/dev/null || true
+  fi
   rm -rf "$backup_dir"
+fi
+
+# Regenerate assets if assets directory exists
+if [ -d "${root_dir}/assets" ]; then
+  echo "Regenerating Android assets..."
+  pnpm run assets
 fi

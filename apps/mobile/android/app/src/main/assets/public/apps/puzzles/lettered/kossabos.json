@@ -1,0 +1,20 @@
+{
+  "appId": "puzzles/lettered",
+  "name": "Lettered",
+  "description": "A word puzzle game where players create words from a set of letters.",
+  "version": "0.0.1",
+  "authorId": "jsampson",
+  "visibility": "public",
+  "runnerTag": "boardgameio",
+  "iconName": "icon.png",
+  "settings": [
+    {
+      "id": "hardMode",
+      "type": "boolean",
+      "label": "Hard Mode",
+      "description": "Must use any previously matched letters.",
+      "defaultValue": false
+    }
+  ],
+  "tags": ["puzzle", "words"]
+}
