@@ -16,6 +16,8 @@
         "@kossabos/patchwork-image-boardgameio": "workspace:*",
         "@tailwindcss/typography": "^0.5.16",
         "@aprovan/patchwork-compiler": "^0.1.0",
+        "@aprovan/bobbin": "catalog:",
+        "@aprovan/patchwork-editor": "catalog:",
         "@aprovan/patchwork-image-shadcn": "^0.1.0",
         "react": "^19.0.0",
         "react-dom": "^19.0.0",

@@ -59,6 +59,8 @@
 
 **Test**: Import statement `import { EditModal } from '@aprovan/patchwork-editor'` compiles without error.
 
+**Status**: Complete
+
 ---
 
 ### P2.2 — Create WidgetEditModal Component
@@ -85,6 +87,8 @@ interface WidgetEditModalProps {
 
 **Test**: Modal opens with current widget code, preview renders correctly.
 
+**Status**: Complete
+
 ---
 
 ### P2.3 — Create EditableWidgetPlayer Component
@@ -100,6 +104,8 @@ interface WidgetEditModalProps {
 
 **Test**: Clicking Edit opens modal, making changes updates preview.
 
+**Status**: Complete
+
 ---
 
 ### P2.4 — Integrate EditableWidgetPlayer in App
@@ -113,6 +119,8 @@ interface WidgetEditModalProps {
 
 **Test**: Play a game, click Edit, make a change, close, continue playing with updated widget.
 
+**Status**: Complete
+
 ---
 
 ### P2.5 — Add Compile Function for Error Recovery
@@ -125,6 +133,8 @@ interface WidgetEditModalProps {
 3. Return `{ success: true }` or `{ success: false, error: message }`
 
 **Test**: When edit causes compilation error, retry is triggered automatically.
+
+**Status**: Complete
 
 ---
 
@@ -155,6 +165,8 @@ interface UseWidgetProjectReturn {
 
 **Test**: Hook loads all files, `isDirty` updates when file content changes.
 
+**Status**: Complete
+
 ---
 
 ### P3.2 — Update WidgetEditModal for Multi-file
@@ -168,6 +180,8 @@ interface UseWidgetProjectReturn {
 4. Handle active file switching
 
 **Test**: File tree shows `main.tsx` and `kossabos.json`, switching files works.
+
+**Status**: Complete
 
 ---
 
@@ -200,6 +214,8 @@ interface SaveRequest {
 
 **Test**: POST request saves file, file exists on disk with correct content.
 
+**Status**: Complete
+
 ---
 
 ### P3.4 — Implement Save Flow in Client
@@ -215,6 +231,8 @@ interface SaveRequest {
 
 **Test**: Make edit, click Done, confirm save, reload page, verify changes persist.
 
+**Status**: Complete
+
 ---
 
 ### P3.5 — Add Save Confirmation Dialog
@@ -229,6 +247,74 @@ interface SaveRequest {
 5. Cancel → return to editor
 
 **Test**: Make changes, click Done, dialog appears with all three options working correctly.
+
+**Status**: Complete
+
+---
+
+## Partition 4: Extract Generic Components to Patchwork
+
+### P4.1 — Add SaveConfirmDialog to patchwork-editor
+
+**Files**: `../patchwork/packages/editor/src/components/edit/SaveConfirmDialog.tsx`, `../patchwork/packages/editor/src/components/edit/index.ts`
+
+**Steps**:
+1. Create `SaveConfirmDialog` component in patchwork-editor (lift from kossabos)
+2. Export from edit index
+3. Export from package index
+
+**Test**: `import { SaveConfirmDialog } from '@aprovan/patchwork-editor'` compiles.
+
+**Status**: Pending
+
+---
+
+### P4.2 — Add onSave to EditModal
+
+**Files**: `../patchwork/packages/editor/src/components/edit/EditModal.tsx`, `../patchwork/packages/editor/src/components/edit/types.ts`
+
+**Steps**:
+1. Add `onSave?: (code: string) => Promise<void>` prop to `EditModalProps`
+2. When `onSave` provided:
+   - Show save button in header
+   - Intercept close to check for unsaved changes
+   - Show `SaveConfirmDialog` when closing with changes
+3. Handle save/discard/cancel flow internally
+
+**Test**: EditModal with `onSave` shows save button and confirmation dialog on close.
+
+**Status**: Pending
+
+---
+
+### P4.3 — Simplify WidgetEditModal
+
+**Files**: `apps/client/src/components/widget-edit-modal.tsx`
+
+**Steps**:
+1. Remove local `SaveConfirmDialog` component
+2. Remove save flow state management (`showConfirm`, `pendingClose`, etc.)
+3. Pass `onSave` prop directly to `EditModal`
+4. Remove manual save button overlay
+
+**Test**: Edit flow works identically with simplified implementation.
+
+**Status**: Pending
+
+---
+
+### P4.4 — Configure pnpm Catalog Reference
+
+**Files**: `pnpm-workspace.yaml`, `apps/client/package.json`
+
+**Steps**:
+1. Add `catalog:` section to workspace yaml with patchwork packages
+2. Update client package.json to use `"catalog:"` for `@aprovan/patchwork-editor` and `@aprovan/bobbin`
+3. Remove hardcoded `link:` paths
+
+**Test**: `pnpm install` resolves dependencies correctly. Switch catalog entry to `link:` and back to verify both modes work.
+
+**Status**: Pending
 
 ---
 

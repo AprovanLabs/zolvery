@@ -398,12 +398,25 @@ export function app({ G, ctx, playerID, isMultiplayer, moves }: BoardProps) {
   const canBet = G.phase === 'betting' && myPlayer && myPlayer.chips >= currentBet && !amIOut;
 
   // Bot betting during betting phase (single player only)
+  // Use a ref to track which bots have bet this round to prevent multiple bets
+  const [botsBetThisRound, setBotsBetThisRound] = useState<Set<number>>(new Set());
+
+  // Reset bot bet tracking when phase changes to betting
+  useEffect(() => {
+    if (G.phase === 'betting') {
+      setBotsBetThisRound(new Set());
+    }
+  }, [G.phase]);
+
   useEffect(() => {
     if (isMultiplayer || G.phase !== 'betting') return;
-    const bots = G.players.filter((p) => p.isBot && p.bet === 0 && p.chips > 0);
+    const bots = G.players.filter(
+      (p) => p.isBot && p.bet === 0 && p.chips > 0 && !botsBetThisRound.has(p.id)
+    );
     if (bots.length === 0) return;
+    const bot = bots[0];
     const timer = setTimeout(() => {
-      const bot = bots[0];
+      setBotsBetThisRound((prev) => new Set(prev).add(bot.id));
       const betAmount = Math.min(
         BET_INCREMENT * (Math.floor(Math.random() * 3) + 1),
         bot.chips,
@@ -411,13 +424,14 @@ export function app({ G, ctx, playerID, isMultiplayer, moves }: BoardProps) {
       moves.bet(bot.id, betAmount);
     }, BOT_DELAY_MS);
     return () => clearTimeout(timer);
-  }, [G.phase, G.players, moves, isMultiplayer]);
+  }, [G.phase, G.players, moves, isMultiplayer, botsBetThisRound]);
 
   // Bot playing during playing phase (single player only)
+  // Only depend on phase and currentPlayer to avoid re-triggering on hand updates
   useEffect(() => {
     if (isMultiplayer || G.phase !== 'playing') return;
     const current = G.players[G.currentPlayer];
-    if (!current.isBot) return;
+    if (!current || !current.isBot) return;
     const timer = setTimeout(() => {
       if (current.score < 17) {
         moves.hit();
@@ -426,16 +440,17 @@ export function app({ G, ctx, playerID, isMultiplayer, moves }: BoardProps) {
       }
     }, BOT_DELAY_MS);
     return () => clearTimeout(timer);
-  }, [G.phase, G.currentPlayer, G.players, moves, isMultiplayer]);
+  }, [G.phase, G.currentPlayer, isMultiplayer]);
 
   // Dealer plays automatically (host triggers in multiplayer, or single player)
   useEffect(() => {
     if (G.phase !== 'dealer') return;
     // Only player 0 (host) triggers dealer play in multiplayer
-    if (isMultiplayer && myPlayerIndex !== 0) return;
+    // In multiplayer, only proceed if we're explicitly player "0"
+    if (isMultiplayer && playerID !== '0') return;
     const timer = setTimeout(() => moves.dealerPlay(), BOT_DELAY_MS);
     return () => clearTimeout(timer);
-  }, [G.phase, moves, isMultiplayer, myPlayerIndex]);
+  }, [G.phase, moves, isMultiplayer, playerID]);
 
   // Reset bet slider when round ends
   useEffect(() => {

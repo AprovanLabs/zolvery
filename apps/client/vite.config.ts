@@ -114,12 +114,17 @@ export default defineConfig({
     proxy: {
       // Proxy non-source app requests to the server
       '^/apps/.*/kossabos\\.json': {
-        target: 'http://localhost:3701',
+        target: 'http://localhost:3000',
         rewrite: (path) => path.replace(/^\/apps/, ''),
       },
       '^/apps/apps\\.json': {
-        target: 'http://localhost:3701',
+        target: 'http://localhost:3000',
         rewrite: (path) => path.replace(/^\/apps/, ''),
+      },
+      // Proxy API v1 to backend server
+      '/api/v1': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
       },
       // Proxy edit API to Stitchery service
       '/api/edit': {

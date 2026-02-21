@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
-import { WidgetPlayer } from './src/components/widget-player';
+import { PencilIcon } from '@heroicons/react/24/outline';
+import { EditableWidgetPlayer } from './src/components/editable-widget-player';
 import { useWidgetSource } from './src/hooks/use-widget-source';
 import { useGamesCatalog, type GameEntry } from './src/hooks/use-games-catalog';
 import { GameCatalog } from './src/components/game-catalog';
@@ -76,6 +77,7 @@ function parseJoinUrl(): { gameId: string; matchCode: string } | null {
 
 function App() {
   const [state, setState] = useState<AppState>({ view: 'catalog' });
+  const [isEditing, setIsEditing] = useState(false);
   const { categories, isLoading: catalogLoading } = useGamesCatalog();
 
   // Handle join URLs on mount
@@ -202,7 +204,13 @@ function App() {
         <span className="text-sm font-medium text-slate-900">
           {state.config.game.name ?? state.config.game.appId}
         </span>
-        <div className="w-16" />
+        <button
+          onClick={() => setIsEditing(true)}
+          className="text-sm text-slate-500 hover:text-slate-700 flex items-center gap-1"
+        >
+          <PencilIcon className="h-4 w-4" />
+          Edit
+        </button>
       </header>
 
       <main className="flex-1 relative">
@@ -213,7 +221,7 @@ function App() {
         )}
 
         {manifest && source && !isLoading && (
-          <WidgetPlayer
+          <EditableWidgetPlayer
             appId={state.config.game.appId}
             manifest={manifest}
             source={source}
@@ -230,6 +238,9 @@ function App() {
               }),
             }}
             className="w-full h-full"
+            editable
+            isEditing={isEditing}
+            onEditingChange={setIsEditing}
           />
         )}
       </main>
