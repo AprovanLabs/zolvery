@@ -9,5 +9,25 @@
   "visibility": "public",
   "tags": ["game", "classics"],
   "servers": ["kossabos/games"],
-  "iconName": "icon.png"
+  "players": { "min": 2, "max": 2, "maxLocal": 2 },
+  "settings": [
+    {
+      "id": "bot-count",
+      "label": "Number of Bots",
+      "type": "number",
+      "min": 0,
+      "max": 1,
+      "default": 1
+    },
+    {
+      "id": "bot-difficulty",
+      "label": "Bot Difficulty",
+      "options": [
+        { "value": "easy", "label": "Easy" },
+        { "value": "medium", "label": "Medium" },
+        { "value": "hard", "label": "Hard" }
+      ],
+      "default": "medium"
+    }
+  ]
 }

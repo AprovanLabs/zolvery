@@ -6,15 +6,7 @@
   "authorId": "jsampson",
   "visibility": "public",
   "runnerTag": "boardgameio",
-  "iconName": "icon.png",
-  "settings": [
-    {
-      "id": "hardMode",
-      "type": "boolean",
-      "label": "Hard Mode",
-      "description": "Must use any previously matched letters.",
-      "defaultValue": false
-    }
-  ],
+  "players": { "min": 1, "max": 1, "maxLocal": 1 },
+  "settings": [],
   "tags": ["puzzle", "words"]
 }

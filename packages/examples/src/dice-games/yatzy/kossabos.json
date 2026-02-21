@@ -9,18 +9,15 @@
   "runnerTag": "boardgameio",
   "authorId": "jsampson",
   "tags": ["game", "classics"],
-  "iconName": "icon.png",
+  "players": { "min": 1, "max": 4, "maxLocal": 1 },
   "settings": [
     {
-      "id": "num-players",
-      "label": "settings.num-players",
-      "options": [
-        { "value": "1" },
-        { "value": "2" },
-        { "value": "3" },
-        { "value": "4" }
-      ],
-      "default": "1"
+      "id": "bot-count",
+      "label": "Number of Bots",
+      "type": "number",
+      "min": 0,
+      "max": 3,
+      "default": 1
     }
   ]
 }

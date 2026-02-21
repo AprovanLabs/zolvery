@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
+import type { VirtualProject } from '@aprovan/patchwork-compiler';
 import { WidgetPlayer, type WidgetPlayerProps } from './widget-player';
 import { WidgetEditModal } from './widget-edit-modal';
 import { useWidgetProject } from '../hooks/use-widget-project';
@@ -48,8 +49,12 @@ export function EditableWidgetPlayer({
     [source, onSourceChange, setIsEditing, project],
   );
 
-  const handleSave = useCallback(async (code: string) => {
-    await project.save([{ path: 'client/main.tsx', content: code }]);
+  const handleSaveProject = useCallback(async (editedProject: VirtualProject) => {
+    const filesToSave = Array.from(editedProject.files.values()).map((f) => ({
+      path: f.path,
+      content: f.content,
+    }));
+    await project.save(filesToSave);
   }, [project]);
 
   return (
@@ -62,15 +67,15 @@ export function EditableWidgetPlayer({
         className={className}
       />
 
-      {editable && (
+      {editable && project.project && (
         <WidgetEditModal
           appId={appId}
           manifest={manifest}
-          source={source}
+          project={project.project}
           isOpen={isEditing}
           isDirty={project.isDirty}
           onClose={handleEditClose}
-          onSave={handleSave}
+          onSaveProject={handleSaveProject}
         />
       )}
     </div>

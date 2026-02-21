@@ -11,6 +11,14 @@
 import { SettingsProvider, useSettings, type GameSettings } from './context.js';
 import { createP2PTransport } from './p2p/index.js';
 import { ensurePeerJS } from './setup.js';
+import {
+  BotManager,
+  resolveBotConfig,
+  computeBotPlayerIDs,
+  type BotState,
+  type BotDifficulty,
+  type DifficultyPreset,
+} from './bot-manager.js';
 
 // Re-export for convenience
 export { SettingsProvider, useSettings, type GameSettings } from './context.js';
@@ -36,9 +44,11 @@ export interface BoardgameGame {
   maxPlayers?: number;
   setup: (context: unknown) => unknown;
   ai?: {
-    enumerate: (...args: unknown[]) => unknown;
+    /** Enumerate legal moves for bot players */
+    enumerate: (G: unknown, ctx: unknown) => Array<{ move: string; args: unknown[] }>;
+    /** Optional game-specific difficulty presets */
+    difficulty?: Partial<Record<BotDifficulty, Partial<DifficultyPreset>>>;
   };
-  // ... other boardgame.io game properties
 }
 
 /** Manifest structure for player count */
@@ -63,15 +73,11 @@ declare global {
         board: BoardComponent;
         numPlayers?: number;
         multiplayer?: unknown;
-        ai?: unknown;
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       }) => any;
     };
-    BoardgameAI?: {
-      RandomBot?: () => unknown;
-    };
     BoardgameMultiplayer?: {
-      Local?: (opts?: { bots?: Record<string, unknown> }) => unknown;
+      Local?: () => unknown;
     };
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     React?: any;
@@ -105,18 +111,12 @@ export function createGameMount(
   options: GameMountOptions = {},
 ): (container: HTMLElement, inputs?: GameSettings) => () => void {
   const {
-    numPlayers = game.maxPlayers ?? game.minPlayers ?? 2,
+    numPlayers: defaultNumPlayers = game.maxPlayers ?? game.minPlayers ?? 2,
     defaultPlayerID = '0',
   } = options;
 
   return (container: HTMLElement, inputs: GameSettings = {}): (() => void) => {
-    const {
-      BoardgameReact,
-      BoardgameAI,
-      BoardgameMultiplayer,
-      React: R,
-      ReactDOM,
-    } = window;
+    const { BoardgameReact, BoardgameMultiplayer, React: R, ReactDOM } = window;
 
     if (!BoardgameReact || !R || !ReactDOM) {
       console.error(
@@ -127,60 +127,150 @@ export function createGameMount(
       return () => {};
     }
 
-    const botCount =
-      typeof inputs['bot-count'] === 'number' ? inputs['bot-count'] : 0;
-    const canUseBots = botCount > 0 && !!game.ai;
-    const botFactory = canUseBots ? BoardgameAI?.RandomBot : undefined;
+    // Player configuration
+    const numPlayers =
+      (inputs.numPlayers as number | undefined) ?? defaultNumPlayers;
 
-    if (canUseBots && !botFactory) {
-      console.warn(
-        '[boardgameio] Bot settings enabled, but AI module is unavailable.',
-      );
-    }
-
-    const enumerate =
-      typeof game.ai?.enumerate === 'function' ? game.ai.enumerate : undefined;
-
-    if (canUseBots && !enumerate) {
-      console.warn(
-        '[boardgameio] Bot settings enabled, but game.ai.enumerate is missing.',
-      );
-    }
-
-    const botPlayers: Record<string, unknown> = {};
-    if (botFactory && enumerate) {
-      let added = 0;
-      for (let pid = 0; pid < numPlayers && added < botCount; pid += 1) {
-        const pidStr = String(pid);
-        if (pidStr === defaultPlayerID) continue;
-        botPlayers[pidStr] = botFactory;
-        added += 1;
-      }
-    }
-
-    // Check for multiplayer configuration
+    // Check for multiplayer configuration first (needed for bot count default)
     const multiplayerConfig = inputs.multiplayer as
       | MultiplayerInput
       | undefined;
     const isMultiplayer = !!multiplayerConfig?.matchID;
-    const playerID = multiplayerConfig?.playerID ?? defaultPlayerID;
 
-    // Use P2P transport for multiplayer, Local for single-player
+    // Bot count: explicit input, or default to numPlayers - 1 (0 for multiplayer)
+    const botCountInput = inputs['bot-count'] ?? inputs.botCount;
+    const botCount =
+      typeof botCountInput === 'number'
+        ? botCountInput
+        : isMultiplayer
+          ? 0
+          : numPlayers - 1;
+    const playerID =
+      (inputs.playerID as string) ??
+      multiplayerConfig?.playerID ??
+      defaultPlayerID;
+
+    // Compute which players are bots
+    const botPlayerIDs = computeBotPlayerIDs(numPlayers, botCount, playerID);
+
+    console.log('[boardgameio] Bot configuration:', {
+      numPlayers,
+      botCount,
+      botCountInput,
+      isMultiplayer,
+      playerID,
+      botPlayerIDs,
+      hasBotEnumerate: !!game.ai?.enumerate,
+      inputsBotCount: inputs['bot-count'],
+      hasMultiplayerConfig: !!multiplayerConfig,
+    });
+
+    // Resolve bot configuration from difficulty presets + explicit overrides
+    const botDifficulty = (inputs.botDifficulty as BotDifficulty) ?? 'medium';
+    const botConfig = resolveBotConfig(inputs, game.ai?.difficulty);
+
+    // Create bot manager (only if game has ai.enumerate and we have bots)
+    const hasBots = botCount > 0 && game.ai?.enumerate;
+    let botManager: BotManager | null = null;
+    if (hasBots) {
+      botManager = new BotManager(game, botConfig);
+    }
+
+    // Use P2P transport for multiplayer only
+    // Don't use Local() for single-player/local-pass-and-play - it restricts moves
+    // to the client's playerID, preventing bots and turn-taking from working
     let multiplayer: unknown;
     if (isMultiplayer && multiplayerConfig) {
       const isHost = multiplayerConfig.isHost ?? playerID === '0';
       multiplayer = createP2PTransport({
         isHost,
       });
-    } else if (BoardgameMultiplayer?.Local) {
-      multiplayer = BoardgameMultiplayer.Local(
-        Object.keys(botPlayers).length > 0 ? { bots: botPlayers } : undefined,
-      );
     }
 
-    // Wrap board component to inject isMultiplayer prop
+    // Wrap board component to inject bot state and additional props
     const WrappedBoard: BoardComponent = (props: Record<string, unknown>) => {
-      return R.createElement(Board, { ...props, isMultiplayer });
+      const [botState, setBotState] = R.useState({
+        isThinking: false,
+        thinkingPlayer: null,
+      }) as [BotState, (state: BotState) => void];
+
+      // Subscribe to bot state changes
+      R.useEffect(() => {
+        if (!botManager) return;
+        return botManager.subscribe(setBotState);
+      }, []);
+
+      // Trigger bot moves on state changes
+      R.useEffect(() => {
+        // Never run bots in multiplayer mode - all players are human
+        if (isMultiplayer) {
+          return;
+        }
+
+        if (!botManager || !props.G) {
+          console.log('[boardgameio] Bot effect skipped:', {
+            hasBotManager: !!botManager,
+            hasG: !!props.G,
+          });
+          return;
+        }
+
+        // Detect current player from G.current (internal tracking) or ctx.currentPlayer
+        // Many games use G.current (number) instead of boardgame.io's ctx.currentPlayer
+        const gState = props.G as { current?: number; winner?: unknown };
+        const ctxState = props.ctx as {
+          currentPlayer: string;
+          gameover?: unknown;
+        };
+        const currentPlayer =
+          gState.current !== undefined
+            ? String(gState.current)
+            : ctxState.currentPlayer;
+
+        // Detect gameover from G.winner (internal tracking) or ctx.gameover
+        const gameover =
+          gState.winner !== undefined ? gState.winner !== null : ctxState.gameover;
+
+        const isBotTurn = botPlayerIDs.includes(currentPlayer);
+        console.log('[boardgameio] Bot effect running:', {
+          currentPlayer,
+          botPlayerIDs,
+          isBotTurn,
+          gameover,
+        });
+
+        const state = {
+          G: props.G,
+          ctx: {
+            ...ctxState,
+            currentPlayer,
+            gameover,
+          },
+        };
+
+        botManager.maybePlayBot(state, botPlayerIDs, (type, ...args) => {
+          console.log('[boardgameio] Bot making move:', { type, args });
+          const moves = props.moves as Record<
+            string,
+            (...a: unknown[]) => void
+          >;
+          moves[type]?.(...args);
+        });
+      }, [
+        props.G,
+        (props.ctx as { currentPlayer?: string })?.currentPlayer,
+        (props.ctx as { turn?: number })?.turn,
+        (props.G as { current?: number })?.current,
+      ]);
+
+      return R.createElement(Board, {
+        ...props,
+        isMultiplayer,
+        botState,
+        botPlayerIDs,
+        botCount,
+        botDifficulty,
+      });
     };
 
     // Create the boardgame.io Client
@@ -189,12 +279,10 @@ export function createGameMount(
       board: WrappedBoard,
       numPlayers,
       ...(multiplayer ? { multiplayer } : {}),
-      // Bots are configured via Local transport when enabled.
     });
 
     // Wrapper that provides settings via context
     const GameWithSettings = () => {
-      // matchID and credentials are passed as props to the rendered component
       const clientProps: Record<string, unknown> = { playerID };
       if (isMultiplayer && multiplayerConfig) {
         clientProps.matchID = multiplayerConfig.matchID;
@@ -216,7 +304,10 @@ export function createGameMount(
     const root = ReactDOM.createRoot(container);
     root.render(R.createElement(GameWithSettings));
 
-    return () => root.unmount();
+    return () => {
+      botManager?.dispose();
+      root.unmount();
+    };
   };
 }
 

@@ -7,6 +7,7 @@ import type {
 import { generateKeyPair, signMessage } from './authentication.js';
 import { P2PHost } from './host.js';
 import type { ClientAction, ClientMetadata } from './types.js';
+import { hasValidSession, cleanupExpiredSessions } from './session-storage.js';
 
 declare global {
   interface Window {
@@ -105,6 +106,9 @@ export class P2PTransport {
   private connected = false;
   private connectionStatusCallbacks: Set<(connected: boolean) => void> =
     new Set();
+  private hostRetryCount = 0;
+  private maxHostRetries = 3;
+  private lastPeerConfig: object | null = null;
 
   public constructor(config: TransportConfig, opts: P2PTransportOpts = {}) {
     console.log('[P2PTransport] Constructor called with config:', {
@@ -156,6 +160,9 @@ export class P2PTransport {
   }
 
   public connect(): void {
+    // Cleanup any expired sessions on connect
+    cleanupExpiredSessions();
+
     const Peer = window.Peer;
     if (!Peer) {
       this.onError?.(new Error('PeerJS not loaded'));
@@ -191,12 +198,29 @@ export class P2PTransport {
       },
     };
 
+    // Check if this is a reconnection (host has existing session)
+    const isReconnection = this.isHost && hasValidSession(this.matchID);
+    
     console.log(
       `[P2PTransport] Connecting as ${
         this.isHost ? 'HOST' : 'CLIENT'
-      }, hostID: ${this.hostID}`,
+      }, hostID: ${this.hostID}${isReconnection ? ' (reconnecting)' : ''}`,
     );
 
+    // If host is reconnecting, delay to allow old PeerJS connection to clear
+    if (isReconnection) {
+      console.log('[P2PTransport] Host reconnecting, waiting for PeerJS ID to clear...');
+      setTimeout(() => this.createPeer(Peer, peerConfig), 2000);
+    } else {
+      this.createPeer(Peer, peerConfig);
+    }
+  }
+
+  private createPeer(
+    Peer: NonNullable<typeof window.Peer>,
+    peerConfig: object,
+  ): void {
+    this.lastPeerConfig = peerConfig;
     this.peer = new Peer(this.isHost ? this.hostID : undefined, peerConfig);
 
     this.peer.on('open', (id) => {
@@ -263,11 +287,30 @@ export class P2PTransport {
         console.error(
           '[P2PTransport] Host peer not found. Is the host connected?',
         );
+        this.onError?.(error);
       } else if (error.type === 'unavailable-id') {
-        console.error('[P2PTransport] Peer ID already taken');
+        // Host ID is still held by old connection - retry after delay
+        if (this.isHost && this.hostRetryCount < this.maxHostRetries) {
+          this.hostRetryCount++;
+          const delay = 2000 * this.hostRetryCount; // Exponential backoff
+          console.log(
+            `[P2PTransport] Peer ID unavailable, retrying in ${delay}ms (${this.hostRetryCount}/${this.maxHostRetries})...`,
+          );
+          this.peer?.destroy();
+          this.peer = null;
+          setTimeout(() => {
+            const Peer = window.Peer;
+            if (Peer && this.lastPeerConfig) {
+              this.createPeer(Peer, this.lastPeerConfig);
+            }
+          }, delay);
+        } else {
+          console.error('[P2PTransport] Peer ID already taken, max retries reached');
+          this.onError?.(error);
+        }
+      } else {
+        this.onError?.(error);
       }
-
-      this.onError?.(error);
     });
 
     this.peer.on('close', () => {
@@ -278,7 +321,8 @@ export class P2PTransport {
   }
 
   private retryCount = 0;
-  private maxRetries = 3;
+  private maxRetries = 6; // Increased from 3 to handle host reconnection
+  private retryDelayMs = 3000; // Delay between retries
 
   private connectToHost(): void {
     if (!this.peer) return;
@@ -301,10 +345,11 @@ export class P2PTransport {
         this.retryCount++;
         if (this.retryCount <= this.maxRetries) {
           console.warn(
-            `[P2PTransport] Connection timeout, retrying (${this.retryCount}/${this.maxRetries})...`,
+            `[P2PTransport] Connection timeout, retrying in ${this.retryDelayMs}ms (${this.retryCount}/${this.maxRetries})...`,
           );
           this.connection.close();
-          this.connectToHost();
+          // Delay before retry to give host time to reconnect
+          setTimeout(() => this.connectToHost(), this.retryDelayMs);
         } else {
           console.error(
             '[P2PTransport] Max retries reached. Could not connect to host.',

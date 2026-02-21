@@ -102,6 +102,7 @@ export function useP2PLobby({
       window.location.protocol === 'https:');
   const MAX_RETRIES = 3;
   const RETRY_DELAY_MS = 1000;
+  const HOST_ID_RETRY_DELAY_MS = 2000; // Delay for reclaiming host ID after refresh
 
   const logEvent = useCallback((message: string) => {
     const stamped = `${new Date().toISOString()} ${message}`;
@@ -216,6 +217,8 @@ export function useP2PLobby({
 
     let mounted = true;
     let retryCount = 0;
+    let hostIdRetryCount = 0;
+    const MAX_HOST_ID_RETRIES = 3;
     setConnectionLog([]);
     setPeerId(null);
     setLastIceState(null);
@@ -526,6 +529,30 @@ export function useP2PLobby({
           if (error.type === 'peer-unavailable') {
             setError('Game not found. Is the host still waiting?');
           } else if (error.type === 'unavailable-id') {
+            // Host ID is still held by old connection (e.g., after refresh)
+            // Retry with exponential backoff
+            if (isHost && hostIdRetryCount < MAX_HOST_ID_RETRIES) {
+              hostIdRetryCount++;
+              const delay = HOST_ID_RETRY_DELAY_MS * hostIdRetryCount;
+              logEvent(
+                `Host ID unavailable, retrying in ${delay}ms (${hostIdRetryCount}/${MAX_HOST_ID_RETRIES})`,
+              );
+              setError('Reconnecting...');
+              setIsConnecting(true);
+              
+              // Clean up current peer
+              peerRef.current?.destroy();
+              peerRef.current = null;
+              
+              // Retry after delay
+              setTimeout(() => {
+                if (mounted) {
+                  retryCount = 0;
+                  init(forceRelayOnly);
+                }
+              }, delay);
+              return;
+            }
             setError('A game with this code already exists');
           } else if (error.type === 'disconnected') {
             // Will be handled by 'disconnected' event

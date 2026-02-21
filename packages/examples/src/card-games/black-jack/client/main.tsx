@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 interface Ctx {
   currentPlayer: string;
@@ -143,7 +143,7 @@ const createInitialState = (ctx: { numPlayers?: number }): GameState => {
     score: 0,
     chips: INITIAL_CHIPS,
     bet: 0,
-    isBot: i > 0, // Player 0 is human, rest could be bots in single player
+    isBot: i > 0, // Default: Player 0 is human, rest are bots (matches default botCount)
     result: null,
   }));
   return {
@@ -160,7 +160,7 @@ export const game = {
   name: 'blackjack',
   minPlayers: 1,
   maxPlayers: 4,
-  setup: (ctx: { numPlayers?: number }): GameState => createInitialState(ctx),
+  setup: ({ ctx }: { ctx: { numPlayers?: number } }): GameState => createInitialState(ctx),
   // Moves validate themselves based on phase and playerID.
   // Mark all players as active so anyone can make moves (validated in move logic).
   turn: {
@@ -168,16 +168,20 @@ export const game = {
   },
   moves: {
     bet: ({ G, ctx }: { G: GameState; ctx: Ctx }, playerId: number, amount: number) => {
-      if (ctx.playerID !== null && ctx.playerID !== undefined && parseInt(ctx.playerID, 10) !== playerId) return;
       const player = G.players[playerId];
+      if (!player) return;
+      const isCallerValid = ctx.playerID === null || ctx.playerID === undefined || 
+        parseInt(ctx.playerID, 10) === playerId || player.isBot;
+      if (!isCallerValid) return;
       if (amount > player.chips || G.phase !== 'betting') return;
       updatePlayer(G, playerId, (p) => {
         p.chips -= amount;
         p.bet += amount;
       });
     },
-    deal: ({ G }: { G: GameState }) => {
+    deal: ({ G, ctx }: { G: GameState; ctx: Ctx }) => {
       if (G.phase !== 'betting') return;
+      if (ctx.playerID !== null && ctx.playerID !== undefined && ctx.playerID !== '0') return;
       const deck = shuffle(createDeck());
       G.deck = deck;
       const nextPlayers = G.players.map((player) => {
@@ -202,7 +206,10 @@ export const game = {
     },
     hit: ({ G, ctx }: { G: GameState; ctx: Ctx }) => {
       if (G.phase !== 'playing') return;
-      if (ctx.playerID !== null && ctx.playerID !== undefined && parseInt(ctx.playerID, 10) !== G.currentPlayer) return;
+      const currentPlayer = G.players[G.currentPlayer];
+      const isCallerValid = ctx.playerID === null || ctx.playerID === undefined || 
+        parseInt(ctx.playerID, 10) === G.currentPlayer || currentPlayer?.isBot;
+      if (!isCallerValid) return;
       const card = G.deck.pop();
       if (!card) return;
       updatePlayer(G, G.currentPlayer, (p) => {
@@ -220,7 +227,10 @@ export const game = {
     },
     stand: ({ G, ctx }: { G: GameState; ctx: Ctx }) => {
       if (G.phase !== 'playing') return;
-      if (ctx.playerID !== null && ctx.playerID !== undefined && parseInt(ctx.playerID, 10) !== G.currentPlayer) return;
+      const currentPlayer = G.players[G.currentPlayer];
+      const isCallerValid = ctx.playerID === null || ctx.playerID === undefined || 
+        parseInt(ctx.playerID, 10) === G.currentPlayer || currentPlayer?.isBot;
+      if (!isCallerValid) return;
       G.currentPlayer = findNextActivePlayer(G.players, G.currentPlayer + 1);
       if (G.currentPlayer >= G.players.length) {
         G.phase = 'dealer';
@@ -228,7 +238,10 @@ export const game = {
     },
     double: ({ G, ctx }: { G: GameState; ctx: Ctx }) => {
       if (G.phase !== 'playing') return;
-      if (ctx.playerID !== null && ctx.playerID !== undefined && parseInt(ctx.playerID, 10) !== G.currentPlayer) return;
+      const currentPlayer = G.players[G.currentPlayer];
+      const isCallerValid = ctx.playerID === null || ctx.playerID === undefined || 
+        parseInt(ctx.playerID, 10) === G.currentPlayer || currentPlayer?.isBot;
+      if (!isCallerValid) return;
       const player = G.players[G.currentPlayer];
       if (player.bet > player.chips) return;
       const card = G.deck.pop();
@@ -267,8 +280,8 @@ export const game = {
       G.players = nextPlayers;
       G.phase = 'results';
     },
-    nextRound: ({ G }: { G: GameState }) => {
-      // Check if all human players are out
+    nextRound: ({ G, ctx }: { G: GameState; ctx: Ctx }) => {
+      if (ctx.playerID !== null && ctx.playerID !== undefined && ctx.playerID !== '0') return;
       if (areAllHumansOut(G.players)) {
         G.phase = 'gameOver';
         return;
@@ -286,7 +299,8 @@ export const game = {
         result: null,
       }));
     },
-    newGame: ({ G }: { G: GameState }) => {
+    newGame: ({ G, ctx }: { G: GameState; ctx: Ctx }) => {
+      if (ctx.playerID !== null && ctx.playerID !== undefined && ctx.playerID !== '0') return;
       G.deck = [];
       G.dealerHand = [];
       G.dealerScore = 0;
@@ -302,19 +316,6 @@ export const game = {
       }));
     },
   },
-  ai: {
-    enumerate: (G: GameState) => {
-      if (G.phase === 'betting') {
-        return [{ move: 'bet', args: [G.currentPlayer, BET_INCREMENT] }];
-      }
-      if (G.phase === 'playing') {
-        const player = G.players[G.currentPlayer];
-        if (player.score < 17) return [{ move: 'hit' }];
-        return [{ move: 'stand' }];
-      }
-      return [];
-    },
-  },
 };
 
 interface BoardProps {
@@ -323,6 +324,8 @@ interface BoardProps {
   playerID: string | null;
   matchID?: string;
   isMultiplayer?: boolean;
+  /** Number of bot players configured via settings */
+  botCount?: number;
   moves: {
     bet: (playerId: number, amount: number) => void;
     deal: () => void;
@@ -389,13 +392,29 @@ function Badge({
   );
 }
 
-export function app({ G, ctx, playerID, isMultiplayer, moves }: BoardProps) {
+export function app({ G, playerID, isMultiplayer, botCount = 0, moves }: BoardProps) {
   const [currentBet, setCurrentBet] = useState(BET_INCREMENT);
   const myPlayerIndex = playerID !== null ? parseInt(playerID, 10) : 0;
   const myPlayer = G.players[myPlayerIndex];
   const amIOut = myPlayer && isPlayerOut(myPlayer);
   const isMyTurn = G.phase === 'playing' && G.currentPlayer === myPlayerIndex && !amIOut;
   const canBet = G.phase === 'betting' && myPlayer && myPlayer.chips >= currentBet && !amIOut;
+  
+  // Determine which players are bots based on botCount (last N players are bots, excluding human)
+  const numPlayers = G.players.length;
+  const botPlayerIDs = useMemo(
+    () => new Set(
+      Array.from({ length: Math.min(botCount, numPlayers - 1) }, (_, i) => numPlayers - 1 - i)
+    ),
+    [botCount, numPlayers]
+  );
+  const isBot = useCallback(
+    (id: number) => id !== myPlayerIndex && botPlayerIDs.has(id),
+    [myPlayerIndex, botPlayerIDs]
+  );
+  
+  // Bot automation only runs in single-player mode with bots configured
+  const shouldRunBots = !isMultiplayer && botCount > 0;
 
   // Bot betting during betting phase (single player only)
   // Use a ref to track which bots have bet this round to prevent multiple bets
@@ -409,9 +428,9 @@ export function app({ G, ctx, playerID, isMultiplayer, moves }: BoardProps) {
   }, [G.phase]);
 
   useEffect(() => {
-    if (isMultiplayer || G.phase !== 'betting') return;
+    if (!shouldRunBots || G.phase !== 'betting') return;
     const bots = G.players.filter(
-      (p) => p.isBot && p.bet === 0 && p.chips > 0 && !botsBetThisRound.has(p.id)
+      (p) => isBot(p.id) && p.bet === 0 && p.chips > 0 && !botsBetThisRound.has(p.id)
     );
     if (bots.length === 0) return;
     const bot = bots[0];
@@ -424,14 +443,15 @@ export function app({ G, ctx, playerID, isMultiplayer, moves }: BoardProps) {
       moves.bet(bot.id, betAmount);
     }, BOT_DELAY_MS);
     return () => clearTimeout(timer);
-  }, [G.phase, G.players, moves, isMultiplayer, botsBetThisRound]);
+  }, [G.phase, G.players, moves, shouldRunBots, botsBetThisRound, isBot]);
 
-  // Bot playing during playing phase (single player only)
-  // Only depend on phase and currentPlayer to avoid re-triggering on hand updates
+  // Bot playing during playing phase
+  // Include score in deps so effect re-runs after each hit
+  const currentBotScore = G.phase === 'playing' ? G.players[G.currentPlayer]?.score : null;
   useEffect(() => {
-    if (isMultiplayer || G.phase !== 'playing') return;
+    if (!shouldRunBots || G.phase !== 'playing') return;
     const current = G.players[G.currentPlayer];
-    if (!current || !current.isBot) return;
+    if (!current || !isBot(G.currentPlayer)) return;
     const timer = setTimeout(() => {
       if (current.score < 17) {
         moves.hit();
@@ -440,7 +460,7 @@ export function app({ G, ctx, playerID, isMultiplayer, moves }: BoardProps) {
       }
     }, BOT_DELAY_MS);
     return () => clearTimeout(timer);
-  }, [G.phase, G.currentPlayer, isMultiplayer]);
+  }, [G.phase, G.currentPlayer, currentBotScore, shouldRunBots, moves, G.players, isBot]);
 
   // Dealer plays automatically (host triggers in multiplayer, or single player)
   useEffect(() => {
@@ -465,17 +485,6 @@ export function app({ G, ctx, playerID, isMultiplayer, moves }: BoardProps) {
   return (
     <div className="flex min-h-full w-full flex-col items-center bg-white p-6">
       <div className="w-full max-w-md space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <span className="text-xs uppercase tracking-widest text-slate-400">
-            Blackjack
-          </span>
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-400">Chips</span>
-            <Badge value={`$${myPlayer?.chips ?? 0}`} />
-          </div>
-        </div>
-
         {/* Dealer Section */}
         <div className="flex flex-col items-center gap-2 py-4">
           <span className="text-xs uppercase tracking-widest text-slate-400">
@@ -526,7 +535,7 @@ export function app({ G, ctx, playerID, isMultiplayer, moves }: BoardProps) {
                       style={{ backgroundColor: PLAYER_COLORS[idx] }}
                     />
                     <span className="text-xs font-medium text-slate-600">
-                      {idx === myPlayerIndex ? 'You' : isMultiplayer ? `Player ${player.id + 1}` : `Bot ${player.id}`}
+                      {idx === myPlayerIndex ? 'You' : isMultiplayer ? `Player ${player.id + 1}` : isBot(idx) ? `Bot ${player.id}` : `Player ${player.id + 1}`}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">

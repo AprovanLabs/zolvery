@@ -4,12 +4,13 @@ import type { KossabosManifest } from './use-widget-source';
 export interface VirtualFile {
   path: string;
   content: string;
-  encoding?: 'utf8' | 'base64';
+  language?: string;
 }
 
 export interface VirtualProject {
+  id: string;
+  entry: string;
   files: Map<string, VirtualFile>;
-  entryPoint: string;
 }
 
 export interface UseWidgetProjectReturn {
@@ -26,8 +27,12 @@ export interface UseWidgetProjectReturn {
 }
 
 export function useWidgetProject(appId: string | null): UseWidgetProjectReturn {
-  const [originalFiles, setOriginalFiles] = useState<Map<string, VirtualFile>>(new Map());
-  const [currentFiles, setCurrentFiles] = useState<Map<string, VirtualFile>>(new Map());
+  const [originalFiles, setOriginalFiles] = useState<Map<string, VirtualFile>>(
+    new Map(),
+  );
+  const [currentFiles, setCurrentFiles] = useState<Map<string, VirtualFile>>(
+    new Map(),
+  );
   const [manifest, setManifest] = useState<KossabosManifest | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
@@ -47,21 +52,26 @@ export function useWidgetProject(appId: string | null): UseWidgetProjectReturn {
 
     Promise.all([
       fetch(`${base}apps/${appId}/kossabos.json`).then((r) => r.json()),
+      fetch(`${base}apps/${appId}/logo.png`),
       fetch(`${base}apps/${appId}/client/main.tsx`).then((r) => r.text()),
     ])
-      .then(([m, mainSource]) => {
+      .then(([m, logo, mainSource]) => {
         setManifest(m);
-        
+
         const files = new Map<string, VirtualFile>();
         files.set('client/main.tsx', {
           path: 'client/main.tsx',
           content: mainSource,
         });
+        files.set('logo.png', {
+          path: 'logo.png',
+          content: logo.url,
+        });
         files.set('kossabos.json', {
           path: 'kossabos.json',
           content: JSON.stringify(m, null, 2),
         });
-        
+
         setOriginalFiles(files);
         setCurrentFiles(new Map(files));
       })
@@ -95,77 +105,86 @@ export function useWidgetProject(appId: string | null): UseWidgetProjectReturn {
     });
   }, []);
 
-  const resetFile = useCallback((path: string) => {
-    const original = originalFiles.get(path);
-    if (original) {
-      setCurrentFiles((prev) => {
-        const next = new Map(prev);
-        next.set(path, { ...original });
-        return next;
-      });
-    }
-  }, [originalFiles]);
+  const resetFile = useCallback(
+    (path: string) => {
+      const original = originalFiles.get(path);
+      if (original) {
+        setCurrentFiles((prev) => {
+          const next = new Map(prev);
+          next.set(path, { ...original });
+          return next;
+        });
+      }
+    },
+    [originalFiles],
+  );
 
   const resetAll = useCallback(() => {
     setCurrentFiles(new Map(originalFiles));
   }, [originalFiles]);
 
-  const save = useCallback(async (explicitFiles?: Array<{ path: string; content: string }>) => {
-    if (!appId) return;
+  const save = useCallback(
+    async (explicitFiles?: Array<{ path: string; content: string }>) => {
+      if (!appId) return;
 
-    const filesToSave = explicitFiles ?? Array.from(dirtyFiles).map((path) => {
-      const file = currentFiles.get(path)!;
-      return {
-        path: file.path,
-        content: file.content,
-      };
-    });
-
-    if (filesToSave.length === 0) return;
-
-    setIsSaving(true);
-    try {
-      const response = await fetch(`/api/v1/apps/${appId}/save`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ files: filesToSave }),
-      });
-
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        throw new Error(data.message || `Save failed: ${response.status}`);
-      }
-
-      if (explicitFiles) {
-        setCurrentFiles((prev) => {
-          const next = new Map(prev);
-          for (const file of explicitFiles) {
-            next.set(file.path, { path: file.path, content: file.content });
-          }
-          return next;
+      const filesToSave =
+        explicitFiles ??
+        Array.from(dirtyFiles).map((path) => {
+          const file = currentFiles.get(path)!;
+          return {
+            path: file.path,
+            content: file.content,
+          };
         });
-        setOriginalFiles((prev) => {
-          const next = new Map(prev);
-          for (const file of explicitFiles) {
-            next.set(file.path, { path: file.path, content: file.content });
-          }
-          return next;
+
+      if (filesToSave.length === 0) return;
+
+      setIsSaving(true);
+      try {
+        const response = await fetch(`/api/v1/apps/${appId}/save`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ files: filesToSave }),
         });
-      } else {
-        setOriginalFiles(new Map(currentFiles));
+
+        if (!response.ok) {
+          const data = await response.json().catch(() => ({}));
+          throw new Error(data.message || `Save failed: ${response.status}`);
+        }
+
+        if (explicitFiles) {
+          setCurrentFiles((prev) => {
+            const next = new Map(prev);
+            for (const file of explicitFiles) {
+              next.set(file.path, { path: file.path, content: file.content });
+            }
+            return next;
+          });
+          setOriginalFiles((prev) => {
+            const next = new Map(prev);
+            for (const file of explicitFiles) {
+              next.set(file.path, { path: file.path, content: file.content });
+            }
+            return next;
+          });
+        } else {
+          setOriginalFiles(new Map(currentFiles));
+        }
+      } finally {
+        setIsSaving(false);
       }
-    } finally {
-      setIsSaving(false);
-    }
-  }, [appId, dirtyFiles, currentFiles]);
+    },
+    [appId, dirtyFiles, currentFiles],
+  );
 
   const project = useMemo<VirtualProject | null>(() => {
-    if (currentFiles.size === 0) return null;
+    if (currentFiles.size === 0 || !appId) return null;
     return {
+      id: appId,
+      entry: 'client/main.tsx',
       files: currentFiles,
-      entryPoint: 'client/main.tsx',
     };
-  }, [currentFiles]);
+  }, [appId, currentFiles]);
 
   return {
     project,

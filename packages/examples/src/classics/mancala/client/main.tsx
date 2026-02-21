@@ -1,4 +1,5 @@
-import React, { useEffect } from 'react';
+import React from 'react';
+import type { BotState } from '@kossabos/patchwork-image-boardgameio';
 
 type Player = 0 | 1;
 
@@ -7,7 +8,6 @@ interface GameState {
   homes: [number, number];
   current: Player;
   winner: Player | 'draw' | null;
-  botCount: 0 | 1;
 }
 
 interface BoardProps {
@@ -15,14 +15,14 @@ interface BoardProps {
   ctx: { currentPlayer: string };
   moves: { sow: (pitIndex: number) => void; reset: () => void };
   playerID?: string;
+  isMultiplayer?: boolean;
+  botState?: BotState;
+  botPlayerIDs?: string[];
+  botCount?: number;
 }
 
 const PITS_PER_SIDE = 6;
 const INITIAL_STONES = 4;
-const HUMAN: Player = 0;
-const BOT: Player = 1;
-const BOT_DELAY_MS = 600;
-
 const COLORS: Record<Player, string> = {
   0: 'oklch(72.3% 0.219 149.579)', // green
   1: 'oklch(62.3% 0.214 259.815)', // blue
@@ -106,76 +106,21 @@ const getValidMoves = (pits: number[], player: Player): number[] => {
 };
 
 // Check if game is over
-const checkGameOver = (
-  pits: number[],
-): boolean => {
+const checkGameOver = (pits: number[]): boolean => {
   const p0Empty = pits.slice(0, PITS_PER_SIDE).every((p) => p === 0);
   const p1Empty = pits.slice(PITS_PER_SIDE).every((p) => p === 0);
   return p0Empty || p1Empty;
 };
 
-// Evaluate board score for a player (higher is better)
-const evaluateBoard = (homes: [number, number], player: Player): number => {
-  return homes[player] - homes[1 - player];
-};
-
-// Score a move for bot AI
-const scoreMove = (
-  pits: number[],
-  homes: [number, number],
-  player: Player,
-  pitIndex: number,
-): number => {
-  const result = simulateMove(pits, homes, player, pitIndex);
-  let score = evaluateBoard(result.homes, player);
-
-  // Bonus for extra turn
-  if (result.extraTurn) score += 5;
-
-  // Bonus for captures (compare to current)
-  const captureGain = result.homes[player] - homes[player];
-  if (captureGain > 1) score += captureGain * 2;
-
-  // Penalize if opponent can make a big capture next
-  if (!result.extraTurn && !checkGameOver(result.pits)) {
-    const oppMoves = getValidMoves(result.pits, 1 - player as Player);
-    for (const oppMove of oppMoves) {
-      const oppResult = simulateMove(result.pits, result.homes, 1 - player as Player, oppMove);
-      const oppGain = oppResult.homes[1 - player] - result.homes[1 - player];
-      if (oppGain > 3) score -= oppGain;
-    }
-  }
-
-  return score;
-};
-
-// Bot move selection
-const getBotMove = (pits: number[], homes: [number, number]): number => {
-  const validMoves = getValidMoves(pits, BOT);
-  if (validMoves.length === 0) return -1;
-
-  let bestMove = validMoves[0];
-  let bestScore = -Infinity;
-
-  for (const move of validMoves) {
-    const score = scoreMove(pits, homes, BOT, move);
-    if (score > bestScore) {
-      bestScore = score;
-      bestMove = move;
-    }
-  }
-
-  return bestMove;
-};
-
 export const game = {
   name: 'mancala',
+  minPlayers: 2,
+  maxPlayers: 2,
   setup: (): GameState => ({
     pits: createPits(),
     homes: [0, 0],
-    current: HUMAN,
+    current: 0 as Player,
     winner: null,
-    botCount: 1,
   }),
   moves: {
     sow: ({ G }: { G: GameState }, pitIndex: number) => {
@@ -205,7 +150,7 @@ export const game = {
     reset: ({ G }: { G: GameState }) => {
       G.pits = createPits();
       G.homes = [0, 0];
-      G.current = HUMAN;
+      G.current = 0 as Player;
       G.winner = null;
     },
   },
@@ -220,22 +165,16 @@ export const game = {
   },
 };
 
-export function app({ G, moves }: BoardProps) {
-  const myTurn = G.current === HUMAN;
+export function app({ G, moves, botState, botCount = 0, botPlayerIDs, playerID, isMultiplayer }: BoardProps) {
+  // Ensure botPlayerIDs is always an array
+  const safeBotPlayerIDs = Array.isArray(botPlayerIDs) ? botPlayerIDs : [];
+  console.log('[mancala] Props received:', { botCount, botPlayerIDs, safeBotPlayerIDs, current: G.current, playerID, isMultiplayer });
+
   const over = G.winner !== null;
-  const hasBot = G.botCount === 1;
+  const isBotThinking = botState?.isThinking ?? false;
 
-  // Bot move
-  useEffect(() => {
-    if (over || myTurn || !hasBot) return;
-
-    const timer = setTimeout(() => {
-      const pick = getBotMove(G.pits, G.homes);
-      if (pick !== -1) moves.sow(pick);
-    }, BOT_DELAY_MS);
-
-    return () => clearTimeout(timer);
-  }, [G.pits, G.current, over, myTurn, hasBot, moves]);
+  // In multiplayer, check if it's the local player's turn
+  const isLocalPlayersTurn = !isMultiplayer || playerID === String(G.current);
 
   const renderStones = (count: number, compact: boolean = false) => {
     if (count === 0) return null;
@@ -264,8 +203,11 @@ export function app({ G, moves }: BoardProps) {
     stones: number;
     owner: Player;
   }) => {
+    const isOwnerBot = safeBotPlayerIDs.includes(String(owner));
+    const isCurrentPlayersTurn = owner === G.current;
+    // In multiplayer, only allow clicking if it's the local player's turn
     const isClickable =
-      owner === HUMAN && myTurn && stones > 0 && !over && (!hasBot || myTurn);
+      isCurrentPlayersTurn && isLocalPlayersTurn && !isOwnerBot && stones > 0 && !over && !isBotThinking;
     const isActive = owner === G.current && !over;
 
     return (
@@ -274,7 +216,7 @@ export function app({ G, moves }: BoardProps) {
         disabled={!isClickable}
         className={`relative flex aspect-[3/4] w-full flex-col items-center justify-center rounded-xl border-2 transition-all duration-200
           ${isClickable ? 'cursor-pointer hover:scale-105 hover:border-slate-400' : 'cursor-default'}
-          ${isActive && stones > 0 ? 'border-slate-300 bg-slate-50' : 'border-slate-200 bg-white'}
+          ${isActive && stones > 0 ? 'border-slate-300 bg-white' : 'border-slate-200 bg-slate-50'}
         `}
       >
         <div className="flex-1 flex items-center justify-center p-1">
@@ -323,6 +265,11 @@ export function app({ G, moves }: BoardProps) {
               className="h-4 w-8 rounded-full transition-colors duration-300"
               style={{ backgroundColor: COLORS[G.current] }}
             />
+            {isBotThinking && (
+              <span className="animate-pulse text-xs text-slate-400">
+                Thinking...
+              </span>
+            )}
           </div>
           <button
             onClick={() => moves.reset()}

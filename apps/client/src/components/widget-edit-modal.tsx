@@ -2,7 +2,7 @@ import { useMemo, useRef, useEffect, useState, useCallback } from 'react';
 import { EditModal, type CompileFn } from '@aprovan/patchwork-editor';
 import { usePatchwork } from '../hooks/use-patchwork';
 import type { KossabosManifest } from '../hooks/use-widget-source';
-import type { Manifest, InputSpec } from '@aprovan/patchwork-compiler';
+import type { Manifest, InputSpec, VirtualProject } from '@aprovan/patchwork-compiler';
 
 const IMAGE_MAP: Record<string, string> = {
   shadcn: '@aprovan/patchwork-image-shadcn',
@@ -31,22 +31,23 @@ const normalizeInputType = (settingType?: string): InputSpec['type'] => {
 export interface WidgetEditModalProps {
   appId: string;
   manifest: KossabosManifest;
-  source: string;
+  project: VirtualProject;
   isOpen: boolean;
   isDirty?: boolean;
   onClose: (finalCode: string, editCount: number) => void;
-  onSave?: (code: string) => Promise<void>;
+  onSaveProject?: (project: VirtualProject) => Promise<void>;
 }
 
 export function WidgetEditModal({
   appId,
   manifest,
-  source,
+  project,
   isOpen,
   isDirty,
   onClose,
-  onSave,
+  onSaveProject,
 }: WidgetEditModalProps) {
+  const source = project.files.get(project.entry)?.content ?? '';
   const imageName = IMAGE_MAP[manifest.runnerTag] ?? manifest.runnerTag;
   const { compiler, isReady, error: compilerError } = usePatchwork({
     image: imageName,
@@ -98,6 +99,12 @@ export function WidgetEditModal({
     );
   }, [manifest, compilerManifest, imageName]);
 
+  const patchworkProject: VirtualProject = useMemo(() => ({
+    id: project.id,
+    entry: project.entry,
+    files: project.files,
+  }), [project]);
+
   if (!isOpen) return null;
 
   if (compilerError) {
@@ -120,12 +127,13 @@ export function WidgetEditModal({
     <EditModal
       isOpen={isOpen}
       onClose={onClose}
-      onSave={onSave}
-      originalCode={source}
+      onSaveProject={onSaveProject}
+      originalProject={patchworkProject}
       compile={compile}
       apiEndpoint="/api/edit"
       renderPreview={renderPreview}
       previewLoading={!isReady}
+      initialState={{ showPreview: true, showTree: true }}
     />
   );
 }

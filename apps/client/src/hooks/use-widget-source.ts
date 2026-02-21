@@ -20,7 +20,12 @@ export interface KossabosManifest {
   visibility?: string;
   tags?: string[];
   servers?: string[];
-  players?: { min?: number; max?: number };
+  players?: {
+    min?: number;
+    max?: number;
+    /** Max players that can play on the same device. Defaults to players.max */
+    maxLocal?: number;
+  };
   settings?: GameSetting[];
 }
 

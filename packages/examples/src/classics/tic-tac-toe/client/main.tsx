@@ -1,4 +1,5 @@
-import React, { useEffect } from 'react';
+import React from 'react';
+import type { BotState } from '@kossabos/patchwork-image-boardgameio';
 
 type Player = 0 | 1;
 type Cell = Player | null;
@@ -15,11 +16,11 @@ interface BoardProps {
   ctx: { currentPlayer: string };
   moves: { play: (i: number) => void; reset: () => void };
   playerID?: string;
+  isMultiplayer?: boolean;
+  botState?: BotState;
+  botPlayerIDs?: string[];
+  botCount?: number;
 }
-
-const HUMAN: Player = 0;
-const AI: Player = 1;
-const AI_DELAY_MS = 400;
 
 const LINES = [
   [0, 1, 2],
@@ -50,9 +51,11 @@ const checkWinner = (
 
 export const game = {
   name: 'tic-tac-toe',
+  minPlayers: 1,
+  maxPlayers: 2,
   setup: (): GameState => ({
     cells: Array(9).fill(null),
-    current: HUMAN,
+    current: 0 as Player,
     winner: null,
     winLine: [],
   }),
@@ -67,12 +70,12 @@ export const game = {
       } else if (G.cells.every((c) => c !== null)) {
         G.winner = 'draw';
       } else {
-        G.current = G.current === HUMAN ? AI : HUMAN;
+        G.current = G.current === 0 ? 1 : 0;
       }
     },
     reset: ({ G }: { G: GameState }) => {
       G.cells = Array(9).fill(null);
-      G.current = HUMAN;
+      G.current = 0;
       G.winner = null;
       G.winLine = [];
     },
@@ -87,21 +90,14 @@ export const game = {
   },
 };
 
-export function app({ G, moves }: BoardProps) {
-  const myTurn = G.current === HUMAN;
+export function app({ G, moves, botState, botCount = 0, botPlayerIDs, playerID, isMultiplayer }: BoardProps) {
+  const safeBotPlayerIDs = Array.isArray(botPlayerIDs) ? botPlayerIDs : [];
+  
   const over = G.winner !== null;
-
-  // AI move when not player's turn
-  useEffect(() => {
-    if (over || myTurn) return;
-    const empty = G.cells.flatMap((c, i) => (c === null ? [i] : []));
-    if (empty.length === 0) return;
-    const timer = setTimeout(() => {
-      const pick = empty[Math.floor(Math.random() * empty.length)];
-      moves.play(pick);
-    }, AI_DELAY_MS);
-    return () => clearTimeout(timer);
-  }, [G.cells, G.current, over, myTurn, moves]);
+  const isBotThinking = botState?.isThinking ?? false;
+  
+  const isLocalPlayersTurn = !isMultiplayer || playerID === String(G.current);
+  const isCurrentPlayerBot = safeBotPlayerIDs.includes(String(G.current));
 
   return (
     <div className="flex min-h-full w-full items-center justify-center bg-white p-8">
@@ -115,6 +111,11 @@ export function app({ G, moves }: BoardProps) {
               className="h-4 w-8 rounded-md transition-colors duration-300"
               style={{ backgroundColor: COLORS[G.current] }}
             />
+            {isBotThinking && (
+              <span className="animate-pulse text-xs text-slate-400">
+                Thinking...
+              </span>
+            )}
           </div>
           <button
             onClick={() => moves.reset()}
@@ -127,19 +128,15 @@ export function app({ G, moves }: BoardProps) {
         <div className="grid grid-cols-3 gap-3">
           {G.cells.map((cell, i) => {
             const winning = G.winLine.includes(i);
-            const disabled = cell !== null || over || !myTurn;
+            const isClickable = cell === null && !over && isLocalPlayersTurn && !isCurrentPlayerBot && !isBotThinking;
             return (
               <button
                 key={i}
-                disabled={disabled}
+                disabled={!isClickable}
                 onClick={() => moves.play(i)}
                 className={`aspect-square rounded-2xl border-2 transition-all duration-200
                   ${winning ? 'scale-105 border-slate-900' : 'border-slate-200'}
-                  ${
-                    !disabled
-                      ? 'hover:-translate-y-1 hover:border-slate-400'
-                      : ''
-                  }
+                  ${isClickable ? 'hover:-translate-y-1 hover:border-slate-400' : ''}
                 `}
                 style={{
                   backgroundColor: cell !== null ? COLORS[cell] : '#fff',

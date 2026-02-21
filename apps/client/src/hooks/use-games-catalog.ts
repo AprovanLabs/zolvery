@@ -42,7 +42,7 @@ export function useGamesCatalog() {
                 `${base}apps/${appId}/kossabos.json`,
               ).then((r) => r.json());
               const category = appId.split('/')[0];
-              const logoName = manifest.iconName ?? 'icon.svg';
+              const logoName = manifest.iconName ?? 'icon.png';
               return {
                 ...manifest,
                 appId,

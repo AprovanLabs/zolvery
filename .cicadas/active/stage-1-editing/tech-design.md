@@ -224,10 +224,34 @@ apps/
 
 ### New Dependencies (client)
 
+Uses pnpm catalog for patchwork dependencies:
+
+```yaml
+# pnpm-workspace.yaml
+catalog:
+  '@aprovan/patchwork-editor': ^0.1.0
+  '@aprovan/bobbin': ^0.1.0
+```
+
 ```json
+// apps/client/package.json
 {
   "dependencies": {
-    "@aprovan/patchwork-editor": "workspace:^"
+    "@aprovan/patchwork-editor": "catalog:",
+    "@aprovan/bobbin": "catalog:"
+  }
+}
+```
+
+For local development against patchwork repo, use overrides in root `package.json`:
+
+```json
+{
+  "pnpm": {
+    "overrides": {
+      "@aprovan/patchwork-editor": "link:../patchwork/packages/editor",
+      "@aprovan/bobbin": "link:../patchwork/packages/bobbin"
+    }
   }
 }
 ```
@@ -324,16 +348,101 @@ function createWidgetProject(
 - No arbitrary file writes outside examples folder
 - Dev-mode only (no auth) — will change in Stage 4
 
-## Open Questions
+## Resolved Questions
 
-1. **Multi-file LLM editing**: Can the edit prompt reference multiple files? May need Patchwork enhancement.
-2. **Icon editing**: Should we support icon upload/generation via AI?
-3. **Live reload**: After save, should the client auto-reload the widget from disk?
+1. **Multi-file LLM editing**: Patchwork's `EditModal` supports multi-file projects via `VirtualProject`. File tree toggle implemented.
+2. **Save flow**: Implemented in patchwork-editor with `onSave` prop, `SaveConfirmDialog` for unsaved changes confirmation.
 
-## Patchwork Enhancement (if needed)
+## File Type Handling
 
-If multi-file editing is not fully supported in `@aprovan/patchwork-editor`:
+### Categories
 
-1. Extend `useEditSession` to track multiple files
-2. Allow edit prompt to specify target file
-3. Context should include all project files for LLM awareness
+Files in the editor are classified into categories that determine rendering and editing behavior:
+
+| Category    | Extensions                          | Preview Mode | Edit Mode       |
+|-------------|-------------------------------------|--------------|-----------------|
+| Compilable  | `.tsx`, `.jsx`, `.ts`, `.js`        | React render | LLM + direct    |
+| Text        | `.json`, `.yaml`, `.yml`, `.md`, `.txt`, `.css`, `.html` | Code block   | Direct + LLM    |
+| Media       | `.svg`, `.png`, `.jpg`, `.jpeg`, `.gif`, `.webp`, `.mp4`, `.mov`, `.webm` | Browser API  | Upload/replace  |
+| Binary      | Other                               | N/A          | Upload/replace  |
+
+### Rendering Components
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                         EditModal                               │
+│  ┌─────────────────┐                                           │
+│  │   FileTree      │──── onReplaceFile (for media upload)      │
+│  └─────────────────┘                                           │
+│                                                                 │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │                  Content Area                            │   │
+│  │                                                          │   │
+│  │  if (isCompilable):                                     │   │
+│  │    showPreview ? renderPreview(code) : <pre>{code}</pre>│   │
+│  │                                                          │   │
+│  │  if (isText):                                           │   │
+│  │    <CodeBlockView content={code} language={ext}         │   │
+│  │                   editable onChange={updateFile} />     │   │
+│  │                                                          │   │
+│  │  if (isMedia):                                          │   │
+│  │    <MediaPreview content={base64} mimeType={...} />     │   │
+│  │                                                          │   │
+│  └─────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Code Block Rendering
+
+Non-markdown text files are displayed wrapped in markdown code fences:
+
+```
+// For kossabos.json:
+┌────────────────────────────────────┐
+│ ```json                            │
+│ {                                  │
+│   "name": "My Widget",             │
+│   "version": "1.0.0"               │
+│ }                                  │
+│ ```                                │
+└────────────────────────────────────┘
+```
+
+This provides:
+- Syntax highlighting via standard markdown renderer
+- Consistent visual style across file types
+- Language-aware formatting
+
+### Media File Upload Flow
+
+```
+1. User hovers over media file in FileTree
+2. Upload icon overlay appears
+3. User clicks → file picker opens
+4. User selects new file
+5. File read as base64
+6. onReplaceFile(path, base64, 'base64') called
+7. VirtualProject updated with new content
+8. MediaPreview re-renders with new data
+9. On Save: base64 decoded, written as binary
+```
+
+### VirtualFile Encoding
+
+```typescript
+interface VirtualFile {
+  path: string;
+  content: string;
+  encoding?: 'utf8' | 'base64';  // NEW: default 'utf8'
+}
+```
+
+Save endpoint handles encoding:
+- `utf8`: Write content as-is
+- `base64`: Decode then write as Buffer
+
+## Open Questions (deferred to future stages)
+
+1. **AI-generated icons**: Could LLM generate/modify SVG icons from prompts?
+2. **Live reload**: After save, should the client auto-reload the widget from disk?
+3. **Drag-and-drop**: Support dropping files onto FileTree to add new files?

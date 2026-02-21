@@ -171,15 +171,15 @@ interface UseWidgetProjectReturn {
 
 ### P3.2 — Update WidgetEditModal for Multi-file
 
-**Files**: `apps/client/src/components/widget-edit-modal.tsx`
+**Files**: `apps/client/src/components/widget-edit-modal.tsx`, `../patchwork/packages/editor/src/components/edit/useEditSession.ts`
 
 **Steps**:
-1. Use `useWidgetProject` instead of single source
-2. Pass full `VirtualProject` to `useEditSession`
-3. Enable file tree toggle in UI
-4. Handle active file switching
+1. Update patchwork `useEditSession` to accept `originalProject?: VirtualProject` option
+2. Update patchwork `EditModal` to pass `originalProject` prop through
+3. Update kossabos `WidgetEditModal` props to accept `VirtualProject` instead of `source: string`
+4. Update `EditableWidgetPlayer` to pass full project from `useWidgetProject`
 
-**Test**: File tree shows `main.tsx` and `kossabos.json`, switching files works.
+**Test**: File tree shows `client/main.tsx` and `kossabos.json`, switching files works.
 
 **Status**: Complete
 
@@ -265,7 +265,7 @@ interface SaveRequest {
 
 **Test**: `import { SaveConfirmDialog } from '@aprovan/patchwork-editor'` compiles.
 
-**Status**: Pending
+**Status**: Complete
 
 ---
 
@@ -283,7 +283,7 @@ interface SaveRequest {
 
 **Test**: EditModal with `onSave` shows save button and confirmation dialog on close.
 
-**Status**: Pending
+**Status**: Complete
 
 ---
 
@@ -299,7 +299,7 @@ interface SaveRequest {
 
 **Test**: Edit flow works identically with simplified implementation.
 
-**Status**: Pending
+**Status**: Complete
 
 ---
 
@@ -314,7 +314,7 @@ interface SaveRequest {
 
 **Test**: `pnpm install` resolves dependencies correctly. Switch catalog entry to `link:` and back to verify both modes work.
 
-**Status**: Pending
+**Status**: Complete
 
 ---
 
@@ -342,3 +342,260 @@ interface SaveRequest {
 - [ ] Save endpoint rejects path traversal attempts
 - [ ] Modal handles missing manifest gracefully
 - [ ] Revert button resets all changes
+
+---
+
+## Partition 5: Multi-File Type Support
+
+> **Location**: Changes are in **Patchwork** (`../patchwork/packages/editor/`)
+
+### P5.1 — Add File Type Detection Utility
+
+**Files**: `../patchwork/packages/editor/src/components/edit/fileTypes.ts`
+
+**Steps**:
+1. Create `fileTypes.ts` with file type classification utilities
+2. Define file type categories: `compilable`, `text`, `media`, `binary`
+3. Implement `getFileType(path: string)` returning category + language hint
+4. Implement `isCompilable(path: string)` for files the compiler can handle
+5. Implement `getLanguageFromExt(path: string)` for syntax highlighting
+
+**Interface**:
+```typescript
+type FileCategory = 'compilable' | 'text' | 'media' | 'binary';
+
+interface FileTypeInfo {
+  category: FileCategory;
+  language: string | null;  // For code blocks: 'json', 'yaml', 'tsx', etc.
+  mimeType: string;
+}
+
+const COMPILABLE_EXTENSIONS = ['.tsx', '.jsx', '.ts', '.js'];
+const MEDIA_EXTENSIONS = ['.svg', '.png', '.jpg', '.jpeg', '.gif', '.webp', '.mp4', '.mov', '.webm'];
+const TEXT_EXTENSIONS = ['.json', '.yaml', '.yml', '.md', '.txt', '.css', '.html'];
+
+function getFileType(path: string): FileTypeInfo;
+function isCompilable(path: string): boolean;
+function isMediaFile(path: string): boolean;
+function getLanguageFromExt(path: string): string | null;
+```
+
+**Test**: `getFileType('foo.json')` returns `{ category: 'text', language: 'json', mimeType: 'application/json' }`.
+
+**Status**: Pending
+
+---
+
+### P5.2 — Add MediaPreview Component
+
+**Files**: `../patchwork/packages/editor/src/components/edit/MediaPreview.tsx`
+
+**Steps**:
+1. Create component that renders media files using browser/HTML APIs
+2. Handle images: `<img src="data:..." />` with base64 data URL
+3. Handle videos: `<video>` element with controls
+4. Handle SVG: inline render or `<img>` with data URL
+5. Center content with max-width/max-height constraints
+6. Show file metadata (dimensions, size) below preview
+
+**Interface**:
+```typescript
+interface MediaPreviewProps {
+  content: string;       // Base64 or raw content
+  mimeType: string;
+  fileName: string;
+}
+```
+
+**Test**: Pass base64-encoded PNG, renders as visible image.
+
+**Status**: Pending
+
+---
+
+### P5.3 — Add CodeBlockView Component
+
+**Files**: `../patchwork/packages/editor/src/components/edit/CodeBlockView.tsx`
+
+**Steps**:
+1. Create component for displaying non-markdown text files in code view
+2. Wrap content in markdown code fence with language tag
+3. Use `MarkdownEditor` in read-only mode OR a simple syntax-highlighted `<pre>` block
+4. Support editing: when `editable={true}`, allow direct text editing
+5. Auto-detect language from file extension using `getLanguageFromExt`
+
+**Interface**:
+```typescript
+interface CodeBlockViewProps {
+  content: string;
+  language: string | null;
+  editable?: boolean;
+  onChange?: (content: string) => void;
+}
+```
+
+**Rendering Logic**:
+- For `.json` file with content `{"foo": "bar"}`:
+  ```json
+  {"foo": "bar"}
+  ```
+- For `.yml` file with content `foo: bar`:
+  ```yml
+  foo: bar
+  ```
+
+**Test**: JSON file renders with syntax highlighting, edits update content.
+
+**Status**: Pending
+
+---
+
+### P5.4 — Update EditModal for File-Type Rendering
+
+**Files**: `../patchwork/packages/editor/src/components/edit/EditModal.tsx`
+
+**Steps**:
+1. Import `getFileType`, `isCompilable`, `isMediaFile` from `fileTypes.ts`
+2. Determine file type when `activeFile` changes
+3. Conditionally disable Preview toggle for non-compilable files
+4. Route rendering based on file type:
+   - **Compilable** (tsx/jsx): Use existing `renderPreview` + Code toggle
+   - **Text** (json/yaml/md): Show `CodeBlockView` with editing, hide Preview button
+   - **Media** (png/svg/mp4): Show `MediaPreview`, hide Preview button
+5. Update header button visibility based on file type
+
+**Rendering Matrix**:
+| File Type | Preview Button | Code Button | Editable | Component |
+|-----------|----------------|-------------|----------|-----------|
+| `.tsx`    | Shown (active) | Shown       | Via LLM  | `renderPreview` / `<pre>` |
+| `.json`   | Hidden         | N/A         | Direct   | `CodeBlockView` |
+| `.yaml`   | Hidden         | N/A         | Direct   | `CodeBlockView` |
+| `.md`     | Hidden         | N/A         | Direct   | `MarkdownEditor` |
+| `.png`    | Hidden         | N/A         | Upload   | `MediaPreview` |
+| `.svg`    | Hidden         | N/A         | Upload   | `MediaPreview` |
+
+**Test**: Open `kossabos.json`, Preview button hidden, content renders as formatted JSON code block.
+
+**Status**: Pending
+
+---
+
+### P5.5 — Add Direct Text Editing Support
+
+**Files**: `../patchwork/packages/editor/src/components/edit/EditModal.tsx`, `../patchwork/packages/editor/src/components/edit/useEditSession.ts`
+
+**Steps**:
+1. For text files, replace read-only `<pre>` with editable textarea/CodeBlockView
+2. Wire `onChange` to `session.updateActiveFile(content)`
+3. Track dirty state per-file (already exists via project comparison)
+4. Keep LLM prompt input available for AI-assisted edits even on text files
+5. Ensure Save button works with direct edits (no LLM round-trip required)
+
+**UX**:
+- User can directly type in JSON/YAML/text files
+- User can still use prompt input for AI edits
+- Save tracks all changes regardless of edit method
+
+**Test**: Open `kossabos.json`, directly edit text, Save persists changes.
+
+**Status**: Pending
+
+---
+
+### P5.6 — Add File Upload to FileTree
+
+**Files**: `../patchwork/packages/editor/src/components/edit/FileTree.tsx`
+
+**Steps**:
+1. Detect media files using `isMediaFile(path)`
+2. On hover over media file, show upload icon overlay
+3. On click upload icon, open file picker (`<input type="file">`)
+4. On file selection:
+   - Read file as base64
+   - Call `onReplaceFile(path, base64Content, encoding: 'base64')`
+5. Add `onReplaceFile` callback prop to `FileTreeProps`
+
+**Interface**:
+```typescript
+interface FileTreeProps {
+  files: VirtualFile[];
+  activeFile: string;
+  onSelectFile: (path: string) => void;
+  onReplaceFile?: (path: string, content: string, encoding: 'utf8' | 'base64') => void;
+}
+```
+
+**Test**: Hover over `icon.png` in tree, click upload, select new image, preview updates.
+
+**Status**: Pending
+
+---
+
+### P5.7 — Wire File Upload Through EditModal
+
+**Files**: `../patchwork/packages/editor/src/components/edit/EditModal.tsx`, `../patchwork/packages/editor/src/components/edit/useEditSession.ts`
+
+**Steps**:
+1. Add `replaceFile(path, content, encoding)` to `useEditSession` actions
+2. Pass `onReplaceFile` from EditModal to FileTree
+3. When file replaced:
+   - Update project files map with new content
+   - Mark file as dirty
+   - If replaced file is active, refresh preview
+4. Ensure base64 content is preserved through save flow
+
+**Interface addition to useEditSession**:
+```typescript
+interface EditSessionActions {
+  // ... existing
+  replaceFile: (path: string, content: string, encoding?: 'utf8' | 'base64') => void;
+}
+```
+
+**Test**: Upload new icon, Save, reload, new icon persists.
+
+**Status**: Pending
+
+---
+
+### P5.8 — Update Save Flow for Multi-Type Files
+
+**Files**: `../patchwork/packages/editor/src/components/edit/types.ts`, kossabos save endpoint
+
+**Steps**:
+1. Ensure `VirtualFile` can carry encoding hint: `encoding?: 'utf8' | 'base64'`
+2. When saving project, include encoding in save request payload
+3. Update Kossabos save endpoint to handle `encoding: 'base64'` files:
+   - Decode base64 before writing
+   - Write as binary buffer for media files
+4. Verify round-trip: upload image → save → reload → image displays correctly
+
+**Test**: Replace icon.png via upload, Save, restart server, icon.png is correct binary file.
+
+**Status**: Pending
+
+---
+
+## Verification Checklist: Partition 5
+
+### File Type Rendering
+- [ ] `.tsx` files show Preview/Code toggle, Preview renders compiled React
+- [ ] `.json` files show formatted JSON in code block, no Preview button
+- [ ] `.yaml` files show formatted YAML in code block, no Preview button
+- [ ] `.md` files show in MarkdownEditor (or similar), editable directly
+- [ ] `.png`/`.jpg` files show image preview, no Preview button
+- [ ] `.svg` files render inline or as image
+- [ ] `.mp4`/`.mov` files show video player
+
+### Direct Editing
+- [ ] Can type directly in `.json` files and Save
+- [ ] Can type directly in `.yaml` files and Save
+- [ ] Can still use LLM prompt on any text file
+- [ ] Changes tracked correctly for Save confirmation
+
+### Media Upload
+- [ ] Hover over media file in tree shows upload indicator
+- [ ] Click upload opens file picker
+- [ ] Selecting file updates preview immediately
+- [ ] Save persists new media file to disk correctly
+- [ ] Binary files not corrupted through save round-trip
