@@ -7,9 +7,9 @@
     "setup": "tailscale up",
     "expose": "tailscale serve --http 3701 localhost:3700",
     "expose:public": "tailscale funnel localhost:3700",
-    "watch": "pnpx turbo watch dev --filter=@aprovan/client --filter=@aprovan/server --filter=@aprovan/examples",
+    "watch": "pnpm turbo run dev --parallel --filter=@aprovan/client --filter=@aprovan/server --filter=@aprovan/examples",
     "dev": "./scripts/start-local.sh && $_ npm run expose & $_ npm run watch",
-    "dev:api": "./scripts/start-local.sh && pnpx turbo watch dev --filter=@aprovan/server",
+    "dev:api": "./scripts/start-local.sh && pnpm turbo run dev --parallel --filter=@aprovan/server",
     "dev:public": "./scripts/start-local.sh $_ npm run expose:public & $_ npm run watch",
     "dev:stitchery": "STITCHERY_PORT=6434 pnpm dlx @aprovan/stitchery serve",
     "app:build": "pnpx turbo run build --filter=@aprovan/client",
@@ -28,6 +28,7 @@
     "changesets": "pnpx @changesets/cli"
   },
   "devDependencies": {
+    "turbo": "2.8.10",
     "@commitlint/cli": "^17.0.3",
     "@commitlint/config-conventional": "^17.0.3",
     "@typescript-eslint/eslint-plugin": "^8.14.0",

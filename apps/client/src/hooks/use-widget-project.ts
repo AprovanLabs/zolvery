@@ -52,7 +52,7 @@ export function useWidgetProject(appId: string | null): UseWidgetProjectReturn {
 
     Promise.all([
       fetch(`${base}apps/${appId}/zolvery.json`).then((r) => r.json()),
-      fetch(`${base}apps/${appId}/logo.png`),
+      fetch(`${base}apps/${appId}/icon.png`),
       fetch(`${base}apps/${appId}/client/main.tsx`).then((r) => r.text()),
     ])
       .then(([m, logo, mainSource]) => {
@@ -63,8 +63,8 @@ export function useWidgetProject(appId: string | null): UseWidgetProjectReturn {
           path: 'client/main.tsx',
           content: mainSource,
         });
-        files.set('logo.png', {
-          path: 'logo.png',
+        files.set('icon.png', {
+          path: 'icon.png',
           content: logo.url,
         });
         files.set('zolvery.json', {

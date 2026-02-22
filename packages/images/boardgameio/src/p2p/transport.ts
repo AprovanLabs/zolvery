@@ -200,7 +200,7 @@ export class P2PTransport {
 
     // Check if this is a reconnection (host has existing session)
     const isReconnection = this.isHost && hasValidSession(this.matchID);
-    
+
     console.log(
       `[P2PTransport] Connecting as ${
         this.isHost ? 'HOST' : 'CLIENT'
@@ -209,7 +209,9 @@ export class P2PTransport {
 
     // If host is reconnecting, delay to allow old PeerJS connection to clear
     if (isReconnection) {
-      console.log('[P2PTransport] Host reconnecting, waiting for PeerJS ID to clear...');
+      console.log(
+        '[P2PTransport] Host reconnecting, waiting for PeerJS ID to clear...',
+      );
       setTimeout(() => this.createPeer(Peer, peerConfig), 2000);
     } else {
       this.createPeer(Peer, peerConfig);
@@ -226,19 +228,32 @@ export class P2PTransport {
     this.peer.on('open', (id) => {
       console.log(`[P2PTransport] Peer opened with ID: ${id}`);
       if (this.isHost) {
-        this.host = new P2PHost({
-          game: this.game,
-          numPlayers: this.numPlayers,
-          matchID: this.matchID,
-        });
+        try {
+          this.host = new P2PHost({
+            game: this.game,
+            numPlayers: this.numPlayers,
+            matchID: this.matchID,
+          });
 
-        this.host.registerHostClient({
-          metadata: this.metadata,
-          send: (data) => this.notifyClient(data as TransportData),
-        });
-        // Host is ready immediately
-        console.log('[P2PTransport] Host ready, waiting for connections');
-        this.onConnect();
+          this.host.registerHostClient({
+            metadata: this.metadata,
+            send: (data) => this.notifyClient(data as TransportData),
+          });
+          // Host is ready immediately
+          console.log('[P2PTransport] Host ready, waiting for connections');
+          this.onConnect();
+        } catch (error) {
+          const transportError =
+            error instanceof Error
+              ? error
+              : new Error('Failed to initialize host');
+          console.error(
+            '[P2PTransport] Host initialization failed:',
+            transportError,
+          );
+          this.onError?.(transportError);
+          this.disconnect();
+        }
       } else {
         // Non-host connects to the host peer
         console.log(`[P2PTransport] Client connecting to host: ${this.hostID}`);
@@ -305,7 +320,9 @@ export class P2PTransport {
             }
           }, delay);
         } else {
-          console.error('[P2PTransport] Peer ID already taken, max retries reached');
+          console.error(
+            '[P2PTransport] Peer ID already taken, max retries reached',
+          );
           this.onError?.(error);
         }
       } else {

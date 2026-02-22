@@ -113,7 +113,7 @@ jobs:
       - name: Decode keystore
         if: github.event.inputs.build_type == 'release'
         run: |
-          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > apps/mobile/android/keystore.jks
+          echo "${{ secrets.RELEASE_KEYSTORE_BASE64 }}" | base64 -d > apps/mobile/android/keystore.jks
 
       - name: Build release AAB
         if: github.event.inputs.build_type == 'release'
@@ -123,9 +123,9 @@ jobs:
           ./gradlew bundleRelease
         env:
           KEYSTORE_FILE: ${{ github.workspace }}/apps/mobile/android/keystore.jks
-          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
 
       - name: Rename AAB artifact
         if: github.event.inputs.build_type == 'release'

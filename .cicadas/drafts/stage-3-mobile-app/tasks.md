@@ -78,7 +78,7 @@ The GitHub Actions workflow (`.github/workflows/build-android.yml`) handles auto
 - **Release builds**: Triggered manually with `build_type: release`
 
 Required secrets for release builds:
-- `ANDROID_KEYSTORE_BASE64`: Base64-encoded keystore file
-- `ANDROID_KEYSTORE_PASSWORD`: Keystore password
-- `ANDROID_KEY_ALIAS`: Key alias
-- `ANDROID_KEY_PASSWORD`: Key password
+- `RELEASE_KEYSTORE_BASE64`: Base64-encoded keystore file
+- `RELEASE_KEYSTORE_PASSWORD`: Keystore password
+- `RELEASE_KEY_ALIAS`: Key alias
+- `RELEASE_KEY_PASSWORD`: Key password

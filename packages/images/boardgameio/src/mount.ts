@@ -45,7 +45,10 @@ export interface BoardgameGame {
   setup: (context: unknown) => unknown;
   ai?: {
     /** Enumerate legal moves for bot players */
-    enumerate: (G: unknown, ctx: unknown) => Array<{ move: string; args: unknown[] }>;
+    enumerate: (
+      G: unknown,
+      ctx: unknown,
+    ) => Array<{ move: string; args: unknown[] }>;
     /** Optional game-specific difficulty presets */
     difficulty?: Partial<Record<BotDifficulty, Partial<DifficultyPreset>>>;
   };
@@ -136,6 +139,20 @@ export function createGameMount(
       | MultiplayerInput
       | undefined;
     const isMultiplayer = !!multiplayerConfig?.matchID;
+    const transportErrorListeners = new Set<(error: Error | null) => void>();
+    let transportError: Error | null = null;
+    const reportTransportError = (error: Error): void => {
+      transportError = error;
+      for (const listener of transportErrorListeners) {
+        listener(transportError);
+      }
+    };
+    const subscribeTransportError = (
+      listener: (error: Error | null) => void,
+    ): (() => void) => {
+      transportErrorListeners.add(listener);
+      return () => transportErrorListeners.delete(listener);
+    };
 
     // Bot count: explicit input, or default to numPlayers - 1 (0 for multiplayer)
     const botCountInput = inputs['bot-count'] ?? inputs.botCount;
@@ -143,8 +160,8 @@ export function createGameMount(
       typeof botCountInput === 'number'
         ? botCountInput
         : isMultiplayer
-          ? 0
-          : numPlayers - 1;
+        ? 0
+        : numPlayers - 1;
     const playerID =
       (inputs.playerID as string) ??
       multiplayerConfig?.playerID ??
@@ -184,6 +201,7 @@ export function createGameMount(
       const isHost = multiplayerConfig.isHost ?? playerID === '0';
       multiplayer = createP2PTransport({
         isHost,
+        onError: reportTransportError,
       });
     }
 
@@ -229,7 +247,9 @@ export function createGameMount(
 
         // Detect gameover from G.winner (internal tracking) or ctx.gameover
         const gameover =
-          gState.winner !== undefined ? gState.winner !== null : ctxState.gameover;
+          gState.winner !== undefined
+            ? gState.winner !== null
+            : ctxState.gameover;
 
         const isBotTurn = botPlayerIDs.includes(currentPlayer);
         console.log('[boardgameio] Bot effect running:', {
@@ -283,21 +303,64 @@ export function createGameMount(
 
     // Wrapper that provides settings via context
     const GameWithSettings = () => {
-      const clientProps: Record<string, unknown> = { playerID };
+      const [p2pError, setP2pError] = R.useState(null as Error | null);
+      const isHost = multiplayerConfig?.isHost ?? playerID === '0';
+      R.useEffect(() => subscribeTransportError(setP2pError), []);
+      const clientProps: Record<string, unknown> = {
+        // In local play with bots, allow moves for any player.
+        playerID: !isMultiplayer && botCount > 0 ? null : playerID,
+      };
       if (isMultiplayer && multiplayerConfig) {
         clientProps.matchID = multiplayerConfig.matchID;
         clientProps.credentials = multiplayerConfig.credentials;
         console.log('[boardgameio] Multiplayer props:', {
           matchID: multiplayerConfig.matchID,
           playerID,
-          isHost: multiplayerConfig.isHost ?? playerID === '0',
+          isHost,
         });
       }
 
       return R.createElement(
         SettingsProvider,
         { settings: inputs },
-        R.createElement(GameClient, clientProps),
+        R.createElement(
+          'div',
+          { className: 'relative w-full h-full' },
+          p2pError && isMultiplayer
+            ? R.createElement(
+                'div',
+                {
+                  className:
+                    'absolute inset-0 z-10 flex items-center justify-center bg-white/80 backdrop-blur-sm',
+                },
+                R.createElement(
+                  'div',
+                  {
+                    className:
+                      'w-[min(90%,24rem)] rounded-xl border border-rose-200 bg-white p-5 shadow-sm',
+                  },
+                  R.createElement(
+                    'div',
+                    { className: 'text-sm font-semibold text-rose-700' },
+                    isHost ? 'Host error' : 'Connection error',
+                  ),
+                  R.createElement(
+                    'div',
+                    { className: 'mt-1 text-xs text-rose-600' },
+                    isHost
+                      ? 'The host failed to initialize the game. Try refreshing and hosting again.'
+                      : 'We could not connect to the host. Ask them to refresh and retry.',
+                  ),
+                  R.createElement(
+                    'div',
+                    { className: 'mt-2 text-[11px] text-rose-500 break-words' },
+                    p2pError.message,
+                  ),
+                ),
+              )
+            : null,
+          R.createElement(GameClient, clientProps),
+        ),
       );
     };
 

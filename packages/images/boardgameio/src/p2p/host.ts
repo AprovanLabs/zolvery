@@ -43,8 +43,11 @@ export class P2PHost {
 
     // Try to restore from a previous session
     const gameName = game.name ?? 'unknown';
-    console.log('[P2PHost] Checking for existing session:', { matchID, gameName });
-    
+    console.log('[P2PHost] Checking for existing session:', {
+      matchID,
+      gameName,
+    });
+
     const existingSession = loadSession(matchID);
     if (existingSession) {
       console.log('[P2PHost] Found existing session:', {
@@ -53,7 +56,7 @@ export class P2PHost {
         expectedGameName: gameName,
         stateID: existingSession.state._stateID,
       });
-      
+
       if (existingSession.gameName === gameName) {
         console.log('[P2PHost] Restoring session from storage');
 
@@ -63,7 +66,7 @@ export class P2PHost {
           metadata: existingSession.metadata,
         });
         this.db.setState(matchID, existingSession.state, existingSession.log);
-        
+
         // Refresh the session timestamp to prevent expiry
         saveSession(existingSession);
         return;
@@ -75,8 +78,14 @@ export class P2PHost {
     }
 
     // Create fresh state for new session
-    const initialState = this.createInitialState();
-    this.state = initialState;
+    let initialState: State;
+    try {
+      initialState = this.createInitialState();
+      this.state = initialState;
+    } catch (error) {
+      console.error('[P2PHost] Failed to create initial state:', error);
+      throw error;
+    }
 
     const players: Record<number, Server.PlayerMetadata> = {};
     for (let i = 0; i < numPlayers; i++) {
@@ -112,12 +121,13 @@ export class P2PHost {
       state,
       initialState: existingSession?.initialState ?? state,
       log: log as PersistedSession['log'],
-      metadata: metadata ?? existingSession?.metadata ?? {
-        gameName: this.game.name ?? 'unknown',
-        players: {},
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-      },
+      metadata: metadata ??
+        existingSession?.metadata ?? {
+          gameName: this.game.name ?? 'unknown',
+          players: {},
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        },
       createdAt: existingSession?.createdAt ?? Date.now(),
       updatedAt: Date.now(),
     };
@@ -229,13 +239,22 @@ export class P2PHost {
     // Determine current player from either ctx.currentPlayer or G.current
     const ctxCurrentPlayer = currentState.ctx.currentPlayer;
     const gCurrent = (currentState.G as { current?: number })?.current;
-    const currentPlayer = gCurrent !== undefined ? String(gCurrent) : ctxCurrentPlayer;
+    const currentPlayer =
+      gCurrent !== undefined ? String(gCurrent) : ctxCurrentPlayer;
 
-    console.log('[P2PHost] handleUpdate:', { moveName, moveArgs, playerID, currentPlayer });
+    console.log('[P2PHost] handleUpdate:', {
+      moveName,
+      moveArgs,
+      playerID,
+      currentPlayer,
+    });
 
     // Validate that the player making the move is the current player
     if (playerID !== currentPlayer) {
-      console.log('[P2PHost] Rejected move: wrong player', { playerID, currentPlayer });
+      console.log('[P2PHost] Rejected move: wrong player', {
+        playerID,
+        currentPlayer,
+      });
       return;
     }
 
@@ -274,11 +293,11 @@ export class P2PHost {
 
       this.state = newState;
       this.db.setState(this.matchID, newState);
-      
+
       // Persist state to localStorage for host reconnection
       const { log } = this.db.fetch(this.matchID);
       updateSessionState(this.matchID, newState, log);
-      
+
       console.log(
         '[P2PHost] State updated, broadcasting to',
         this.clients.size,

@@ -65,6 +65,32 @@ function PlayerList({ players }: { players: LobbyPlayer[] }) {
   );
 }
 
+function LoadingCard({ title, message }: { title: string; message: string }) {
+  return (
+    <div className="rounded-xl border-2 border-slate-200 bg-white p-4 shadow-sm">
+      <div className="flex items-center gap-3">
+        <div className="h-10 w-10 rounded-full border-2 border-slate-200 border-t-slate-500 animate-spin" />
+        <div>
+          <div className="text-sm font-semibold text-slate-800">{title}</div>
+          <div className="text-xs text-slate-500">{message}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ErrorCard({ title, message, detail }: { title: string; message: string; detail?: string }) {
+  return (
+    <div className="rounded-xl border-2 border-rose-200 bg-rose-50 p-4">
+      <div className="text-sm font-semibold text-rose-700">{title}</div>
+      <div className="text-xs text-rose-600 mt-1">{message}</div>
+      {detail && (
+        <div className="text-[11px] text-rose-500 mt-2 break-words">{detail}</div>
+      )}
+    </div>
+  );
+}
+
 export function GameLobby({ gameId, initialMode, initialCode, onStart, onCancel, onCodeGenerated }: GameLobbyProps) {
   // Determine initial mode based on provided props
   // - If host mode with code: restore hosting with that code
@@ -281,17 +307,22 @@ export function GameLobby({ gameId, initialMode, initialCode, onStart, onCancel,
           </div>
 
           {/* Connection Status */}
-          <div className="rounded-xl border-2 border-slate-200 p-4 space-y-3">
+          <div className="space-y-3">
             {isConnecting ? (
-              <div className="text-sm text-slate-500 text-center">
-                Setting up lobby...
-              </div>
+              <LoadingCard
+                title="Setting up lobby"
+                message="Preparing the host connection. Keep this tab open."
+              />
             ) : error ? (
-              <div className="text-sm text-slate-500 text-center">
-                {error}
-              </div>
+              <ErrorCard
+                title="Lobby connection error"
+                message="We could not start the lobby. Try refreshing or hosting again."
+                detail={error}
+              />
             ) : (
-              <PlayerList players={players} />
+              <div className="rounded-xl border-2 border-slate-200 p-4">
+                <PlayerList players={players} />
+              </div>
             )}
           </div>
 
@@ -446,26 +477,30 @@ export function GameLobby({ gameId, initialMode, initialCode, onStart, onCancel,
         </div>
 
         {/* Connection Status */}
-        <div className="rounded-xl border-2 border-slate-200 p-4 space-y-3">
+        <div className="space-y-3">
           {isConnecting ? (
-            <div className="text-sm text-slate-500 text-center">
-              Connecting to game...
-            </div>
+            <LoadingCard
+              title="Connecting to lobby"
+              message="Finding the host and negotiating a connection."
+            />
           ) : error ? (
-            <div className="text-sm text-slate-500 text-center">
-              {error}
-            </div>
+            <ErrorCard
+              title="Connection error"
+              message="We could not reach the host. Double-check the code and try again."
+              detail={error}
+            />
           ) : !isConnected ? (
-            <div className="text-sm text-slate-500 text-center">
-              Connecting...
-            </div>
+            <LoadingCard
+              title="Waiting for host"
+              message="The host is not ready yet. Keep this page open."
+            />
           ) : (
-            <>
+            <div className="rounded-xl border-2 border-slate-200 p-4 space-y-3">
               <PlayerList players={players} />
-              <div className="text-sm text-slate-500 text-center pt-2">
+              <div className="text-sm text-slate-500 text-center">
                 Waiting for host to start the game...
               </div>
-            </>
+            </div>
           )}
         </div>
 
