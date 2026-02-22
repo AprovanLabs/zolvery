@@ -53,7 +53,7 @@ export KEY_ALIAS=your_alias
 export KEY_PASSWORD=your_key_password
 
 # Build client
-pnpm --filter @aprovan/client run build
+pnpm --filter @zolvery/client run build
 
 # Sync to Android
 cd apps/mobile && pnpm exec cap sync android

@@ -39,11 +39,9 @@ export interface WidgetEditModalProps {
 }
 
 export function WidgetEditModal({
-  appId,
   manifest,
   project,
   isOpen,
-  isDirty,
   onClose,
   onSaveProject,
 }: WidgetEditModalProps) {
@@ -102,8 +100,8 @@ export function WidgetEditModal({
   const patchworkProject: VirtualProject = useMemo(() => ({
     id: project.id,
     entry: project.entry,
-    files: project.files,
-  }), [project]);
+    files: new Map(project.files),
+  }), [project.id, project.entry, project.files]);
 
   if (!isOpen) return null;
 

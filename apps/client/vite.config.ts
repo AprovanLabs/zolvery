@@ -73,12 +73,50 @@ export default defineConfig({
 
         // Serve example app sources at /apps/...
         server.middlewares.use('/apps', (req, res, next) => {
-          const urlPath = req.url || '';
+          const parsedUrl = new URL(req.url || '', 'http://localhost');
+          const urlPath = parsedUrl.pathname;
           const examplesDir = path.resolve(
             __dirname,
             '../../packages/examples/src',
           );
           const fullPath = path.join(examplesDir, urlPath);
+
+          // Handle ?files query to list all files in the directory
+          if (parsedUrl.searchParams.has('files')) {
+            if (
+              !fs.existsSync(fullPath) ||
+              !fs.statSync(fullPath).isDirectory()
+            ) {
+              res.statusCode = 404;
+              res.end(JSON.stringify({ error: 'Directory not found' }));
+              return;
+            }
+
+            const listFilesRecursive = (dir: string, base = ''): string[] => {
+              const entries = fs.readdirSync(dir, { withFileTypes: true });
+              const files: string[] = [];
+              for (const entry of entries) {
+                const relativePath = base
+                  ? `${base}/${entry.name}`
+                  : entry.name;
+                if (entry.isDirectory()) {
+                  files.push(
+                    ...listFilesRecursive(
+                      path.join(dir, entry.name),
+                      relativePath,
+                    ),
+                  );
+                } else {
+                  files.push(relativePath);
+                }
+              }
+              return files;
+            };
+
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify(listFilesRecursive(fullPath)));
+            return;
+          }
 
           // Serve source files and assets
           const ext = path.extname(urlPath);

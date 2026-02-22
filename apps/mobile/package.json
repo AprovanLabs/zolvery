@@ -1,10 +1,10 @@
 {
   "name": "@aprovan/mobile",
   "private": true,
-  "version": "0.0.4",
+  "version": "0.0.5",
   "scripts": {
-    "build": "pnpm --filter @aprovan/client run build",
-    "sync:android": "pnpm --filter @aprovan/client run build && pnpm exec cap sync android",
+    "build": "pnpm --filter @zolvery/client run build",
+    "sync:android": "pnpm --filter @zolvery/client run build && pnpm exec cap sync android",
     "run:android": "pnpm exec cap run android",
     "android:regen": "bash ./scripts/android-regen.sh",
     "assets": "pnpm exec capacitor-assets generate --iconBackgroundColor '#3059d4' --splashBackgroundColor '#3059d4' --android"

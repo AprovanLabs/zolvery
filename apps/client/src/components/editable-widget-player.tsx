@@ -29,7 +29,8 @@ export function EditableWidgetPlayer({
   const isEditing = externalIsEditing ?? internalIsEditing;
   const setIsEditing = onEditingChange ?? setInternalIsEditing;
 
-  const source = project.project?.files.get('client/main.tsx')?.content ?? localSource;
+  const entryFile = project.project?.entry ?? 'client/main.tsx';
+  const source = project.project?.files.get(entryFile)?.content ?? localSource;
 
   useEffect(() => {
     if (!project.isLoading && initialSource !== localSource) {
@@ -41,12 +42,12 @@ export function EditableWidgetPlayer({
     (finalCode: string, editCount: number) => {
       setIsEditing(false);
       if (editCount > 0 && finalCode !== source) {
-        project.updateFile('client/main.tsx', finalCode);
+        project.updateFile(entryFile, finalCode);
         setLocalSource(finalCode);
         onSourceChange?.(finalCode);
       }
     },
-    [source, onSourceChange, setIsEditing, project],
+    [source, onSourceChange, setIsEditing, project, entryFile],
   );
 
   const handleSaveProject = useCallback(async (editedProject: VirtualProject) => {

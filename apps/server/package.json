@@ -1,5 +1,5 @@
 {
-  "name": "@aprovan/server",
+  "name": "@zolvery/server",
   "version": "1.0.0",
   "description": "Zolvery server in TypeScript",
   "main": "index.js",

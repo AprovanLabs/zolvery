@@ -1,17 +1,10 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import {
+  resolveEntry,
+  type VirtualFile,
+  type VirtualProject,
+} from '@aprovan/patchwork-compiler';
 import type { ZolveryManifest } from './use-widget-source';
-
-export interface VirtualFile {
-  path: string;
-  content: string;
-  language?: string;
-}
-
-export interface VirtualProject {
-  id: string;
-  entry: string;
-  files: Map<string, VirtualFile>;
-}
 
 export interface UseWidgetProjectReturn {
   project: VirtualProject | null;
@@ -50,31 +43,67 @@ export function useWidgetProject(appId: string | null): UseWidgetProjectReturn {
     setError(null);
     const base = import.meta.env.BASE_URL;
 
-    Promise.all([
-      fetch(`${base}apps/${appId}/zolvery.json`).then((r) => r.json()),
-      fetch(`${base}apps/${appId}/icon.png`),
-      fetch(`${base}apps/${appId}/client/main.tsx`).then((r) => r.text()),
-    ])
-      .then(([m, logo, mainSource]) => {
-        setManifest(m);
+    // Binary file extensions that should store URL instead of content
+    const BINARY_EXTENSIONS = [
+      '.png',
+      '.jpg',
+      '.jpeg',
+      '.gif',
+      '.webp',
+      '.ico',
+      '.mp4',
+      '.mov',
+      '.webm',
+    ];
+    const isBinaryFile = (path: string) =>
+      BINARY_EXTENSIONS.some((ext) => path.toLowerCase().endsWith(ext));
 
-        const files = new Map<string, VirtualFile>();
-        files.set('client/main.tsx', {
-          path: 'client/main.tsx',
-          content: mainSource,
-        });
-        files.set('icon.png', {
-          path: 'icon.png',
-          content: logo.url,
-        });
-        files.set('zolvery.json', {
-          path: 'zolvery.json',
-          content: JSON.stringify(m, null, 2),
-        });
+    const loadProject = async () => {
+      // Fetch manifest and file listing in parallel
+      const [manifestRes, filesRes] = await Promise.all([
+        fetch(`${base}apps/${appId}/zolvery.json`),
+        fetch(`${base}apps/${appId}?files`),
+      ]);
 
-        setOriginalFiles(files);
-        setCurrentFiles(new Map(files));
-      })
+      const m: ZolveryManifest = await manifestRes.json();
+      setManifest(m);
+
+      const allFiles: string[] = await filesRes.json();
+
+      // Fetch all file contents in parallel
+      const filePromises = allFiles.map(async (filePath) => {
+        const url = `${base}apps/${appId}/${filePath}`;
+
+        // For binary files, store the URL instead of fetching content
+        if (isBinaryFile(filePath)) {
+          return { path: filePath, content: url, encoding: 'base64' as const };
+        }
+
+        const res = await fetch(url);
+        if (!res.ok) return null;
+        const content = await res.text();
+        return { path: filePath, content };
+      });
+
+      const fileResults = await Promise.all(filePromises);
+
+      const files = new Map<string, VirtualFile>();
+
+      for (const file of fileResults) {
+        if (file) {
+          files.set(file.path, {
+            path: file.path,
+            content: file.content,
+            encoding: file.encoding,
+          });
+        }
+      }
+
+      setOriginalFiles(files);
+      setCurrentFiles(new Map(files));
+    };
+
+    loadProject()
       .catch(setError)
       .finally(() => setIsLoading(false));
   }, [appId]);
@@ -181,7 +210,7 @@ export function useWidgetProject(appId: string | null): UseWidgetProjectReturn {
     if (currentFiles.size === 0 || !appId) return null;
     return {
       id: appId,
-      entry: 'client/main.tsx',
+      entry: resolveEntry(currentFiles),
       files: currentFiles,
     };
   }, [appId, currentFiles]);

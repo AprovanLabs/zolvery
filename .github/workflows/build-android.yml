@@ -72,15 +72,11 @@ jobs:
           EOF
 
       - name: Build client
-        run: pnpm --filter @aprovan/client run build
-
-      - name: Remove existing Android directory
-        working-directory: apps/mobile
-        run: rm -rf android
+        run: pnpm --filter @zolvery/client run build
 
       - name: Regenerate Android project
         working-directory: apps/mobile
-        run: pnpm exec cap add android
+        run: pnpm run android:regen
 
       - name: Configure release signing
         if: github.event.inputs.build_type == 'release'
@@ -113,10 +109,6 @@ jobs:
           fs.writeFileSync('build.gradle', gradle);
           console.log('Signing config added to build.gradle');
           "
-
-      - name: Generate app assets
-        working-directory: apps/mobile
-        run: pnpm run assets
 
       - name: Sync Android project
         working-directory: apps/mobile

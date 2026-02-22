@@ -1,5 +1,4 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Random } from 'boardgame.io/plugins';
 import { User, Circle, Trophy, Target } from 'lucide-react';
 
 type Suit = 'hearts' | 'diamonds' | 'clubs' | 'spades';
@@ -211,7 +210,6 @@ export const game = {
   name: 'buck-euchre',
   minPlayers: 4,
   maxPlayers: 4,
-  plugins: [Random()],
   
   setup: ({ ctx, random }: { ctx: { numPlayers: number }; random: { Shuffle: <T>(arr: T[]) => T[] } }) => {
     const deck = createDeck();
