@@ -86,34 +86,33 @@ jobs:
         if: github.event.inputs.build_type == 'release'
         working-directory: apps/mobile/android/app
         run: |
-          node << 'EOF'
+          node -e "
           const fs = require('fs');
           let gradle = fs.readFileSync('build.gradle', 'utf8');
           
-          const signingConfig = `
-    signingConfigs {
-        release {
-            storeFile file(System.getenv("KEYSTORE_FILE") ?: "keystore.jks")
-            storePassword System.getenv("KEYSTORE_PASSWORD")
-            keyAlias System.getenv("KEY_ALIAS")
-            keyPassword System.getenv("KEY_PASSWORD")
-        }
-    }
-
-    `;
+          const signingConfig = [
+            '    signingConfigs {',
+            '        release {',
+            '            storeFile file(System.getenv(\"KEYSTORE_FILE\") ?: \"keystore.jks\")',
+            '            storePassword System.getenv(\"KEYSTORE_PASSWORD\")',
+            '            keyAlias System.getenv(\"KEY_ALIAS\")',
+            '            keyPassword System.getenv(\"KEY_PASSWORD\")',
+            '        }',
+            '    }',
+            '',
+            '    '
+          ].join('\n');
           
-          // Insert signingConfigs before buildTypes
           gradle = gradle.replace('buildTypes {', signingConfig + 'buildTypes {');
           
-          // Add signingConfig to release buildType
           gradle = gradle.replace(
             /release\s*\{\s*\n(\s*)minifyEnabled/,
-            'release {\n$1signingConfig signingConfigs.release\n$1minifyEnabled'
+            'release {\n\$1signingConfig signingConfigs.release\n\$1minifyEnabled'
           );
           
           fs.writeFileSync('build.gradle', gradle);
           console.log('Signing config added to build.gradle');
-          EOF
+          "
 
       - name: Generate app assets
         working-directory: apps/mobile
