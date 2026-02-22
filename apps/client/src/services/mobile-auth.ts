@@ -24,8 +24,8 @@ export interface AuthUser {
   groups: string[];
 }
 
-const TOKEN_STORAGE_KEY = 'kossabos_auth_tokens';
-const USER_STORAGE_KEY = 'kossabos_auth_user';
+const TOKEN_STORAGE_KEY = 'zolvery_auth_tokens';
+const USER_STORAGE_KEY = 'zolvery_auth_user';
 
 let config: AuthConfig | null = null;
 let authListenerHandle: Promise<{ remove: () => void }> | null = null;
@@ -46,19 +46,24 @@ function parseJwt(token: string): Record<string, unknown> {
     atob(base64)
       .split('')
       .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-      .join('')
+      .join(''),
   );
   return JSON.parse(jsonPayload);
 }
 
 function extractTokensFromUrl(url: string): AuthTokens | null {
   const hashParams = new URLSearchParams(url.split('#')[1] || '');
-  const queryParams = new URLSearchParams(url.split('?')[1]?.split('#')[0] || '');
+  const queryParams = new URLSearchParams(
+    url.split('?')[1]?.split('#')[0] || '',
+  );
 
-  const accessToken = hashParams.get('access_token') || queryParams.get('access_token');
+  const accessToken =
+    hashParams.get('access_token') || queryParams.get('access_token');
   const idToken = hashParams.get('id_token') || queryParams.get('id_token');
-  const refreshToken = hashParams.get('refresh_token') || queryParams.get('refresh_token');
-  const expiresIn = hashParams.get('expires_in') || queryParams.get('expires_in');
+  const refreshToken =
+    hashParams.get('refresh_token') || queryParams.get('refresh_token');
+  const expiresIn =
+    hashParams.get('expires_in') || queryParams.get('expires_in');
 
   if (!accessToken || !idToken) {
     return null;
@@ -68,7 +73,7 @@ function extractTokensFromUrl(url: string): AuthTokens | null {
     accessToken,
     idToken,
     refreshToken: refreshToken || '',
-    expiresAt: Date.now() + (parseInt(expiresIn || '3600', 10) * 1000),
+    expiresAt: Date.now() + parseInt(expiresIn || '3600', 10) * 1000,
   };
 }
 
