@@ -44,11 +44,5 @@
   "lint-staged": {
     "*.{ts,tsx}": "eslint --fix",
     "*.{js,jsx,ts,tsx,md,scss}": "prettier --write"
-  },
-  "pnpm": {
-    "overrides": {
-      "@aprovan/patchwork-editor": "link:../patchwork/packages/editor",
-      "@aprovan/bobbin": "link:../patchwork/packages/bobbin"
-    }
   }
 }
