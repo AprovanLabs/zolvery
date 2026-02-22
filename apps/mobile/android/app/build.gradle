@@ -2,14 +2,14 @@ apply plugin: 'com.android.application'
 
 android {
   namespace "com.aprovan.zolvery"
-  compileSdkVersion 34
+  compileSdkVersion 35
 
   defaultConfig {
     applicationId "com.aprovan.zolvery"
     minSdkVersion 23
-    targetSdkVersion 34
-    versionCode 3
-    versionName "0.0.3"
+    targetSdkVersion 35
+    versionCode 4
+    versionName "0.0.4"
     testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
   }
 
