@@ -158,6 +158,7 @@ jobs:
         if: github.event.inputs.build_type == 'release'
         run: |
           VERSION=$(node -p "require('./apps/mobile/package.json').version")
+          echo "VERSION=${VERSION}" >> $GITHUB_ENV
           mv apps/mobile/android/app/build/outputs/bundle/release/app-release.aab \
              apps/mobile/android/app/build/outputs/bundle/release/zolvery-${VERSION}-${{ env.SHORT_SHA }}.aab
 
@@ -165,6 +166,6 @@ jobs:
         if: github.event.inputs.build_type == 'release'
         uses: actions/upload-artifact@v4
         with:
-          name: zolvery-release-${{ env.SHORT_SHA }}
+          name: zolvery-release-${{env.VERSION}}-${{ env.SHORT_SHA }}
           path: apps/mobile/android/app/build/outputs/bundle/release/*.aab
           retention-days: 30

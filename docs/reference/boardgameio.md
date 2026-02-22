@@ -934,6 +934,10 @@ const spectator = Client({
 
 ## Randomness
 
+The random API is **built-in** as of v0.50.x. No import or plugin required - the `random` object is automatically available in `setup`, moves, and hooks.
+
+> **Warning**: Do not import `Random` from `boardgame.io/plugins` - that export no longer exists in the ESM build. The framework injects `random` automatically.
+
 ### Random API
 
 Available in moves via the `random` object:
