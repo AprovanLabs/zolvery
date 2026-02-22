@@ -1,14 +1,14 @@
 name: Build Android
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'apps/client/**'
-      - 'apps/mobile/**'
-      - 'packages/**'
-      - '.github/workflows/build-android.yml'
+  # push:
+  #   branches:
+  #     - main
+  #   paths:
+  #     - 'apps/client/**'
+  #     - 'apps/mobile/**'
+  #     - 'packages/**'
+  #     - '.github/workflows/build-android.yml'
   workflow_dispatch:
     inputs:
       build_type:
