@@ -1,7 +1,7 @@
-import { connect } from '@kossabos/mcp';
+import { connect } from '@zolvery/mcp';
 import { createApp, computed, ref } from 'vue';
 
-const games = await connect('kossabos/games');
+const games = await connect('zolvery/games');
 
 const isDev = process.env.ENVIRONMENT === 'development';
 

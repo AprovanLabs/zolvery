@@ -46,7 +46,7 @@ Implement the editing flow incrementally, starting with core infrastructure (ser
 
 ### Partition 2: Edit Modal Integration
 
-**Scope**: Integrate `@aprovan/patchwork-editor` into the Kossabos client.
+**Scope**: Integrate `@aprovan/patchwork-editor` into the Zolvery client.
 
 **Modules**:
 - `apps/client/src/components/widget-edit-modal.tsx` — New component
@@ -55,7 +55,7 @@ Implement the editing flow incrementally, starting with core infrastructure (ser
 - `apps/client/package.json` — Dependencies
 
 **Deliverables**:
-1. `EditModal` from patchwork-editor rendered in Kossabos
+1. `EditModal` from patchwork-editor rendered in Zolvery
 2. Edit button visible in widget player toolbar
 3. User can enter edit prompt and see updated preview
 4. Edit history displays correctly
@@ -76,7 +76,7 @@ Implement the editing flow incrementally, starting with core infrastructure (ser
 - `apps/client/src/components/widget-edit-modal.tsx` — Multi-file support
 
 **Deliverables**:
-1. File tree shows `main.tsx` and `kossabos.json`
+1. File tree shows `main.tsx` and `zolvery.json`
 2. User can switch between files and edit each
 3. Save button writes changes to `packages/examples/src/{appId}/`
 4. Widget reloads correctly after save
@@ -108,13 +108,13 @@ Implement the editing flow incrementally, starting with core infrastructure (ser
 
 ## Partition 4: Extract Generic Components to Patchwork
 
-**Scope**: Migrate generic editing components from Kossabos back to `@aprovan/patchwork-editor`.
+**Scope**: Migrate generic editing components from Zolvery back to `@aprovan/patchwork-editor`.
 
 **Rationale**: Stage 1 implementation added components that belong in the upstream package:
 - `SaveConfirmDialog` - completely generic
 - Save flow integration (onSave prop, unsaved changes detection)
 
-Moving these upstream keeps Kossabos lean and benefits other Patchwork consumers.
+Moving these upstream keeps Zolvery lean and benefits other Patchwork consumers.
 
 **Modules**:
 - `../patchwork/packages/editor/src/components/edit/` — Add SaveConfirmDialog, extend EditModal
@@ -124,7 +124,7 @@ Moving these upstream keeps Kossabos lean and benefits other Patchwork consumers
 **Deliverables**:
 1. `SaveConfirmDialog` exported from `@aprovan/patchwork-editor`
 2. `EditModal` accepts optional `onSave` prop with built-in save button + confirmation
-3. Kossabos uses catalog reference for easy local/NPM switching
+3. Zolvery uses catalog reference for easy local/NPM switching
 
 **Validation**:
 - Edit flow works identically after migration

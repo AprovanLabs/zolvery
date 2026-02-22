@@ -47,7 +47,7 @@ export function getMultiplayer(config: MultiplayerConfig, game?: Game) {
   }
 
   return BoardgameMultiplayer.Local({
-    storageKey: `kossabos:bgio:${config.appId}`,
+    storageKey: `zolvery:bgio:${config.appId}`,
     ...(Object.keys(bots).length > 0 ? { bots } : {}),
   });
 }

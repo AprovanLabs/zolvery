@@ -1,13 +1,13 @@
 import { useMemo, useRef, useEffect, useState, useCallback } from 'react';
 import { EditModal, type CompileFn } from '@aprovan/patchwork-editor';
 import { usePatchwork } from '../hooks/use-patchwork';
-import type { KossabosManifest } from '../hooks/use-widget-source';
+import type { ZolveryManifest } from '../hooks/use-widget-source';
 import type { Manifest, InputSpec, VirtualProject } from '@aprovan/patchwork-compiler';
 
 const IMAGE_MAP: Record<string, string> = {
   shadcn: '@aprovan/patchwork-image-shadcn',
   vanilla: '@aprovan/patchwork-vanilla',
-  boardgameio: '@kossabos/patchwork-image-boardgameio@0.1.0',
+  boardgameio: '@zolvery/patchwork-image-boardgameio@0.1.0',
 };
 
 const CDN_BASE_URL = import.meta.env.DEV ? '/npm' : 'https://esm.sh';
@@ -30,7 +30,7 @@ const normalizeInputType = (settingType?: string): InputSpec['type'] => {
 
 export interface WidgetEditModalProps {
   appId: string;
-  manifest: KossabosManifest;
+  manifest: ZolveryManifest;
   project: VirtualProject;
   isOpen: boolean;
   isDirty?: boolean;
@@ -140,7 +140,7 @@ export function WidgetEditModal({
 
 interface WidgetPreviewProps {
   code: string;
-  manifest: KossabosManifest;
+  manifest: ZolveryManifest;
   compilerManifest: Manifest;
   imageName: string;
 }

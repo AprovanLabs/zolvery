@@ -1,7 +1,7 @@
 {
-  "name": "@kossabos/server",
+  "name": "@zolvery/server",
   "version": "1.0.0",
-  "description": "Kossabos server in TypeScript",
+  "description": "Zolvery server in TypeScript",
   "main": "index.js",
   "scripts": {
     "build": "tsc",
@@ -19,7 +19,7 @@
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist",
     "prestart": "npm run build",
-    "load-env": "tsx scripts/load-env-from-parameter-store.ts --parameter /aprovan/kossabos/prd/use2/main/env --overwrite"
+    "load-env": "tsx scripts/load-env-from-parameter-store.ts --parameter /aprovan/zolvery/prd/use2/main/env --overwrite"
   },
   "author": "Jacob Sampson",
   "license": "MIT",
@@ -31,7 +31,7 @@
     "@aws-sdk/lib-dynamodb": "^3.490.0",
     "@koa/cors": "^5.0.0",
     "@koa/router": "^12.0.1",
-    "@kossabos/core": "workspace:^",
+    "@zolvery/core": "workspace:^",
     "@opentelemetry/api": "^1.9.0",
     "@opentelemetry/auto-instrumentations-node": "^0.62.0",
     "@opentelemetry/exporter-logs-otlp-grpc": "^0.203.0",

@@ -123,20 +123,20 @@ The script will:
 ```bash
 # Create a parameter in AWS Parameter Store
 aws ssm put-parameter \
-  --name "/kossabos/production/env" \
+  --name "/zolvery/production/env" \
   --value "$(cat .env.example)" \
   --type "SecureString" \
-  --description "Production environment variables for Kossabos"
+  --description "Production environment variables for Zolvery"
 ```
 
 ### Loading in Development
 
 ```bash
 # Load production config for testing
-npm run load-env -- --parameter /kossabos/production/env --output .env.prod
+npm run load-env -- --parameter /zolvery/production/env --output .env.prod
 
 # Load staging config
-npm run load-env -- --parameter /kossabos/staging/env --output .env.staging
+npm run load-env -- --parameter /zolvery/staging/env --output .env.staging
 ```
 
 ### Integration with npm scripts
@@ -146,8 +146,8 @@ Add to your package.json:
 ```json
 {
   "scripts": {
-    "env:prod": "npm run load-env -- --parameter /kossabos/production/env",
-    "env:staging": "npm run load-env -- --parameter /kossabos/staging/env --output .env.staging",
+    "env:prod": "npm run load-env -- --parameter /zolvery/production/env",
+    "env:staging": "npm run load-env -- --parameter /zolvery/staging/env --output .env.staging",
     "dev:prod": "npm run env:prod && npm run dev"
   }
 }

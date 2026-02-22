@@ -5,7 +5,7 @@ Parameters:
   DomainName:
     Type: String
     Description: Domain name
-    Default: kossabos.com
+    Default: zolvery.com
 
 Resources:
   PublicCertificate:

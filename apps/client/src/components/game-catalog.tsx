@@ -60,7 +60,7 @@ export function GameCatalog({
     <div className="h-full overflow-auto">
       <div className="p-4 space-y-6 max-w-lg mx-auto">
         <header className="text-center space-y-1 flex space-between gap-4 items-center justify-center">
-          <img src={`${import.meta.env.BASE_URL}logo.png`} alt="Kossabos Logo" className="w-8 h-8" />
+          <img src={`${import.meta.env.BASE_URL}logo.png`} alt="Zolvery Logo" className="w-8 h-8" />
           <span className="text-sm uppercase tracking-widest text-slate-400">Zolvery</span>
         </header>
 
@@ -86,7 +86,7 @@ export function GameCatalog({
             Want more games? Build your own!
           </p>
           <a
-            href="https://github.com/JacobSampson/kossabos"
+            href="https://github.com/JacobSampson/zolvery"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-700 transition-colors"

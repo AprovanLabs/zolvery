@@ -1,4 +1,4 @@
-import { App as KossabosApp } from '@kossabos/core';
+import { App as ZolveryApp } from '@zolvery/core';
 
 export enum Locale {
   EN_US = 'en-US',
@@ -8,7 +8,7 @@ export enum Locale {
 export type LocaleType = `${Locale}`;
 
 export const generateHelpContent = (
-  app: KossabosApp,
+  app: ZolveryApp,
   locale: LocaleType,
 ): string => {
   if (locale === Locale.EN_US) {
@@ -17,7 +17,7 @@ export const generateHelpContent = (
 **Created by:** ${app.authorId}
 
 ### Getting Started
-This is an interactive game/application built with the Kossabos platform.
+This is an interactive game/application built with the Zolvery platform.
 
 ### How to Play
 - Interact with the game interface in the main area
@@ -37,7 +37,7 @@ Contact the game author or check the game's documentation for specific gameplay 
 **Creado por:** ${app.authorId}
 
 ### Primeros Pasos
-Esta es una aplicación/juego interactivo construido con la plataforma Kossabos.
+Esta es una aplicación/juego interactivo construido con la plataforma Zolvery.
 
 ### Cómo Jugar
 - Interactúa con la interfaz del juego en el área principal

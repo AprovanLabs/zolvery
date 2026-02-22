@@ -25,7 +25,7 @@ logger.info(
       corsOrigins: appConfig.cors.origin,
     },
   },
-  'Starting Kossabos API',
+  'Starting Zolvery API',
 );
 
 app.use(errorLogger);
@@ -152,6 +152,6 @@ app.on('error', (err: Error, ctx?: any) => {
   }
 });
 
-logger.info('Kossabos server initialized successfully');
+logger.info('Zolvery server initialized successfully');
 
 export { app };

@@ -128,7 +128,7 @@ function setHashRoute(route: ParsedRoute): void {
 }
 
 function getSessionStorageKey(matchCode: string): string {
-  return `kossabos-session-${matchCode}`;
+  return `zolvery-session-${matchCode}`;
 }
 
 function saveSessionCredentials(matchCode: string, credentials: string): void {

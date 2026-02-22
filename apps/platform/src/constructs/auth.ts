@@ -6,11 +6,7 @@ import {
   aws_cognito as cognito,
   aws_certificatemanager as certificatemanager,
 } from 'aws-cdk-lib';
-import {
-  DOMAIN_PACKAGE,
-  MOBILE_PORT,
-  PROJECT_DOMAIN,
-} from '../core/constants';
+import { DOMAIN_PACKAGE, MOBILE_PORT, PROJECT_DOMAIN } from '../core/constants';
 import { namer } from '../core/utils';
 
 export interface AuthProps {
@@ -59,15 +55,15 @@ export class Auth extends Construct {
       },
       selfSignUpEnabled: true,
       userVerification: {
-        emailSubject: 'Verify Your Email for Kossabos',
-        emailBody: `Thanks for signing up for Kossabos! Verify account by clicking on {##Verify Email##}`,
+        emailSubject: 'Verify Your Email for Zolvery',
+        emailBody: `Thanks for signing up for Zolvery! Verify account by clicking on {##Verify Email##}`,
         emailStyle: cognito.VerificationEmailStyle.LINK,
       },
       userInvitation: {
-        emailSubject: 'Invite to Join Kossabos',
+        emailSubject: 'Invite to Join Zolvery',
         emailBody: `Hello {username},
 
-You've been invited to join Kossabos! Your temporary password is {####}`,
+You've been invited to join Zolvery! Your temporary password is {####}`,
       },
       standardAttributes: {
         email: {

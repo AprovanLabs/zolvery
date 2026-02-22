@@ -8,7 +8,7 @@
   "authorId": "jsampson",
   "visibility": "public",
   "tags": ["game", "classics"],
-  "servers": ["kossabos/games"],
+  "servers": ["zolvery/games"],
   "players": { "min": 2, "max": 2, "maxLocal": 2 },
   "settings": [
     {

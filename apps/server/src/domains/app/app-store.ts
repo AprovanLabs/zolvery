@@ -1,5 +1,5 @@
 import { DynamoDBDocumentClient, GetCommand } from '@aws-sdk/lib-dynamodb';
-import type { App } from '@kossabos/core';
+import type { App } from '@zolvery/core';
 import { appConfig } from '@/config';
 import logger from '@/logger';
 import {
@@ -10,9 +10,8 @@ import {
 } from '@/aws/dynamodb';
 
 const appKeys = {
-  partitionKey: (appId: string) =>
-    generatePartitionKey('APP', appId),
-  sortKey: () => generateSortKey('DATA', 'v1'),    
+  partitionKey: (appId: string) => generatePartitionKey('APP', appId),
+  sortKey: () => generateSortKey('DATA', 'v1'),
 };
 
 export interface AppStore {
@@ -31,8 +30,8 @@ export class DynamoDbAppStore implements AppStore {
         TableName: this.tableName,
         Key: {
           PK: appKeys.partitionKey(appId),
-          SK: appKeys.sortKey()
-        }
+          SK: appKeys.sortKey(),
+        },
       });
 
       const result = await this.docClient.send(command);
@@ -47,4 +46,4 @@ export class DynamoDbAppStore implements AppStore {
   }
 }
 
-export const getAppStore = () => new DynamoDbAppStore()
+export const getAppStore = () => new DynamoDbAppStore();

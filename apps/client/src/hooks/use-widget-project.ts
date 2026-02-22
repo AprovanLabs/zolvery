@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import type { KossabosManifest } from './use-widget-source';
+import type { ZolveryManifest } from './use-widget-source';
 
 export interface VirtualFile {
   path: string;
@@ -15,7 +15,7 @@ export interface VirtualProject {
 
 export interface UseWidgetProjectReturn {
   project: VirtualProject | null;
-  manifest: KossabosManifest | null;
+  manifest: ZolveryManifest | null;
   isLoading: boolean;
   error: Error | null;
   isDirty: boolean;
@@ -33,7 +33,7 @@ export function useWidgetProject(appId: string | null): UseWidgetProjectReturn {
   const [currentFiles, setCurrentFiles] = useState<Map<string, VirtualFile>>(
     new Map(),
   );
-  const [manifest, setManifest] = useState<KossabosManifest | null>(null);
+  const [manifest, setManifest] = useState<ZolveryManifest | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -51,7 +51,7 @@ export function useWidgetProject(appId: string | null): UseWidgetProjectReturn {
     const base = import.meta.env.BASE_URL;
 
     Promise.all([
-      fetch(`${base}apps/${appId}/kossabos.json`).then((r) => r.json()),
+      fetch(`${base}apps/${appId}/zolvery.json`).then((r) => r.json()),
       fetch(`${base}apps/${appId}/logo.png`),
       fetch(`${base}apps/${appId}/client/main.tsx`).then((r) => r.text()),
     ])
@@ -67,8 +67,8 @@ export function useWidgetProject(appId: string | null): UseWidgetProjectReturn {
           path: 'logo.png',
           content: logo.url,
         });
-        files.set('kossabos.json', {
-          path: 'kossabos.json',
+        files.set('zolvery.json', {
+          path: 'zolvery.json',
           content: JSON.stringify(m, null, 2),
         });
 

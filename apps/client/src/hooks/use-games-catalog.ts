@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
-import type { KossabosManifest } from './use-widget-source';
+import type { ZolveryManifest } from './use-widget-source';
 
-export interface GameEntry extends KossabosManifest {
+export interface GameEntry extends ZolveryManifest {
   category: string;
   iconUrl: string;
 }
@@ -39,7 +39,7 @@ export function useGamesCatalog() {
           appList.map(async ({ appId }) => {
             try {
               const manifest = await fetch(
-                `${base}apps/${appId}/kossabos.json`,
+                `${base}apps/${appId}/zolvery.json`,
               ).then((r) => r.json());
               const category = appId.split('/')[0];
               const logoName = manifest.iconName ?? 'icon.png';

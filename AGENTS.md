@@ -1,4 +1,4 @@
-# Kossabos
+# Zolvery
 
 Use this file to guide loading other context for implementing plans or executing tasks.
 

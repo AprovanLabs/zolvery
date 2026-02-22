@@ -3,7 +3,7 @@
  */
 export class ClientStorage {
   private cache = new Map<string, any>();
-  private readonly storageKey = 'kossabos-client-cache';
+  private readonly storageKey = 'zolvery-client-cache';
 
   public constructor() {
     this.loadFromLocalStorage();

@@ -1,4 +1,4 @@
-package com.aprovan.kossabos;
+package com.aprovan.zolvery;
 
 import com.getcapacitor.BridgeActivity;
 

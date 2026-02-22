@@ -2,7 +2,7 @@
 
 ## Overview
 
-The editing experience integrates Patchwork's `EditModal` component into the Kossabos client, allowing users to enter an "edit mode" from any running widget. The modal provides side-by-side code/preview views, a natural language editor, and edit history.
+The editing experience integrates Patchwork's `EditModal` component into the Zolvery client, allowing users to enter an "edit mode" from any running widget. The modal provides side-by-side code/preview views, a natural language editor, and edit history.
 
 ## User Flows
 
@@ -38,15 +38,15 @@ The editing experience integrates Patchwork's `EditModal` component into the Kos
 ### Flow 3: Edit Metadata
 
 ```
-[Edit Modal] → [Toggle File Tree] → [Select kossabos.json] → [Edit]
+[Edit Modal] → [Toggle File Tree] → [Select zolvery.json] → [Edit]
 ```
 
 1. User clicks the folder/tree toggle button
 2. File tree panel appears showing:
    - `main.tsx` (active)
-   - `kossabos.json`
+   - `zolvery.json`
    - `icon.png` (view-only)
-3. User selects `kossabos.json`
+3. User selects `zolvery.json`
 4. JSON content displayed in code view
 5. User edits via natural language or manual edit
 
@@ -74,7 +74,7 @@ The editing experience integrates Patchwork's `EditModal` component into the Kos
 │                                                           │
 │  ┌─────────────┬─────────────────────────────────────┐   │
 │  │ main.tsx    │                                     │   │
-│  │ kossabos.   │      [Live Preview Area]            │   │
+│  │ zolvery.   │      [Live Preview Area]            │   │
 │  │   json      │                                     │   │
 │  │ icon.png    │                                     │   │
 │  └─────────────┴─────────────────────────────────────┘   │
@@ -109,7 +109,7 @@ The editing experience integrates Patchwork's `EditModal` component into the Kos
 - Collapsible panel on left side
 - Lists all files in the widget project:
   - `main.tsx` — React component source
-  - `kossabos.json` — Widget metadata/manifest
+  - `zolvery.json` — Widget metadata/manifest
   - `icon.png` — Widget icon (view-only indicator)
 - Active file highlighted
 - Click to switch active file

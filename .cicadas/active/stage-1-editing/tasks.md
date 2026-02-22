@@ -78,7 +78,7 @@
 ```typescript
 interface WidgetEditModalProps {
   appId: string;
-  manifest: KossabosManifest;
+  manifest: ZolveryManifest;
   source: string;
   isOpen: boolean;
   onClose: (finalCode: string, editCount: number) => void;
@@ -146,7 +146,7 @@ interface WidgetEditModalProps {
 
 **Steps**:
 1. Create hook that loads all widget files as `VirtualProject`
-2. Fetch `main.tsx`, `kossabos.json`, and icon URL
+2. Fetch `main.tsx`, `zolvery.json`, and icon URL
 3. Track dirty state for each file
 4. Provide `updateFile(path, content)` method
 
@@ -154,7 +154,7 @@ interface WidgetEditModalProps {
 ```typescript
 interface UseWidgetProjectReturn {
   project: VirtualProject | null;
-  manifest: KossabosManifest | null;
+  manifest: ZolveryManifest | null;
   isLoading: boolean;
   error: Error | null;
   isDirty: boolean;
@@ -176,10 +176,10 @@ interface UseWidgetProjectReturn {
 **Steps**:
 1. Update patchwork `useEditSession` to accept `originalProject?: VirtualProject` option
 2. Update patchwork `EditModal` to pass `originalProject` prop through
-3. Update kossabos `WidgetEditModal` props to accept `VirtualProject` instead of `source: string`
+3. Update zolvery `WidgetEditModal` props to accept `VirtualProject` instead of `source: string`
 4. Update `EditableWidgetPlayer` to pass full project from `useWidgetProject`
 
-**Test**: File tree shows `client/main.tsx` and `kossabos.json`, switching files works.
+**Test**: File tree shows `client/main.tsx` and `zolvery.json`, switching files works.
 
 **Status**: Complete
 
@@ -259,7 +259,7 @@ interface SaveRequest {
 **Files**: `../patchwork/packages/editor/src/components/edit/SaveConfirmDialog.tsx`, `../patchwork/packages/editor/src/components/edit/index.ts`
 
 **Steps**:
-1. Create `SaveConfirmDialog` component in patchwork-editor (lift from kossabos)
+1. Create `SaveConfirmDialog` component in patchwork-editor (lift from zolvery)
 2. Export from edit index
 3. Export from package index
 
@@ -328,7 +328,7 @@ interface SaveRequest {
 - [ ] User can click Edit to open modal
 - [ ] User can type edit prompt and see preview update
 - [ ] User can switch between code and preview views
-- [ ] User can view file tree with `main.tsx` and `kossabos.json`
+- [ ] User can view file tree with `main.tsx` and `zolvery.json`
 - [ ] User can switch active file and edit each
 - [ ] User can save changes to disk
 - [ ] Changes persist after page reload
@@ -474,7 +474,7 @@ interface CodeBlockViewProps {
 | `.png`    | Hidden         | N/A         | Upload   | `MediaPreview` |
 | `.svg`    | Hidden         | N/A         | Upload   | `MediaPreview` |
 
-**Test**: Open `kossabos.json`, Preview button hidden, content renders as formatted JSON code block.
+**Test**: Open `zolvery.json`, Preview button hidden, content renders as formatted JSON code block.
 
 **Status**: Pending
 
@@ -496,7 +496,7 @@ interface CodeBlockViewProps {
 - User can still use prompt input for AI edits
 - Save tracks all changes regardless of edit method
 
-**Test**: Open `kossabos.json`, directly edit text, Save persists changes.
+**Test**: Open `zolvery.json`, directly edit text, Save persists changes.
 
 **Status**: Pending
 
@@ -560,12 +560,12 @@ interface EditSessionActions {
 
 ### P5.8 — Update Save Flow for Multi-Type Files
 
-**Files**: `../patchwork/packages/editor/src/components/edit/types.ts`, kossabos save endpoint
+**Files**: `../patchwork/packages/editor/src/components/edit/types.ts`, zolvery save endpoint
 
 **Steps**:
 1. Ensure `VirtualFile` can carry encoding hint: `encoding?: 'utf8' | 'base64'`
 2. When saving project, include encoding in save request payload
-3. Update Kossabos save endpoint to handle `encoding: 'base64'` files:
+3. Update Zolvery save endpoint to handle `encoding: 'base64'` files:
    - Decode base64 before writing
    - Write as binary buffer for media files
 4. Verify round-trip: upload image → save → reload → image displays correctly

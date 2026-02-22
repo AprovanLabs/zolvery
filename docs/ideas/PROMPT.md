@@ -1,6 +1,6 @@
 # Game Generation Prompt
 
-Generate a game using the Boardgame.io framework and a custom 'Kossabos' library providing reusable components and core functionality, like reactions, animations, game settings, and leaderboards.
+Generate a game using the Boardgame.io framework and a custom 'Zolvery' library providing reusable components and core functionality, like reactions, animations, game settings, and leaderboards.
 
 ## Instructions
 
@@ -36,7 +36,7 @@ Notes:
 
 ## Elements
 
-Use the provided Vue components wherever possible. Import from `@kossabos/vue`.
+Use the provided Vue components wherever possible. Import from `@zolvery/vue`.
 Here's the component documentation. These are based on Prime Vue components. At any time, you can reference a Prime Vue component by using the upper camelcase name (e.g. `PrimeColorPicker`).
 
 ### Misc
@@ -382,7 +382,7 @@ export const game = {
           (player) => player.isWinner !== undefined,
         ),
 
-      onEnd: ({ G, random, kossabos }) => {
+      onEnd: ({ G, random, zolvery }) => {
         G.dealerHand[1].hidden = false;
         while (G.deck.length > 0 && dealerShouldHit(G.dealerScore)) {
           G.dealerHand.push(G.deck.pop());
@@ -410,7 +410,7 @@ export const game = {
           player.bet = 0;
         });
 
-        // kossabos.emit('final', { score: rounds, winner: isWinner });
+        // zolvery.emit('final', { score: rounds, winner: isWinner });
       },
     },
 

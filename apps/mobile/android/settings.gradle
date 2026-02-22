@@ -1,4 +1,4 @@
-rootProject.name = 'kossabos'
+rootProject.name = 'zolvery'
 
 include ':app'
 

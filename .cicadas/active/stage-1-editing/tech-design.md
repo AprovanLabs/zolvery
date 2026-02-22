@@ -4,7 +4,7 @@
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│                         Kossabos Client                             │
+│                         Zolvery Client                             │
 │  ┌─────────────────┐    ┌─────────────────┐   ┌─────────────────┐  │
 │  │  Game Catalog   │───▶│  Widget Player  │──▶│   Edit Modal    │  │
 │  └─────────────────┘    └─────────────────┘   └────────┬────────┘  │
@@ -60,12 +60,12 @@ interface EditableWidgetPlayerProps extends WidgetPlayerProps {
 
 #### 2. WidgetEditModal
 
-Extends `EditModal` from `@aprovan/patchwork-editor` with Kossabos-specific features.
+Extends `EditModal` from `@aprovan/patchwork-editor` with Zolvery-specific features.
 
 ```typescript
 interface WidgetEditModalProps {
   appId: string;
-  manifest: KossabosManifest;
+  manifest: ZolveryManifest;
   source: string;
   isOpen: boolean;
   onClose: (saved: boolean) => void;
@@ -76,7 +76,7 @@ interface WidgetEditModalProps {
 **Location**: `apps/client/src/components/widget-edit-modal.tsx`
 
 **Responsibilities**:
-- Wrap `EditModal` with Kossabos styling
+- Wrap `EditModal` with Zolvery styling
 - Provide multi-file VirtualProject (code + manifest)
 - Handle save to examples folder
 - Configure compile function for preview
@@ -89,7 +89,7 @@ Extends `useWidgetSource` to support editing.
 interface WidgetProject {
   appId: string;
   files: Map<string, { path: string; content: string }>;
-  manifest: KossabosManifest;
+  manifest: ZolveryManifest;
   isDirty: boolean;
 }
 
@@ -145,7 +145,7 @@ export default defineConfig({
 });
 ```
 
-#### 3. Save Endpoint (Kossabos Server)
+#### 3. Save Endpoint (Zolvery Server)
 
 New endpoint to save edited widgets to the examples folder.
 
@@ -260,8 +260,8 @@ For local development against patchwork repo, use overrides in root `package.jso
 
 | Service | Port | Start Command |
 |---------|------|---------------|
-| Kossabos Client | 3700 | `pnpm -C apps/client dev` |
-| Kossabos Server | 3000 | `pnpm -C apps/server dev` |
+| Zolvery Client | 3700 | `pnpm -C apps/client dev` |
+| Zolvery Server | 3000 | `pnpm -C apps/server dev` |
 | Stitchery | 6434 | `STITCHERY_PORT=6434 pnpm dlx @aprovan/stitchery serve` |
 | Copilot Proxy | 6433 | Required for LLM calls |
 
@@ -282,11 +282,11 @@ interface VirtualFile {
 }
 ```
 
-### Kossabos Widget Project
+### Zolvery Widget Project
 
 A widget project includes:
 - `main.tsx` — React component source (entry point)
-- `kossabos.json` — Widget manifest/metadata
+- `zolvery.json` — Widget manifest/metadata
 - `icon.png` — Widget icon (binary, base64 encoded for editing)
 
 ### File Type Handling
@@ -294,7 +294,7 @@ A widget project includes:
 | File | Edit Mode | Preview |
 |------|-----------|---------|
 | `main.tsx` | Text editor + LLM | Live compile + render |
-| `kossabos.json` | JSON viewer + LLM | Parsed for manifest |
+| `zolvery.json` | JSON viewer + LLM | Parsed for manifest |
 | `icon.png` | Read-only / upload | Image preview |
 
 ### Project Creation
@@ -303,14 +303,14 @@ A widget project includes:
 function createWidgetProject(
   appId: string,
   source: string,
-  manifest: KossabosManifest,
+  manifest: ZolveryManifest,
   iconUrl?: string,
 ): VirtualProject {
   return {
     entry: 'main.tsx',
     files: new Map([
       ['main.tsx', { path: 'main.tsx', content: source }],
-      ['kossabos.json', { path: 'kossabos.json', content: JSON.stringify(manifest, null, 2) }],
+      ['zolvery.json', { path: 'zolvery.json', content: JSON.stringify(manifest, null, 2) }],
       // Icon handled separately (binary)
     ]),
   };
@@ -397,7 +397,7 @@ Files in the editor are classified into categories that determine rendering and 
 Non-markdown text files are displayed wrapped in markdown code fences:
 
 ```
-// For kossabos.json:
+// For zolvery.json:
 ┌────────────────────────────────────┐
 │ ```json                            │
 │ {                                  │

@@ -1,5 +1,5 @@
 /**
- * @kossabos/patchwork-image-boardgameio
+ * @zolvery/patchwork-image-boardgameio
  *
  * Boardgame.io image for browser widgets with React.
  *
@@ -15,7 +15,7 @@
  *
  * @example
  * ```tsx
- * // kossabos.json:
+ * // zolvery.json:
  * // { "players": { "min": 2, "max": 4 }, ... }
  *
  * export const game = {

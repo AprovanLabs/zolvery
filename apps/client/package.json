@@ -1,5 +1,5 @@
 {
-    "name": "@kossabos/client",
+    "name": "@zolvery/client",
     "private": true,
     "type": "module",
     "version": "0.0.1",
@@ -12,8 +12,8 @@
     },
     "dependencies": {
         "@heroicons/react": "^2.2.0",
-        "@kossabos/core": "*",
-        "@kossabos/patchwork-image-boardgameio": "workspace:*",
+        "@zolvery/core": "*",
+        "@zolvery/patchwork-image-boardgameio": "workspace:*",
         "@tailwindcss/typography": "^0.5.16",
         "@aprovan/patchwork-compiler": "^0.1.0",
         "@aprovan/bobbin": "catalog:",

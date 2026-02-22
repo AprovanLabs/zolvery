@@ -7,8 +7,10 @@ config({ path: '.env.test' });
 process.env.NODE_ENV = 'development';
 process.env.ENVIRONMENT = 'tst';
 process.env.AWS_REGION = 'us-east-2';
-process.env.DYNAMODB_TABLE_NAME = process.env.DYNAMODB_TABLE_NAME || 'kossabos-tst-use2-main';
-process.env.S3_DATA_BUCKET = process.env.S3_DATA_BUCKET || 'kossabos-tst-use2-data';
+process.env.DYNAMODB_TABLE_NAME =
+  process.env.DYNAMODB_TABLE_NAME || 'zolvery-tst-use2-main';
+process.env.S3_DATA_BUCKET =
+  process.env.S3_DATA_BUCKET || 'zolvery-tst-use2-data';
 
 // Mock AWS SDK for tests
 jest.mock('@aws-sdk/client-dynamodb');

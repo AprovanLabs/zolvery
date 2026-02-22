@@ -21,10 +21,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout kossabos
+      - name: Checkout zolvery
         uses: actions/checkout@v4
         with:
-          path: kossabos
+          path: zolvery
 
       - name: Checkout apprentice
         uses: actions/checkout@v4
@@ -44,11 +44,11 @@ jobs:
           node-version: 20
 
       - name: Install dependencies
-        working-directory: kossabos
+        working-directory: zolvery
         run: pnpm install
 
       - name: Build client
-        working-directory: kossabos
+        working-directory: zolvery
         run: pnpm run app:build
 
       - name: Setup Pages
@@ -57,7 +57,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: kossabos/apps/client/dist
+          path: zolvery/apps/client/dist
 
   deploy:
     environment:

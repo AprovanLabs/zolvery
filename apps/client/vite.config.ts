@@ -9,7 +9,7 @@ const BASE_PATH = '/';
 
 // Map npm package names to local directories
 const LOCAL_NPM_PACKAGES: Record<string, string> = {
-  '@kossabos/patchwork-image-boardgameio': path.join(
+  '@zolvery/patchwork-image-boardgameio': path.join(
     __dirname,
     '../../packages/images/boardgameio',
   ),
@@ -113,7 +113,7 @@ export default defineConfig({
   server: {
     proxy: {
       // Proxy non-source app requests to the server
-      '^/apps/.*/kossabos\\.json': {
+      '^/apps/.*/zolvery\\.json': {
         target: 'http://localhost:3000',
         rewrite: (path) => path.replace(/^\/apps/, ''),
       },
