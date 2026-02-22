@@ -69,6 +69,7 @@ function SettingInput({
 export function GameSetup({ game, onStart, onBack }: GameSetupProps) {
   const minPlayers = game.players?.min ?? 2;
   const maxPlayers = game.players?.max ?? 2;
+  const maxLocalPlayers = game.players?.maxLocal ?? maxPlayers;
   const isMultiplayerSupported = game.runnerTag === 'boardgameio';
 
   const [playerCount, setPlayerCount] = useState(maxPlayers);
@@ -93,7 +94,11 @@ export function GameSetup({ game, onStart, onBack }: GameSetupProps) {
     setSettings((prev) => ({ ...prev, [id]: value }));
   };
 
+  const humanPlayers = playerCount - botCount;
+  const localPlayValid = humanPlayers <= maxLocalPlayers;
+
   const startGame = (mode: PlayMode) => {
+    if (mode === 'local' && !localPlayValid) return;
     onStart({
       game,
       settings: { ...settings, 'bot-count': mode === 'local' ? botCount : 0 },
@@ -154,25 +159,30 @@ export function GameSetup({ game, onStart, onBack }: GameSetupProps) {
             </div>
           )}
 
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">
-              Bots
-            </label>
-            <select
-              value={botCount}
-              onChange={(e) => setBotCount(Number(e.target.value))}
-              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-slate-400 focus:outline-none"
-            >
-              {Array.from({ length: playerCount }, (_, i) => i).map((n) => (
-                <option key={n} value={n}>
-                  {n} {n === 1 ? 'Bot' : 'Bots'}
-                </option>
-              ))}
-            </select>
-            <p className="text-xs text-slate-400">
-              {playerCount - botCount} human {playerCount - botCount === 1 ? 'player' : 'players'} needed
-            </p>
-          </div>
+          {playerCount > 1 && (
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">
+                Bots
+              </label>
+              <select
+                value={botCount}
+                onChange={(e) => setBotCount(Number(e.target.value))}
+                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-slate-400 focus:outline-none"
+              >
+                {Array.from({ length: playerCount }, (_, i) => i).map((n) => (
+                  <option key={n} value={n}>
+                    {n} {n === 1 ? 'Bot' : 'Bots'}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-slate-400">
+                {humanPlayers} {humanPlayers === 1 ? 'player' : 'players needed'}
+                {!localPlayValid && (
+                    ` This game supports ${maxLocalPlayers} local ${maxLocalPlayers === 1 ? 'player' : 'players'}.`
+                )}
+              </p>
+            </div>
+          )}
 
           {filteredSettings.length > 0 && (
             <div className="space-y-3 pt-2 border-t border-slate-100">
@@ -196,7 +206,12 @@ export function GameSetup({ game, onStart, onBack }: GameSetupProps) {
         <div className="space-y-2 pt-2">
           <button
             onClick={() => startGame('local')}
-            className="w-full rounded-lg bg-slate-900 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-slate-800 active:scale-[0.98]"
+            disabled={!localPlayValid}
+            className={`w-full rounded-lg px-4 py-3 text-sm font-medium transition-colors active:scale-[0.98] ${
+              localPlayValid
+                ? 'bg-slate-900 text-white hover:bg-slate-800'
+                : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+            }`}
           >
             Play
           </button>

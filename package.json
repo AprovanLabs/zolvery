@@ -1,5 +1,5 @@
 {
-  "name": "kossabos",
+  "name": "zolvery",
   "packageManager": "pnpm@9.14.4",
   "scripts": {
     "prepare": "husky install",
@@ -7,21 +7,21 @@
     "setup": "tailscale up",
     "expose": "tailscale serve --http 3701 localhost:3700",
     "expose:public": "tailscale funnel localhost:3700",
-    "watch": "pnpx turbo watch dev --filter=@kossabos/client --filter=@kossabos/server --filter=@kossabos/examples",
+    "watch": "pnpx turbo watch dev --filter=@zolvery/client --filter=@zolvery/server --filter=@zolvery/examples",
     "dev": "./scripts/start-local.sh && $_ npm run expose & $_ npm run watch",
-    "dev:api": "./scripts/start-local.sh && pnpx turbo watch dev --filter=@kossabos/server",
+    "dev:api": "./scripts/start-local.sh && pnpx turbo watch dev --filter=@zolvery/server",
     "dev:public": "./scripts/start-local.sh $_ npm run expose:public & $_ npm run watch",
     "dev:stitchery": "STITCHERY_PORT=6434 pnpm dlx @aprovan/stitchery serve",
-    "app:build": "pnpx turbo run build --filter=@kossabos/client",
-    "mobile:build": "pnpm --filter @kossabos/mobile run build",
-    "mobile:sync": "pnpm --filter @kossabos/mobile run sync:android",
-    "mobile:run": "pnpm --filter @kossabos/mobile run run:android",
-    "mobile:android:regen": "pnpm --filter @kossabos/mobile run android:regen",
-    "core:build": "pnpx turbo run build --filter=@kossabos/core",
-    "core:test": "pnpx turbo run test --filter=@kossabos/core",
-    "docs:serve": "pnpx turbo run serve --filter=@kossabos/docs",
-    "docs:build": "pnpx turbo run build --filter=@kossabos/docs",
-    "e2e:test": "pnpx turbo run test --filter=@kossabos/e2e",
+    "app:build": "pnpx turbo run build --filter=@zolvery/client",
+    "mobile:build": "pnpm --filter @zolvery/mobile run build",
+    "mobile:sync": "pnpm --filter @zolvery/mobile run sync:android",
+    "mobile:run": "pnpm --filter @zolvery/mobile run run:android",
+    "mobile:android:regen": "pnpm --filter @zolvery/mobile run android:regen",
+    "core:build": "pnpx turbo run build --filter=@zolvery/core",
+    "core:test": "pnpx turbo run test --filter=@zolvery/core",
+    "docs:serve": "pnpx turbo run serve --filter=@zolvery/docs",
+    "docs:build": "pnpx turbo run build --filter=@zolvery/docs",
+    "e2e:test": "pnpx turbo run test --filter=@zolvery/e2e",
     "eslint": "eslint --fix \"**/*.ts?(x)\"",
     "prettier": "prettier --write .",
     "release": "pnpx recursive publish --filter './packages/*' --no-git-checks --report-summary && pnpx @changesets/cli publish",
@@ -44,5 +44,6 @@
   "lint-staged": {
     "*.{ts,tsx}": "eslint --fix",
     "*.{js,jsx,ts,tsx,md,scss}": "prettier --write"
-  }
+  },
+  "pnpm": {}
 }

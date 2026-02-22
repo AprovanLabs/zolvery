@@ -1,4 +1,4 @@
-import type { App } from '@kossabos/core';
+import type { App } from '@zolvery/core';
 import { getAppStore } from './app-store';
 import { NotFoundError, UnauthorizedError } from '../common/errors';
 

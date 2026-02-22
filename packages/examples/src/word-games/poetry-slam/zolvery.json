@@ -7,9 +7,8 @@
   "authorId": "jsampson",
   "visibility": "public",
   "tags": ["game", "creative", "voting"],
-  "iconName": "icon.png",
   "servers": {
-    "kossabos/games": {
+    "zolvery/games": {
       "version": "1.0.0",
       "features": ["leaderboard", "voting"],
       "config": {
@@ -19,7 +18,7 @@
         "maximumVotesPerUser": 10
       }
     },
-    "kossabos/mastra": {
+    "zolvery/mastra": {
       "version": "1.0.0",
       "config": { "models": ["gpt-4.1-nano"] }
     }

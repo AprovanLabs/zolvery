@@ -17,6 +17,10 @@ Implement the editing flow incrementally, starting with core infrastructure (ser
                ▼
 ┌─────────────────────────────┐
 │ P3: Multi-file & Persistence│  ← VirtualProject, save API
+└──────────────┬──────────────┘
+               ▼
+┌─────────────────────────────┐
+│ P4: Extract to Patchwork    │  ← Generic components upstream
 └─────────────────────────────┘
 ```
 
@@ -42,7 +46,7 @@ Implement the editing flow incrementally, starting with core infrastructure (ser
 
 ### Partition 2: Edit Modal Integration
 
-**Scope**: Integrate `@aprovan/patchwork-editor` into the Kossabos client.
+**Scope**: Integrate `@aprovan/patchwork-editor` into the Zolvery client.
 
 **Modules**:
 - `apps/client/src/components/widget-edit-modal.tsx` — New component
@@ -51,7 +55,7 @@ Implement the editing flow incrementally, starting with core infrastructure (ser
 - `apps/client/package.json` — Dependencies
 
 **Deliverables**:
-1. `EditModal` from patchwork-editor rendered in Kossabos
+1. `EditModal` from patchwork-editor rendered in Zolvery
 2. Edit button visible in widget player toolbar
 3. User can enter edit prompt and see updated preview
 4. Edit history displays correctly
@@ -72,7 +76,7 @@ Implement the editing flow incrementally, starting with core infrastructure (ser
 - `apps/client/src/components/widget-edit-modal.tsx` — Multi-file support
 
 **Deliverables**:
-1. File tree shows `main.tsx` and `kossabos.json`
+1. File tree shows `main.tsx` and `zolvery.json`
 2. User can switch between files and edit each
 3. Save button writes changes to `packages/examples/src/{appId}/`
 4. Widget reloads correctly after save
@@ -90,6 +94,7 @@ Implement the editing flow incrementally, starting with core infrastructure (ser
 | P2 | P1 | Edit modal needs `/api/edit` proxy working |
 | P3 | P2 | Multi-file extends the base edit modal |
 | P3 | P1 | Save endpoint relies on server being running |
+| P4 | P3 | Migration requires working save flow to validate |
 
 ## Risk Assessment
 
@@ -99,6 +104,33 @@ Implement the editing flow incrementally, starting with core infrastructure (ser
 | Stitchery service complexity | Medium | Use minimal config, defer advanced features |
 | Multi-file editing gaps in Patchwork | High | Plan P3 as potentially requiring Patchwork changes |
 | LLM quality for game code | Medium | Rely on retry mechanism for compilation errors |
+| Cross-repo refactoring coordination | Medium | Use pnpm catalog for easy local/NPM switching |
+
+## Partition 4: Extract Generic Components to Patchwork
+
+**Scope**: Migrate generic editing components from Zolvery back to `@aprovan/patchwork-editor`.
+
+**Rationale**: Stage 1 implementation added components that belong in the upstream package:
+- `SaveConfirmDialog` - completely generic
+- Save flow integration (onSave prop, unsaved changes detection)
+
+Moving these upstream keeps Zolvery lean and benefits other Patchwork consumers.
+
+**Modules**:
+- `../patchwork/packages/editor/src/components/edit/` — Add SaveConfirmDialog, extend EditModal
+- `apps/client/src/components/widget-edit-modal.tsx` — Simplify to use enhanced EditModal
+- `apps/client/package.json`, `pnpm-workspace.yaml` — Catalog references
+
+**Deliverables**:
+1. `SaveConfirmDialog` exported from `@aprovan/patchwork-editor`
+2. `EditModal` accepts optional `onSave` prop with built-in save button + confirmation
+3. Zolvery uses catalog reference for easy local/NPM switching
+
+**Validation**:
+- Edit flow works identically after migration
+- `WidgetEditModal` significantly simplified
+
+---
 
 ## Out-of-Scope for Stage 1
 
@@ -123,5 +155,6 @@ Implement the editing flow incrementally, starting with core infrastructure (ser
 | P1: Infrastructure | 2-4 hours | Apprentice Stitchery available |
 | P2: Edit Modal | 4-8 hours | P1 complete |
 | P3: Multi-file & Save | 4-6 hours | P2 complete |
+| P4: Extract to Patchwork | 2-4 hours | P3 complete |
 
-**Total**: ~10-18 hours
+**Total**: ~12-22 hours

@@ -1,5 +1,5 @@
 {
-  "name": "@kossabos/patchwork-image-boardgameio",
+  "name": "@zolvery/patchwork-image-boardgameio",
   "version": "0.1.0",
   "description": "Patchwork image: Boardgame.io with React",
   "type": "module",

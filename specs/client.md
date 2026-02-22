@@ -1,8 +1,8 @@
-# Kossabos Client Architecture
+# Zolvery Client Architecture
 
 ## Overview
 
-The Kossabos client system provides an event-driven interface for game applications to interact with the backend API. Each app has both a client-side script for UI logic and an optional server-side script for multiplayer coordination.
+The Zolvery client system provides an event-driven interface for game applications to interact with the backend API. Each app has both a client-side script for UI logic and an optional server-side script for multiplayer coordination.
 
 ## Core Concepts
 
@@ -27,7 +27,7 @@ Each app consists of:
 The client exposes a unified interface via dependency injection:
 
 ```javascript
-const { get, set, env, emit, on, t } = inject('kossabos');
+const { get, set, env, emit, on, t } = inject('zolvery');
 ```
 
 ### Core Methods
@@ -198,7 +198,7 @@ The Poetry Slam example demonstrates the event-driven approach:
 ```javascript
 export const app = createApp({
   setup() {
-    const { get, env, emit, t } = inject('kossabos');
+    const { get, env, emit, t } = inject('zolvery');
     
     // Environment detection
     const isDev = computed(() => env('ENVIRONMENT') === 'dev');
@@ -344,11 +344,11 @@ emit('card.play', { cardId });
 The new `Client` class provides a comprehensive event-driven interface:
 
 ```typescript
-import { Client, ClientConfig, CoreEventType } from '@kossabos/core';
+import { Client, ClientConfig, CoreEventType } from '@zolvery/core';
 
 const config: ClientConfig = {
   appId: 'my-game',
-  apiBaseUrl: 'https://api.kossabos.com',
+  apiBaseUrl: 'https://api.zolvery.com',
   environment: 'production',
   locale: 'en-US',
   enableCaching: true,
@@ -383,7 +383,7 @@ const client = new Client(user, config, transport);
 
 **Before (Vue with inject):**
 ```javascript
-const { get, env, emit, t } = inject('kossabos');
+const { get, env, emit, t } = inject('zolvery');
 
 // Get data
 const data = get('data');
@@ -422,7 +422,7 @@ const canSubmit = !client.hasSubmittedScoreToday();
 
 ### Backwards Compatibility
 
-The new client maintains the same public interface as the legacy `inject('kossabos')` system:
+The new client maintains the same public interface as the legacy `inject('zolvery')` system:
 
 ```typescript
 // Create backwards-compatible interface
@@ -436,8 +436,8 @@ const createLegacyInterface = (client: Client) => ({
 });
 
 // Use in existing code without changes
-const kossabos = createLegacyInterface(client);
-const data = kossabos.get('data'); // Works exactly the same
+const zolvery = createLegacyInterface(client);
+const data = zolvery.get('data'); // Works exactly the same
 ```
 
 ## Runner Implementations
@@ -457,7 +457,7 @@ class VanillaGameRunner {
   
   private createWebSocketTransport() {
     // WebSocket-based transport for real-time events
-    const ws = new WebSocket('wss://api.kossabos.com/ws');
+    const ws = new WebSocket('wss://api.zolvery.com/ws');
     return {
       addEventListener: (type, handler) => ws.addEventListener(type, handler),
       removeEventListener: (type, handler) => ws.removeEventListener(type, handler),
@@ -482,7 +482,7 @@ class BoardgameIORunner {
   }
   
   private createBGIOTransport() {
-    // Bridge between Kossabos events and boardgame.io moves
+    // Bridge between Zolvery events and boardgame.io moves
     return {
       addEventListener: (type, handler) => {
         this.bgio.subscribe(state => {
@@ -493,7 +493,7 @@ class BoardgameIORunner {
         });
       },
       dispatchEvent: (event) => {
-        // Convert Kossabos events to boardgame.io moves
+        // Convert Zolvery events to boardgame.io moves
         this.bgio.moves[event.type](event.data);
       },
     };
@@ -506,9 +506,9 @@ class BoardgameIORunner {
 ### Unit Testing
 
 ```typescript
-import { Client, ClientConfig } from '@kossabos/core';
+import { Client, ClientConfig } from '@zolvery/core';
 
-describe('Kossabos Client', () => {
+describe('Zolvery Client', () => {
   let client: Client;
   let mockTransport: any;
   
@@ -625,7 +625,7 @@ onUnmounted(() => {
 - Type-safe event handling
 
 ✅ **Backwards Compatibility**
-- Maintains same interface as legacy `inject('kossabos')` system
+- Maintains same interface as legacy `inject('zolvery')` system
 - Migration helpers for existing games
 - Drop-in replacement capability
 
@@ -667,7 +667,7 @@ onUnmounted(() => {
 To complete the implementation:
 
 1. **Runner Implementations**: Create boardgame.io and vanilla JS runners
-2. **Vue Plugin**: Provide `inject('kossabos')` compatibility  
+2. **Vue Plugin**: Provide `inject('zolvery')` compatibility  
 3. **WebSocket Transport**: Real-time event synchronization
 4. **Testing Suite**: Comprehensive unit and integration tests
 5. **Example Games**: Port existing games to new system

@@ -6,7 +6,7 @@ import {} from 'autopia';
 import {} from 'autolib';
 import {} from 'urpc';
 
-import { mastra, kossabos } from '@urpc/clients';
+import { mastra, zolvery } from '@urpc/clients';
 import { logger, metrics, trace } from '@urpc/telemetry';
 
 logger.info('Example URPC tool execution started.');
@@ -42,10 +42,10 @@ export default async () => {
       required: ['prompt', 'examples'],
     },
   });
-  await kossabos.saveDailyData(dailyPoem);
+  await zolvery.saveDailyData(dailyPoem);
 };
 
-kossabos.subscribe('player.joined', (event) => {
+zolvery.subscribe('player.joined', (event) => {
   console.log(`Player joined: ${event.playerName}`);
 });
 

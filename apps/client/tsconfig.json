@@ -15,7 +15,7 @@
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
     "skipLibCheck": true,
     "paths": {
-      "@kossabos/core": ["../../packages/core/src"]
+      "@zolvery/core": ["../../packages/core/src"]
     }
   },
   "exclude": ["public/apps"]

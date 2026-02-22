@@ -2613,7 +2613,7 @@ export function app({ G, moves }: BoardProps) {
         {/* Keyboard */}
         <div className="space-y-1.5 pt-2">
           {KEYBOARD_LAYOUT.map((row, rowIndex) => (
-            <div key={rowIndex} className="flex justify-center gap-1">
+            <div key={rowIndex} className="flex justify-center gap-1" style={{ width: '100%' }}>
               {row.map((key) => {
                 const status = getKeyboardStatus(key);
                 return (
@@ -2621,8 +2621,8 @@ export function app({ G, moves }: BoardProps) {
                     key={key}
                     onClick={() => handleKeyPress(key)}
                     disabled={over}
-                    className="min-w-[1.75rem] rounded-lg px-2 py-3 text-xs font-semibold text-white transition-all duration-150 active:scale-95 disabled:opacity-50"
-                    style={{ backgroundColor: getKeyColor(status) }}
+                    className="flex-1 rounded-lg py-3 text-xs font-semibold text-white transition-all duration-150 active:scale-95 disabled:opacity-50"
+                    style={{ backgroundColor: getKeyColor(status), maxWidth: '10%' }}
                   >
                     {key}
                   </button>
@@ -2630,30 +2630,32 @@ export function app({ G, moves }: BoardProps) {
               })}
             </div>
           ))}
-          <div className="flex justify-center gap-1.5 pt-1">
+          <div className="flex justify-center gap-1" style={{ width: '100%' }}>
             <button
               onClick={handleBackspace}
               disabled={over}
-              className="rounded-lg px-3 py-3 text-xs font-semibold text-white transition-all duration-150 active:scale-95 disabled:opacity-50"
-              style={{ backgroundColor: 'oklch(70% 0.01 264)' }}
+              className="rounded-lg py-3 text-xs font-semibold text-white transition-all duration-150 active:scale-95 disabled:opacity-50"
+              style={{ backgroundColor: 'oklch(70% 0.01 264)', flex: '1.5', maxWidth: '15%' }}
             >
               ←
             </button>
             <button
               onClick={submitGuess}
               disabled={!canSubmit}
-              className="rounded-lg px-4 py-3 text-xs font-semibold text-white transition-all duration-150 active:scale-95 disabled:opacity-50"
+              className="rounded-lg py-3 text-xs font-semibold text-white transition-all duration-150 active:scale-95 disabled:opacity-50"
               style={{
                 backgroundColor: canSubmit
                   ? 'oklch(62.3% 0.214 259.815)'
                   : 'oklch(60% 0.01 264)',
+                flex: '1.5',
+                maxWidth: '15%',
               }}
             >
               Enter
             </button>
           </div>
         </div>
-      </div>
+</div>
     </div>
   );
 }

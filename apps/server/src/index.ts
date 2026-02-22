@@ -18,7 +18,7 @@ const server = app.listen(port, () => {
       version: process.env.npm_package_version || '1.0.0',
       telemetryEnabled: !!telemetrySDK,
     },
-    `🚀 Kossabos server started successfully on port ${port}`,
+    `🚀 Zolvery server started successfully on port ${port}`,
   );
 });
 

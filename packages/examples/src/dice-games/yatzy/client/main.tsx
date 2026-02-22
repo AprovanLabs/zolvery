@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 
 // Adapted from https://github.com/PJohannessen/yatzy
 
@@ -40,19 +40,21 @@ interface GameState {
 
 interface BoardProps {
   G: GameState;
-  ctx: { currentPlayer: string };
+  ctx: { currentPlayer: string; numPlayers: number };
   moves: {
     rollDice: () => void;
     selectScore: (category: ScoringCategory) => void;
     toggleDie: (index: number) => void;
     reset: () => void;
   };
+  playerID?: string;
+  isMultiplayer?: boolean;
+  botCount?: number;
 }
 
 // Configuration
 const TOTAL_DICE = 5;
 const BOT_DELAY_MS = 600;
-const NUM_BOTS = 1; // Configurable number of bots (0-3)
 
 // Player colors using OKLCH for modern color appearance
 const PLAYER_COLORS = [
@@ -260,24 +262,18 @@ const getBotMove = (
 
 export const game = {
   name: 'Yatzy',
-  setup: (): GameState => {
-    const totalPlayers = 1 + NUM_BOTS;
+  minPlayers: 1,
+  maxPlayers: 4,
+  setup: ({ ctx }: { ctx: { numPlayers?: number } }): GameState => {
+    const numPlayers = ctx?.numPlayers ?? 2;
     const players: Player[] = [];
 
-    // Human player first
-    players.push({
-      id: '0',
-      name: 'You',
-      isBot: false,
-      scoring: createInitialScores(),
-    });
-
-    // Add bots
-    for (let i = 1; i <= NUM_BOTS; i++) {
+    // Create all players (bot status determined at runtime by botCount prop)
+    for (let i = 0; i < numPlayers; i++) {
       players.push({
         id: i.toString(),
-        name: `Bot ${i}`,
-        isBot: true,
+        name: i === 0 ? 'You' : `Player ${i + 1}`,
+        isBot: i > 0, // Default: Player 0 is human, rest are bots
         scoring: createInitialScores(),
       });
     }
@@ -351,14 +347,6 @@ export const game = {
     },
   },
 
-  ai: {
-    enumerate: (G: GameState) =>
-      G.winner !== null
-        ? []
-        : scoringCategories
-            .filter((cat) => G.players[G.currentPlayer].scoring[cat.key] === null)
-            .map((cat) => ({ move: 'selectScore', args: [cat.key] })),
-  },
 };
 
 // Dice face SVG component
@@ -424,10 +412,26 @@ const DiceFace = ({ value }: { value: number }) => {
   );
 };
 
-export function app({ G, moves }: BoardProps) {
+export function app({ G, moves, playerID, isMultiplayer, botCount = 0 }: BoardProps) {
+  const myPlayerIndex = playerID !== null && playerID !== undefined ? parseInt(playerID, 10) : 0;
   const currentPlayer = G.players[G.currentPlayer];
-  const isMyTurn = !currentPlayer.isBot;
+  
+  // Determine which players are bots based on botCount (last N players are bots, excluding human)
+  const numPlayers = G.players.length;
+  const botPlayerIDs = useMemo(
+    () => new Set(
+      Array.from({ length: Math.min(botCount, numPlayers - 1) }, (_, i) => numPlayers - 1 - i)
+    ),
+    [botCount, numPlayers]
+  );
+  const isBot = useCallback(
+    (id: number) => id !== myPlayerIndex && botPlayerIDs.has(id),
+    [myPlayerIndex, botPlayerIDs]
+  );
+  
+  const isMyTurn = G.currentPlayer === myPlayerIndex && !isBot(G.currentPlayer);
   const gameOver = G.winner !== null || G.isDraw;
+  const shouldRunBots = !isMultiplayer && botCount > 0;
 
   const validCategories = useMemo(
     () =>
@@ -441,7 +445,7 @@ export function app({ G, moves }: BoardProps) {
 
   // Bot AI logic
   useEffect(() => {
-    if (gameOver || isMyTurn) return;
+    if (gameOver || !shouldRunBots || !isBot(G.currentPlayer)) return;
 
     const botAction = () => {
       // Bot needs to roll first
@@ -468,7 +472,7 @@ export function app({ G, moves }: BoardProps) {
 
     const timer = setTimeout(botAction, BOT_DELAY_MS);
     return () => clearTimeout(timer);
-  }, [G.dice, G.totalRolls, G.currentPlayer, gameOver, isMyTurn, moves, currentPlayer.scoring]);
+  }, [G.dice, G.totalRolls, G.currentPlayer, gameOver, shouldRunBots, isBot, moves, currentPlayer.scoring]);
 
   return (
     <div className="flex min-h-full w-full flex-col bg-white p-4 pb-8">
@@ -483,7 +487,9 @@ export function app({ G, moves }: BoardProps) {
               className="h-4 w-8 rounded-md transition-colors duration-300"
               style={{ backgroundColor: PLAYER_COLORS[G.currentPlayer] }}
             />
-            <span className="text-xs text-slate-500">{currentPlayer.name}</span>
+            <span className="text-xs text-slate-500">
+              {G.currentPlayer === myPlayerIndex ? 'You' : isMultiplayer ? `Player ${G.currentPlayer + 1}` : isBot(G.currentPlayer) ? `Bot ${G.currentPlayer}` : currentPlayer.name}
+            </span>
           </div>
           <button
             onClick={() => moves.reset()}
@@ -505,7 +511,7 @@ export function app({ G, moves }: BoardProps) {
             >
               <div className="rounded-md bg-white/95 p-2">
                 <div className="mb-1 text-center text-[10px] font-medium text-slate-600 truncate">
-                  {player.name}
+                  {idx === myPlayerIndex ? 'You' : isMultiplayer ? `Player ${idx + 1}` : isBot(idx) ? `Bot ${idx}` : player.name}
                 </div>
                 <div className="grid grid-cols-5 gap-0.5 text-[9px]">
                   {scoringCategories.map((cat) => (
@@ -631,7 +637,10 @@ export function app({ G, moves }: BoardProps) {
                   }}
                 />
                 <span className="font-bold text-slate-800">
-                  {G.players.find((p) => p.id === G.winner)?.name}
+                  {(() => {
+                    const winnerIdx = G.players.findIndex((p) => p.id === G.winner);
+                    return winnerIdx === myPlayerIndex ? 'You' : isMultiplayer ? `Player ${winnerIdx + 1}` : isBot(winnerIdx) ? `Bot ${winnerIdx}` : G.players[winnerIdx]?.name;
+                  })()}
                 </span>
               </div>
             )}

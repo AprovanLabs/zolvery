@@ -1,14 +1,14 @@
-# Kossabos Backend Platform
+# Zolvery Backend Platform
 
-Serverless platform on AWS providing a storage and compute backend for Kossabos applications.
+Serverless platform on AWS providing a storage and compute backend for Zolvery applications.
 
 ## Architecture
 
 Store user and game-level data in DynamoDB. Run serverless functions in response to HTTP requests and WebSocket events using AWS Lambda, in Node.js.
 
-# Kossabos Platform Infrastructure (CDK)
+# Zolvery Platform Infrastructure (CDK)
 
-This CDK app defines the AWS infrastructure for the Kossabos backend platform, including:
+This CDK app defines the AWS infrastructure for the Zolvery backend platform, including:
 
 - DynamoDB table for storing user game events and scores (with 3-month TTL)
 - S3 buckets for data lake storage and static web assets

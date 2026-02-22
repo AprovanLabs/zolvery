@@ -1,4 +1,4 @@
-import { kossabos, mastra } from '@urpc/clients';
+import { zolvery, mastra } from '@urpc/clients';
 
 export default async () => {
   const dailyPoem = mastra.generate({
@@ -26,5 +26,5 @@ export default async () => {
       required: ['prompt', 'examples'],
     },
   });
-  await kossabos.saveDailyData(dailyPoem);
+  await zolvery.saveDailyData(dailyPoem);
 };

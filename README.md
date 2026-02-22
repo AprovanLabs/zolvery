@@ -1,6 +1,6 @@
-# kossabos
+# zolvery
 
-![Kossabos](apps/client/public/logo.png)
+![Zolvery](apps/client/public/logo.png)
 <br /> <a href="https://aprovan.com">
 <img height="20" src="https://img.shields.io/badge/aprovan.com-ef4444?style=flat-square" alt="aprovan.com">
 </a> <a href="https://github.com/AprovanLabs">
@@ -13,7 +13,7 @@ Games!
 
 ## About
 
-Kossabos is the game development platform behind [Zolvery](https://zolvery.com), a free platform for playing community-built games.
+[Zolvery](https://zolvery.com) is a free platform for playing community-built games.
 
 ## Developing Locally
 
@@ -32,8 +32,8 @@ packages.
 ## Contributing
 
 Read through our [Contribution Guide](./CONTRIBUTING.md) to learn how you can
-help make Kossabos better.
+help make Zolvery better.
 
 [authenticate]:
   https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-npm-registry#authenticating-with-a-personal-access-token
-[docs]: https://jacobsampson.github.io/kossabos/docs/quickstart
+[docs]: https://jacobsampson.github.io/zolvery/docs/quickstart

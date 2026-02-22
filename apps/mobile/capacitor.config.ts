@@ -1,8 +1,8 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.aprovan.kossabos',
-  appName: 'Kossabos',
+  appId: 'com.aprovan.zolvery',
+  appName: 'Zolvery',
   webDir: '../client/dist',
   plugins: {
     StatusBar: {

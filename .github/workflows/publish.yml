@@ -3,8 +3,6 @@ name: Publish Packages to NPM
 on:
   push:
     branches: [main]
-    paths:
-      - 'packages/images/**'
   workflow_dispatch:
 
 env:
@@ -18,10 +16,10 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - name: Checkout kossabos
+      - name: Checkout zolvery
         uses: actions/checkout@v4
         with:
-          path: kossabos
+          path: zolvery
 
       - name: Checkout apprentice
         uses: actions/checkout@v4
@@ -42,16 +40,16 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
 
       - name: Install dependencies
-        working-directory: kossabos
+        working-directory: zolvery
         run: pnpm install
 
       - name: Build packages
-        working-directory: kossabos
-        run: pnpx turbo run build --filter=@kossabos/patchwork-image-boardgameio
+        working-directory: zolvery
+        run: pnpx turbo run build --filter=@zolvery/patchwork-image-boardgameio
 
-      - name: Publish @kossabos/patchwork-image-boardgameio
-        working-directory: kossabos
-        run: pnpm publish --filter @kossabos/patchwork-image-boardgameio --no-git-checks --access public
+      - name: Publish @zolvery/patchwork-image-boardgameio
+        working-directory: zolvery
+        run: pnpm publish --filter @zolvery/patchwork-image-boardgameio --no-git-checks --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         continue-on-error: true

@@ -1,4 +1,4 @@
-# Kossabos Architecture
+# Zolvery Architecture
 
 ```mermaid
 
@@ -143,7 +143,7 @@ Get a stored value. May be used for dynamic game configuration, including daily 
 Game metadata and user information.
 
 ```ts
-type KossabosContext = {
+type ZolveryContext = {
   metadata: {
     appId: string,
     name: string,
@@ -190,7 +190,7 @@ type KossabosContext = {
 Free-form data storage for game state. Initially populated by dynamic game configuration
 
 ```ts
-type KossabosData = {
+type ZolveryData = {
   [key: string]: any
 }
 ```
@@ -200,7 +200,7 @@ type KossabosData = {
 Get a list of users in the game. This is used for multiplayer games to retrieve player information and user-provided data.
 
 ```ts
-type KossabosUser = {
+type ZolveryUser = {
   id: string,
   username: string,
   // User-provided data, e.g. votes
@@ -215,7 +215,7 @@ type KossabosUser = {
 Emit an event with a key and optional payload. Custom events are prepended with `custom:`. The latest event is stored and may be retrieved with `get('event:<event>')`.
 
 ```ts
-type KossabosEmit = (
+type ZolveryEmit = (
   key: string,
   payload?: any,
 ) => void
@@ -227,7 +227,7 @@ type KossabosEmit = (
 Emit when user is ready to play.
 
 ```ts
-type KossabosReadyEvent = {};
+type ZolveryReadyEvent = {};
 ```
 
 #### `start`
@@ -235,7 +235,7 @@ type KossabosReadyEvent = {};
 Emit when the game starts.
 
 ```ts
-type KossabosStartEvent = {}
+type ZolveryStartEvent = {}
 ```
 
 #### `end`
@@ -243,7 +243,7 @@ type KossabosStartEvent = {}
 Final output with optional score.
 
 ```ts
-type KossabosEndEvent = {
+type ZolveryEndEvent = {
   winner?: boolean,
   score?: number,
   // 'You win!'
@@ -280,7 +280,7 @@ One of `dev`, `stg`, and `prd`. Defaults to `dev` for local
 Translate a string. Defaults to string itself if no translation is found.
 
 ```ts
-type KossabosTranslate = (
+type ZolveryTranslate = (
   key: string,
   defaultValue?: string,
 ) => string

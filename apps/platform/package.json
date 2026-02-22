@@ -1,7 +1,7 @@
 {
-  "name": "@kossabos/platform",
+  "name": "@zolvery/platform",
   "version": "1.0.0",
-  "description": "Kossabos CDK Infrastructure in TypeScript",
+  "description": "Zolvery CDK Infrastructure in TypeScript",
   "main": "app.js",
   "scripts": {
     "build": "tsc",

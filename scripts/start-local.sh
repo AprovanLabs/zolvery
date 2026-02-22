@@ -9,7 +9,7 @@ export STITCHERY_PORT="${STITCHERY_PORT:-6434}"
 
 # Start Stitchery for LLM editing
 STITCHERY_PORT="$STITCHERY_PORT" pnpm dlx @aprovan/stitchery serve \
-  >/tmp/kossabos-stitchery.log 2>&1 &
+  >/tmp/zolvery-stitchery.log 2>&1 &
 
 # Start local TURN server for WebRTC during dev
-node $root_dir/scripts/start-turn.js >/tmp/kossabos-turn.log 2>&1 &
+node $root_dir/scripts/start-turn.js >/tmp/zolvery-turn.log 2>&1 &

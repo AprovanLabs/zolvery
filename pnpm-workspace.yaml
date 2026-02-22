@@ -4,3 +4,7 @@ packages:
   - 'scripts/**'
   - '!**/build/**'
   - '!**/dist/**'
+
+catalog:
+  '@aprovan/patchwork-editor': ^0.1.0
+  '@aprovan/bobbin': ^0.1.0

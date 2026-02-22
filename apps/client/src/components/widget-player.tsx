@@ -1,11 +1,11 @@
 import React, { useRef, useEffect, useState, useMemo } from 'react';
 import { usePatchwork } from '../hooks/use-patchwork';
 import type { Manifest, InputSpec } from '@aprovan/patchwork-compiler';
-import type { KossabosManifest } from '../hooks/use-widget-source';
+import type { ZolveryManifest } from '../hooks/use-widget-source';
 
 export interface WidgetPlayerProps {
   appId: string;
-  manifest: KossabosManifest;
+  manifest: ZolveryManifest;
   source: string;
   inputs?: Record<string, unknown>;
   className?: string;
@@ -15,7 +15,7 @@ export interface WidgetPlayerProps {
 const IMAGE_MAP: Record<string, string> = {
   shadcn: '@aprovan/patchwork-image-shadcn',
   vanilla: '@aprovan/patchwork-vanilla',
-  boardgameio: '@kossabos/patchwork-image-boardgameio@0.1.0',
+  boardgameio: '@zolvery/patchwork-image-boardgameio@0.1.0',
 };
 
 // Use local npm serving in dev, public CDN in production
@@ -71,7 +71,7 @@ export function WidgetPlayer({
     return { ...defaults, ...inputsProp };
   }, [manifest.settings, inputsProp]);
 
-  // Convert KossabosManifest to Compiler Manifest
+  // Convert ZolveryManifest to Compiler Manifest
   const compilerManifest: Manifest = useMemo(
     () => ({
       name: manifest.appId,

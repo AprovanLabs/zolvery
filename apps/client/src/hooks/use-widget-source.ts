@@ -10,7 +10,7 @@ export interface GameSetting {
   options?: Array<{ value: string; label: string }>;
 }
 
-export interface KossabosManifest {
+export interface ZolveryManifest {
   appId: string;
   name?: string;
   description?: string;
@@ -20,19 +20,24 @@ export interface KossabosManifest {
   visibility?: string;
   tags?: string[];
   servers?: string[];
-  players?: { min?: number; max?: number };
+  players?: {
+    min?: number;
+    max?: number;
+    /** Max players that can play on the same device. Defaults to players.max */
+    maxLocal?: number;
+  };
   settings?: GameSetting[];
 }
 
 export interface UseWidgetSourceReturn {
-  manifest: KossabosManifest | null;
+  manifest: ZolveryManifest | null;
   source: string | null;
   isLoading: boolean;
   error: Error | null;
 }
 
 export function useWidgetSource(appId: string | null): UseWidgetSourceReturn {
-  const [manifest, setManifest] = useState<KossabosManifest | null>(null);
+  const [manifest, setManifest] = useState<ZolveryManifest | null>(null);
   const [source, setSource] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
@@ -45,7 +50,7 @@ export function useWidgetSource(appId: string | null): UseWidgetSourceReturn {
     const base = import.meta.env.BASE_URL;
 
     Promise.all([
-      fetch(`${base}apps/${appId}/kossabos.json`).then((r) => r.json()),
+      fetch(`${base}apps/${appId}/zolvery.json`).then((r) => r.json()),
       fetch(`${base}apps/${appId}/client/main.tsx`).then((r) => r.text()),
     ])
       .then(([m, s]) => {

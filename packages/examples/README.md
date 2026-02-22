@@ -1,3 +1,3 @@
-# Kossabos Examples
+# Zolvery Examples
 
 Example games and puzzles

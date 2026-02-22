@@ -13,3 +13,11 @@ export {
   type TransportConfig,
 } from './transport.js';
 export type { Client, ClientAction, ClientMetadata } from './types.js';
+export {
+  hasValidSession,
+  loadSession,
+  saveSession,
+  removeSession,
+  cleanupExpiredSessions,
+  type PersistedSession,
+} from './session-storage.js';

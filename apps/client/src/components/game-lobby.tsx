@@ -16,6 +16,7 @@ interface GameLobbyProps {
   initialCode?: string;
   onStart: (config: GameLobbyConfig) => void;
   onCancel?: () => void;
+  onCodeGenerated?: (code: string) => void;
 }
 
 function generateMatchID(): string {
@@ -64,12 +65,24 @@ function PlayerList({ players }: { players: LobbyPlayer[] }) {
   );
 }
 
-export function GameLobby({ gameId, initialMode, initialCode, onStart, onCancel }: GameLobbyProps) {
-  // If initialCode is provided, start in 'waiting' mode directly
-  const [mode, setMode] = useState<LobbyMode>(
-    initialCode ? 'waiting' : initialMode === 'join' ? 'join' : initialMode === 'host' ? 'host' : 'choose'
-  );
-  const [matchID, setMatchID] = useState(() => initialMode === 'host' ? generateMatchID() : '');
+export function GameLobby({ gameId, initialMode, initialCode, onStart, onCancel, onCodeGenerated }: GameLobbyProps) {
+  // Determine initial mode based on provided props
+  // - If host mode with code: restore hosting with that code
+  // - If join mode with code: start in waiting (client connected to host)
+  // - Otherwise: show mode selection
+  const [mode, setMode] = useState<LobbyMode>(() => {
+    if (initialMode === 'host' && initialCode) return 'host'; // Restore host lobby
+    if (initialCode) return 'waiting'; // Join with code
+    if (initialMode === 'join') return 'join';
+    if (initialMode === 'host') return 'host';
+    return 'choose';
+  });
+  const [matchID, setMatchID] = useState(() => {
+    // If host mode with initial code, use that code; otherwise generate new
+    if (initialMode === 'host' && initialCode) return initialCode.toUpperCase();
+    if (initialMode === 'host') return generateMatchID();
+    return '';
+  });
   const [inputCode, setInputCode] = useState(() => (initialCode || '').toUpperCase());
   const [phraseInputs, setPhraseInputs] = useState<string[]>(() => codeToWords(initialCode || '') || ['', '', '']);
   const [copied, setCopied] = useState<'code' | 'link' | null>(null);
@@ -115,6 +128,13 @@ export function GameLobby({ gameId, initialMode, initialCode, onStart, onCancel 
     setMode('waiting');
   };
 
+  // Notify parent when match code is set (for URL persistence)
+  useEffect(() => {
+    if (isHost && matchID && onCodeGenerated) {
+      onCodeGenerated(matchID);
+    }
+  }, [isHost, matchID, onCodeGenerated]);
+
   // Reset copied state when changing modes
   useEffect(() => {
     setCopied(null);
@@ -155,6 +175,7 @@ export function GameLobby({ gameId, initialMode, initialCode, onStart, onCancel 
     const newMatchID = generateMatchID();
     setMatchID(newMatchID);
     setMode('host');
+    onCodeGenerated?.(newMatchID);
   };
 
   const handlePhraseChange = (value: string, index: number) => {

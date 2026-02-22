@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { User, Circle, Trophy, Target } from 'lucide-react';
 
 type Suit = 'hearts' | 'diamonds' | 'clubs' | 'spades';
 type Rank = '9' | '10' | 'J' | 'Q' | 'K' | 'A';
@@ -54,6 +55,8 @@ interface BoardProps {
     startNewRound: () => void;
   };
   playerID?: string;
+  isMultiplayer?: boolean;
+  botCount?: number;
 }
 
 const SUITS: Suit[] = ['hearts', 'diamonds', 'clubs', 'spades'];
@@ -61,9 +64,8 @@ const RANKS: Rank[] = ['9', '10', 'J', 'Q', 'K', 'A'];
 const INITIAL_SCORE = 10;
 const CARDS_PER_HAND = 5;
 const PLAYER_COLORS = ['#16A34A', '#2563EB', '#F97316', '#DB2777'];
-const TURN_DELAY_MS = 500;
-const TURN_LABEL_MS = 1000;
-const BOT_PLAY_DELAY_MS = 700;
+const TURN_DELAY_MS = 1000;
+const BOT_PLAY_DELAY_MS = 1200;
 
 const createDeck = (): Card[] => {
   const deck: Card[] = [];
@@ -529,9 +531,9 @@ const CardDisplay: React.FC<CardDisplayProps> = ({
   return (
     <div
       ref={cardRef}
-      className={`relative flex items-center justify-center border rounded-xl bg-white text-slate-900 shadow-sm select-none touch-none ${sizeClasses} ${
-        disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-grab'
-      } ${dragging ? 'cursor-grabbing shadow-lg' : 'hover:-translate-y-1 hover:shadow-md'} transition-transform duration-200`}
+      className={`relative flex items-center justify-center border rounded-xl text-slate-900 shadow-sm select-none touch-none ${sizeClasses} ${
+        disabled ? 'cursor-not-allowed bg-slate-100 border-slate-200' : 'cursor-grab bg-white'
+      } ${dragging ? 'cursor-grabbing shadow-lg z-50' : 'hover:-translate-y-1 hover:shadow-md hover:z-10'} transition-transform duration-200`}
       style={{
         transform: `translate(${dragOffset.x}px, ${dragOffset.y}px)${dragging ? ' rotate(-2deg)' : ''}`,
         transition: dragging ? 'none' : 'transform 200ms ease',
@@ -540,14 +542,14 @@ const CardDisplay: React.FC<CardDisplayProps> = ({
       onClick={disabled ? undefined : onClick}
       onPointerDown={handlePointerDown}
     >
-      <div className={`${getSuitColor(card.suit)} ${textSize} absolute top-1 left-2`}>{card.rank}</div>
-      <div className={`${getSuitColor(card.suit)} ${iconSize}`}>{getSuitIcon(card.suit)}</div>
-      <div className={`${getSuitColor(card.suit)} ${textSize} absolute bottom-1 right-2`}>{card.rank}</div>
+      <div className={`${getSuitColor(card.suit)} ${textSize} absolute top-1 left-2 ${disabled ? 'opacity-40' : ''}`}>{card.rank}</div>
+      <div className={`${getSuitColor(card.suit)} ${iconSize} ${disabled ? 'opacity-40' : ''}`}>{getSuitIcon(card.suit)}</div>
+      <div className={`${getSuitColor(card.suit)} ${textSize} absolute bottom-1 right-2 ${disabled ? 'opacity-40' : ''}`}>{card.rank}</div>
     </div>
   );
 };
 
-export function app({ G, ctx, moves, playerID }: BoardProps) {
+export function app({ G, ctx, moves, playerID, isMultiplayer, botCount = 0 }: BoardProps) {
   // Get settings from context (provided by boardgameio image)
   const settings = useSettings<GameSettings>();
   const [currentBid, setCurrentBid] = useState(1);
@@ -558,11 +560,30 @@ export function app({ G, ctx, moves, playerID }: BoardProps) {
   const [isOverDropZone, setIsOverDropZone] = useState(false);
   const dropZoneRef = useRef<HTMLDivElement>(null);
   const displayTrickCardsRef = useRef<Card[]>(G.trickCards);
+  const lastSeenTrickLengthRef = useRef<number>(0);
   const botQueueRef = useRef<Card[][]>([]);
   const botQueueTimerRef = useRef<number | null>(null);
   const trickHoldTimerRef = useRef<number | null>(null);
+  const leadPlayerRef = useRef<number>(G.leadPlayer);
+  const botMoveTimerRef = useRef<number | null>(null);
   const pid = parseInt(playerID ?? '0');
-  const currentPlayerId = ctx.currentPlayer;
+  
+  // Determine which players are bots based on botCount (last N players are bots, excluding human)
+  const numPlayers = ctx.numPlayers;
+  const botPlayerIDs = new Set(
+    Array.from({ length: Math.min(botCount, numPlayers - 1) }, (_, i) => numPlayers - 1 - i)
+  );
+  const isBot = (id: number) => id !== pid && botPlayerIDs.has(id);
+  
+  // Bot automation settings
+  const shouldRunBots = !isMultiplayer && botCount > 0;
+  const botDifficulty = settings?.['bot-difficulty'] ?? 'medium';
+  
+  // Determine the active player - prefer activePlayers over currentPlayer
+  const activePlayerFromStages = ctx.activePlayers 
+    ? Object.keys(ctx.activePlayers).find(id => ctx.activePlayers![id] !== 'all')
+    : null;
+  const currentPlayerId = activePlayerFromStages ?? ctx.currentPlayer;
   const isUserTurn = currentPlayerId === String(pid);
   
   const stage =
@@ -577,51 +598,149 @@ export function app({ G, ctx, moves, playerID }: BoardProps) {
   const canStartNewRound = ctx.phase === 'scoring' && currentPlayerId === String(pid);
   const minBid = Math.min(G.highestBid + 1, CARDS_PER_HAND);
   const hasValidBid = G.highestBid < CARDS_PER_HAND;
-
-  const flushBotQueue = () => {
-    if (botQueueTimerRef.current !== null) return;
-    const next = botQueueRef.current.shift();
-    if (!next) return;
-    botQueueTimerRef.current = window.setTimeout(() => {
-      setDisplayTrickCards(next);
-      botQueueTimerRef.current = null;
-      flushBotQueue();
-    }, BOT_PLAY_DELAY_MS);
-  };
-
+  
+  // Bot automation - make moves for bot players
   useEffect(() => {
-    setIsTurnTransitioning(true);
-    const label = currentPlayerId === String(pid) ? 'Your turn' : `Player ${currentPlayerId}'s turn`;
-    setTurnLabel(label);
-
-    const delayTimer = setTimeout(() => {
-      setIsTurnTransitioning(false);
-    }, TURN_DELAY_MS);
-
-    const labelTimer = setTimeout(() => {
-      setTurnLabel(null);
-    }, TURN_LABEL_MS);
-
+    if (!shouldRunBots) return;
+    
+    // Handle scoring phase - any player can start new round
+    if (ctx.phase === 'scoring') {
+      // If human player should start new round, don't auto-proceed
+      // Otherwise, let a bot do it
+      const humanIsCurrentPlayer = currentPlayerId === String(pid);
+      if (!humanIsCurrentPlayer) {
+        botMoveTimerRef.current = window.setTimeout(() => {
+          moves.startNewRound();
+        }, BOT_PLAY_DELAY_MS);
+        return () => {
+          if (botMoveTimerRef.current !== null) {
+            clearTimeout(botMoveTimerRef.current);
+            botMoveTimerRef.current = null;
+          }
+        };
+      }
+      return;
+    }
+    
+    // Find bot players that need to act (in activePlayers stages)
+    const activePlayers = ctx.activePlayers ? Object.keys(ctx.activePlayers) : [];
+    const botPlayers = activePlayers.filter(id => {
+      const playerId = parseInt(id);
+      return playerId < ctx.numPlayers && isBot(playerId);
+    });
+    
+    if (botPlayers.length === 0) return;
+    
+    // Schedule bot moves with delay
+    botMoveTimerRef.current = window.setTimeout(() => {
+      for (const botId of botPlayers) {
+        const botIdx = parseInt(botId);
+        const botStage = ctx.activePlayers?.[botId];
+        const action = makeBotMove(G, botIdx, botStage, botDifficulty);
+        
+        if (action) {
+          if (action.move === 'placeBid' && action.args) {
+            moves.placeBid(action.args[0] as number);
+          } else if (action.move === 'passBid') {
+            moves.passBid();
+          } else if (action.move === 'selectTrump' && action.args) {
+            moves.selectTrump(action.args[0] as Suit);
+          } else if (action.move === 'exchangeWidow') {
+            moves.exchangeWidow();
+          } else if (action.move === 'playCard' && action.args) {
+            moves.playCard(action.args[0] as number);
+          }
+          break; // Only make one move per cycle, let state update
+        }
+      }
+    }, BOT_PLAY_DELAY_MS);
+    
     return () => {
-      clearTimeout(delayTimer);
-      clearTimeout(labelTimer);
+      if (botMoveTimerRef.current !== null) {
+        clearTimeout(botMoveTimerRef.current);
+        botMoveTimerRef.current = null;
+      }
     };
+  }, [shouldRunBots, ctx.activePlayers, ctx.phase, G, pid, botDifficulty, moves, ctx.numPlayers, currentPlayerId, isBot]);
+
+  const scheduleNextBotCard = React.useCallback(() => {
+    if (botQueueRef.current.length === 0) {
+      botQueueTimerRef.current = null;
+      return;
+    }
+    const nextCards = botQueueRef.current.shift();
+    if (!nextCards) {
+      botQueueTimerRef.current = null;
+      return;
+    }
+    // Show the cards immediately, then schedule the next one after a delay
+    setDisplayTrickCards([...nextCards]);
+    displayTrickCardsRef.current = [...nextCards];
+    
+    if (botQueueRef.current.length > 0) {
+      botQueueTimerRef.current = window.setTimeout(() => {
+        botQueueTimerRef.current = null;
+        scheduleNextBotCard();
+      }, BOT_PLAY_DELAY_MS);
+    } else {
+      botQueueTimerRef.current = null;
+    }
+  }, []);
+
+  const flushBotQueue = React.useCallback(() => {
+    // If timer is already running, let it continue
+    if (botQueueTimerRef.current !== null) return;
+    // If queue is empty, nothing to do
+    if (botQueueRef.current.length === 0) return;
+    // Add initial delay before showing first queued card
+    botQueueTimerRef.current = window.setTimeout(() => {
+      botQueueTimerRef.current = null;
+      scheduleNextBotCard();
+    }, BOT_PLAY_DELAY_MS);
+  }, [scheduleNextBotCard]);
+
+  // Only show turn label for user's turn, not for rapid bot transitions
+  useEffect(() => {
+    if (currentPlayerId === String(pid)) {
+      setIsTurnTransitioning(true);
+
+      const delayTimer = setTimeout(() => {
+        setIsTurnTransitioning(false);
+      }, TURN_DELAY_MS);
+
+      return () => {
+        clearTimeout(delayTimer);
+      };
+    } else {
+      setIsTurnTransitioning(false);
+    }
   }, [currentPlayerId, pid]);
 
   useEffect(() => {
     displayTrickCardsRef.current = displayTrickCards;
   }, [displayTrickCards]);
 
+  // Reset seen length when a new round starts (all hands dealt again)
+  useEffect(() => {
+    if (G.bidding && player.hand.length === CARDS_PER_HAND) {
+      lastSeenTrickLengthRef.current = 0;
+      leadPlayerRef.current = G.leadPlayer;
+    }
+  }, [G.bidding, player.hand.length, G.leadPlayer]);
+
   useEffect(() => {
     const next = G.trickCards;
     const currentDisplay = displayTrickCardsRef.current;
+    const currentLeadPlayer = G.leadPlayer;
+    const prevLeadPlayer = leadPlayerRef.current;
 
-    if (trickHoldTimerRef.current !== null && next.length > 0) {
-      clearTimeout(trickHoldTimerRef.current);
-      trickHoldTimerRef.current = null;
-    }
-
-    if (next.length === 0) {
+    // Detect if this is a new trick (lead player changed and cards reset)
+    const isNewTrick = next.length === 0 || (next.length < lastSeenTrickLengthRef.current && currentLeadPlayer !== prevLeadPlayer);
+    
+    if (isNewTrick && next.length === 0) {
+      // Trick ended - show completed trick briefly, then clear
+      leadPlayerRef.current = currentLeadPlayer;
+      lastSeenTrickLengthRef.current = 0;
       botQueueRef.current = [];
       if (botQueueTimerRef.current !== null) {
         clearTimeout(botQueueTimerRef.current);
@@ -630,40 +749,68 @@ export function app({ G, ctx, moves, playerID }: BoardProps) {
       if (currentDisplay.length > 0 && trickHoldTimerRef.current === null) {
         trickHoldTimerRef.current = window.setTimeout(() => {
           setDisplayTrickCards([]);
+          displayTrickCardsRef.current = [];
           trickHoldTimerRef.current = null;
         }, BOT_PLAY_DELAY_MS);
-      } else {
-        setDisplayTrickCards([]);
       }
       return;
     }
 
-    if (next.length <= currentDisplay.length) {
+    if (trickHoldTimerRef.current !== null && next.length > 0) {
+      clearTimeout(trickHoldTimerRef.current);
+      trickHoldTimerRef.current = null;
+    }
+
+    // Figure out what's new since we last saw
+    const lastSeen = lastSeenTrickLengthRef.current;
+    
+    // Nothing new to process
+    if (next.length <= lastSeen) {
+      return;
+    }
+    
+    // Update what we've seen
+    lastSeenTrickLengthRef.current = next.length;
+    leadPlayerRef.current = currentLeadPlayer;
+    
+    // Find if user played any card in the new batch
+    let userCardIndex = -1;
+    for (let i = lastSeen; i < next.length; i++) {
+      const playerId = (currentLeadPlayer + i) % G.players.length;
+      if (playerId === pid) {
+        userCardIndex = i;
+        break;
+      }
+    }
+    
+    if (userCardIndex !== -1) {
+      // User played a card - clear any pending bot animations and show up to user's card immediately
       botQueueRef.current = [];
       if (botQueueTimerRef.current !== null) {
         clearTimeout(botQueueTimerRef.current);
         botQueueTimerRef.current = null;
       }
-      setDisplayTrickCards(next);
-      return;
-    }
-
-    const latestIndex = next.length - 1;
-    const latestPlayerId = (G.leadPlayer + latestIndex) % G.players.length;
-    const isBotPlay = latestPlayerId !== pid;
-
-    if (isBotPlay) {
-      botQueueRef.current.push([...next]);
+      const cardsUpToUser = next.slice(0, userCardIndex + 1);
+      setDisplayTrickCards([...cardsUpToUser]);
+      displayTrickCardsRef.current = [...cardsUpToUser];
+      
+      // Queue any bot cards that come after the user's card
+      for (let i = userCardIndex + 1; i < next.length; i++) {
+        const cardsUpToThis = next.slice(0, i + 1);
+        botQueueRef.current.push([...cardsUpToThis]);
+      }
+      // Start the bot queue with delay
       flushBotQueue();
     } else {
-      botQueueRef.current = [];
-      if (botQueueTimerRef.current !== null) {
-        clearTimeout(botQueueTimerRef.current);
-        botQueueTimerRef.current = null;
+      // Only bot cards in this batch - queue them all
+      for (let i = lastSeen; i < next.length; i++) {
+        const cardsUpToThis = next.slice(0, i + 1);
+        botQueueRef.current.push([...cardsUpToThis]);
       }
-      setDisplayTrickCards(next);
+      // Start flushing bot queue
+      flushBotQueue();
     }
-  }, [G.trickCards, G.leadPlayer, G.players.length, pid]);
+  }, [G.trickCards, G.leadPlayer, G.players.length, pid, flushBotQueue]);
 
   useEffect(() => {
     return () => {
@@ -672,6 +819,9 @@ export function app({ G, ctx, moves, playerID }: BoardProps) {
       }
       if (trickHoldTimerRef.current !== null) {
         clearTimeout(trickHoldTimerRef.current);
+      }
+      if (botMoveTimerRef.current !== null) {
+        clearTimeout(botMoveTimerRef.current);
       }
     };
   }, []);
@@ -711,26 +861,7 @@ export function app({ G, ctx, moves, playerID }: BoardProps) {
   };
   
   return (
-    <div className="flex flex-col items-center w-full h-full pt-6 bg-white text-slate-900">
-      {/* Header */}
-      <div className="w-full px-6 pb-4 mb-6 text-center border-b border-slate-200">
-        <div className="flex flex-col items-center gap-2">
-          <p className="text-xs uppercase tracking-[0.25em] text-slate-400">Buck Euchre</p>
-          <h1 className="text-2xl font-semibold">Table</h1>
-        </div>
-        {settings?.['bot-count'] > 0 && (
-          <p className="text-xs text-slate-400">
-            Playing with {settings['bot-count']} bot(s)
-          </p>
-        )}
-        {G.trumpSuit && (
-          <div className="flex items-center justify-center mt-3">
-            <span className="mr-2 text-sm text-slate-500">Trump</span>
-            <span className={`${getSuitColor(G.trumpSuit)} text-xl font-bold`}>{getSuitIcon(G.trumpSuit)}</span>
-          </div>
-        )}
-      </div>
-
+    <div className="flex flex-col items-center w-full h-full pt-4 bg-white text-slate-900">
       {turnLabel && (
         <div className="mb-4 text-xs uppercase tracking-[0.2em] text-slate-400 animate-pulse">
           {turnLabel}
@@ -738,30 +869,94 @@ export function app({ G, ctx, moves, playerID }: BoardProps) {
       )}
       
       {/* Player Scores */}
-      <div className="grid w-full grid-cols-4 gap-3 mb-6 max-w-xl px-4">
-        {G.players.map((p, idx) => (
+      <div className="flex flex-col items-center gap-2 mt-8 mb-12 px-4">
+        <div className="flex items-center justify-center gap-2 flex-wrap">
+          {G.players.map((p, idx) => {
+            if (idx === pid) return null;
+            const isCurrentPlayer = currentPlayerId === String(idx);
+            return (
+              <div
+                key={idx}
+                className={`flex items-center gap-2 rounded-full pl-3 pr-[7.75rem] py-1.5 text-xs w-32 justify-between ${isCurrentPlayer ? 'ring-2 ring-offset-1 ring-slate-800' : ''}`}
+                style={{ 
+                  backgroundColor: `${PLAYER_COLORS[idx]}15`,
+                  color: PLAYER_COLORS[idx]
+                }}
+              >
+                <span className="font-semibold flex items-center gap-1">
+                  {`P${idx}`}
+                  {isCurrentPlayer && <span className="ml-0.5 w-1.5 h-1.5 rounded-full bg-slate-800 animate-pulse" />}
+                </span>
+                <span className="flex items-center gap-2">
+                  <span className="flex items-center gap-0.5">
+                    <Circle size={8} className="opacity-60" fill="currentColor" />
+                    <span className="font-medium w-4 text-right">{p.score}</span>
+                  </span>
+                  <span className={`flex items-center gap-0.5 ${p.tricks > 0 ? '' : 'opacity-30'}`}>
+                    <Trophy size={10} />
+                    <span className="w-3 text-right">{p.tricks}</span>
+                  </span>
+                  <span className={`flex items-center gap-0.5 ${p.bid > 0 ? '' : 'opacity-30'}`}>
+                    <Target size={10} />
+                    <span className="w-3 text-right">{p.bid}</span>
+                  </span>
+                </span>
+              </div>
+            );
+          })}
+        </div>
+        <div className="flex items-center justify-center gap-4">
+          {/* My Info */}
           <div
-            key={idx}
-            className={`flex flex-col items-center gap-1 rounded-xl border px-3 py-2 text-xs ${pid === idx ? 'border-2' : 'border-slate-200'}`}
-            style={{ borderColor: pid === idx ? PLAYER_COLORS[idx] : undefined }}
+            className={`flex items-center gap-3 rounded-full px-4 py-1.5 text-xs ${currentPlayerId === String(pid) ? 'ring-2 ring-offset-1 ring-slate-800' : ''}`}
+            style={{ 
+              backgroundColor: `${PLAYER_COLORS[pid]}15`,
+              color: PLAYER_COLORS[pid]
+            }}
           >
-            <div className="font-semibold" style={{ color: PLAYER_COLORS[idx] }}>{pid === idx ? 'You' : `P${idx}`}</div>
-            <div className="text-slate-500">Score {p.score}</div>
-            <div className="text-slate-500">Tricks {p.tricks}</div>
-            {p.bid > 0 && <div className="text-slate-500">Bid {p.bid}</div>}
+            <span className="font-semibold flex items-center gap-1">
+              <User size={12} />
+              <span>You</span>
+              {currentPlayerId === String(pid) && <span className="ml-0.5 w-1.5 h-1.5 rounded-full bg-slate-800 animate-pulse" />}
+            </span>
+            <span className="flex items-center gap-0.5">
+              <Circle size={8} className="opacity-60" fill="currentColor" />
+              <span className="font-medium">{player.score}</span>
+              <span className="text-[10px] opacity-60 ml-0.5">PTS</span>
+            </span>
+            <span className={`flex items-center gap-0.5 ${player.tricks > 0 ? '' : 'opacity-30'}`}>
+              <Trophy size={10} />
+              <span>{player.tricks}</span>
+              <span className="text-[10px] opacity-60 ml-0.5">TRICKS</span>
+            </span>
+            <span className={`flex items-center gap-0.5 ${player.bid > 0 ? '' : 'opacity-30'}`}>
+              <Target size={10} />
+              <span>{player.bid}</span>
+              <span className="text-[10px] opacity-60 ml-0.5">BID</span>
+            </span>
           </div>
-        ))}
+          {/* Trump indicator */}
+          <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-slate-400">
+            <span>Trump</span>
+            {G.trumpSuit ? (
+              <span className={`${getSuitColor(G.trumpSuit)} text-sm`}>{getSuitIcon(G.trumpSuit)}</span>
+            ) : (
+              <span className="text-sm opacity-30">—</span>
+            )}
+          </div>
+        </div>
       </div>
       
-      {/* Trick Area */}
-      <div className="relative flex items-center justify-center w-full mb-8 min-h-32">
+      {/* Trick Area - Fixed size play field */}
+      <div className="relative flex items-center justify-center w-[calc(100%-2rem)] max-w-lg mx-auto mb-12 h-44 bg-slate-50 rounded-2xl border border-slate-200">
+        {/* Drop zone overlay */}
         {canPlayCard && (
           <div
             ref={dropZoneRef}
-            className={`pointer-events-none absolute inset-0 mx-auto flex max-w-xl items-center justify-center rounded-2xl border-2 border-dashed transition-all duration-200 ${
+            className={`pointer-events-none absolute inset-0 flex items-center justify-center rounded-2xl border-2 border-dashed transition-all duration-200 ${
               isDraggingCard ? 'opacity-100' : 'opacity-0'
             } ${
-              isOverDropZone ? 'border-slate-900 bg-slate-50' : 'border-slate-200'
+              isOverDropZone ? 'border-slate-900 bg-slate-100' : 'border-slate-300'
             }`}
           >
             <span className={`text-xs font-semibold uppercase tracking-[0.2em] ${isOverDropZone ? 'text-slate-900' : 'text-slate-400'}`}>
@@ -769,6 +964,8 @@ export function app({ G, ctx, moves, playerID }: BoardProps) {
             </span>
           </div>
         )}
+        
+        {/* Content */}
         {displayTrickCards.length > 0 ? (
           <div className="flex items-center justify-center gap-4">
             {displayTrickCards.map((card, idx) => {
@@ -784,11 +981,17 @@ export function app({ G, ctx, moves, playerID }: BoardProps) {
             })}
           </div>
         ) : (
-          !G.bidding && G.trumpSuit && (
-            <div className="italic text-slate-400">
-              Waiting for {pid === G.leadPlayer ? 'you' : `P${G.leadPlayer}`} to lead...
-            </div>
-          )
+          <div className="flex flex-col items-center justify-center text-slate-400">
+            {G.bidding ? (
+              <span className="text-xs uppercase tracking-[0.2em]">Bidding in progress...</span>
+            ) : !G.trumpSuit ? (
+              <span className="text-xs uppercase tracking-[0.2em]">Selecting trump...</span>
+            ) : (
+              <span className="text-xs uppercase tracking-[0.2em]">
+                Waiting for {pid === G.leadPlayer ? 'you' : `P${G.leadPlayer}`} to lead...
+              </span>
+            )}
+          </div>
         )}
       </div>
       
@@ -807,15 +1010,12 @@ export function app({ G, ctx, moves, playerID }: BoardProps) {
       
       {/* Player's Hand and Actions */}
       <div className="flex flex-col items-center w-full mt-auto">
-        <h3 className="mb-2 text-sm font-semibold uppercase tracking-[0.2em] text-slate-400">Your Hand</h3>
-        <p className="mb-4 text-xs text-slate-400">Drag a card to play it</p>
-        <div className="flex justify-center gap-2 mb-6 flex-wrap select-none">
+        <div className="flex justify-center -space-x-4 mb-6 flex-wrap select-none max-h-[40vh] sm:max-h-none overflow-visible [&>*]:mb-[-3rem] sm:[&>*]:mb-0">
           {player.hand.map((card, idx) => (
             <CardDisplay
               key={idx}
               card={card}
               disabled={!canPlayThisCard(idx)}
-              onClick={() => canPlayThisCard(idx) && moves.playCard(idx)}
               draggable={canPlayThisCard(idx)}
               onDragStart={() => {
                 if (!canPlayThisCard(idx)) return;
@@ -826,10 +1026,16 @@ export function app({ G, ctx, moves, playerID }: BoardProps) {
                 setIsOverDropZone(isPointInDropZone(x, y));
               }}
               onDragEnd={({ x, y, wasClick }) => {
+                const wasOverDropZone = isPointInDropZone(x, y);
                 setIsDraggingCard(false);
                 setIsOverDropZone(false);
-                if (wasClick) return;
-                if (canPlayThisCard(idx) && isPointInDropZone(x, y)) {
+                if (wasClick) {
+                  if (canPlayThisCard(idx)) {
+                    moves.playCard(idx);
+                  }
+                  return;
+                }
+                if (canPlayThisCard(idx) && wasOverDropZone) {
                   moves.playCard(idx);
                 }
               }}

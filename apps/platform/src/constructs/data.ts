@@ -12,7 +12,9 @@ import { namer } from '../core/utils';
 
 export class Data extends Construct {
   public readonly bucketName: string = namer().universal();
-  public readonly databaseName: string = namer({ database: true }).regional('lake');
+  public readonly databaseName: string = namer({ database: true }).regional(
+    'lake',
+  );
   public readonly tableName: string = namer().regional();
   public readonly athenaS3Prefix: string = 'athena';
   public readonly athenaWorkgroup: athena.CfnWorkGroup;
@@ -41,7 +43,6 @@ export class Data extends Construct {
       writeCapacity: 1,
     });
 
-
     this.table.addGlobalSecondaryIndex({
       indexName: 'GSI',
       projectionType: dynamodb.ProjectionType.ALL,
@@ -67,7 +68,7 @@ export class Data extends Construct {
       catalogId: stack.account,
       databaseInput: {
         name: this.databaseName,
-        description: 'Kossabos data lake catalog',
+        description: 'Zolvery data lake catalog',
       },
     });
 

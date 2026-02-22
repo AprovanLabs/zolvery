@@ -22,7 +22,7 @@ const isDevelopment = process.env.environment === 'dev';
 // Create logger configuration with transports
 const createLogger = () => {
   const targets = [];
-  
+
   // Always add pretty console transport
   targets.push({
     target: 'pino-pretty',
@@ -45,9 +45,9 @@ const createLogger = () => {
       level: 'info',
       options: {
         resourceAttributes: {
-          'service.name': 'kossabos-server',
+          'service.name': 'zolvery-server',
           'service.version': appConfig.version,
-          'environment': appConfig.environment,
+          environment: appConfig.environment,
         },
       },
     });

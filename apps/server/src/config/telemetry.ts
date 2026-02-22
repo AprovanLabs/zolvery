@@ -44,7 +44,7 @@ export const initTelemetry = (): NodeSDK | null => {
 
   // Create SDK with auto-instrumentations
   telemetrySDK = new NodeSDK({
-    serviceName: 'kossabos-server',
+    serviceName: 'zolvery-server',
     traceExporter,
     metricReader: new PeriodicExportingMetricReader({
       exporter: metricExporter,

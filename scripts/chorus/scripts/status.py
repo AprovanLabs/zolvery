@@ -1,7 +1,7 @@
-from utils # Copyright 2026 Cicadas Contributors
+# Copyright 2026 Cicadas Contributors
 # SPDX-License-Identifier: Apache-2.0
 
-import get_project_root, load_json
+from utils import get_project_root, load_json
 
 def show_status():
     root = get_project_root()

@@ -1,7 +1,7 @@
 {
-  "name": "@kossabos/scripts",
+  "name": "@zolvery/scripts",
   "version": "1.0.0",
-  "description": "Development scripts for Kossabos",
+  "description": "Development scripts for Zolvery",
   "type": "module",
   "scripts": {
     "load-apps": "tsx dynamodb/load-apps.ts",

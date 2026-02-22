@@ -1,4 +1,4 @@
-# Kossabos Research
+# Zolvery Research
 
 - https://en.wikipedia.org/wiki/Tiling_puzzle
 - https://en.wikipedia.org/wiki/Tafl_games#Hnefatafl

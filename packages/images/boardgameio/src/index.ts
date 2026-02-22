@@ -1,27 +1,39 @@
 /**
- * @kossabos/patchwork-image-boardgameio
+ * @zolvery/patchwork-image-boardgameio
  *
  * Boardgame.io image for browser widgets with React.
  *
  * Games should export:
- * - `game` - The boardgame.io game definition
+ * - `game` - The boardgame.io game definition with ai.enumerate for bot support
  * - `app` - The React board component (or use default export)
  *
- * The image automatically handles mounting - widgets don't need to
- * reference image internals or call createGameMount directly.
+ * The image automatically handles mounting and bot management.
+ * Widgets don't need to reference image internals or call createGameMount directly.
  *
  * Player count is read from the manifest's `players` field.
+ * Bot count defaults to numPlayers - 1 for single-player experience.
  *
  * @example
  * ```tsx
- * // kossabos.json:
- * // { "players": { "min": 4, "max": 4 }, ... }
+ * // zolvery.json:
+ * // { "players": { "min": 2, "max": 4 }, ... }
  *
- * export const game = { name: 'my-game', setup: () => ({}) };
+ * export const game = {
+ *   name: 'my-game',
+ *   setup: () => ({ board: [] }),
+ *   moves: { makeMove: ({ G }, pos) => { G.board[pos] = 1; } },
+ *   ai: {
+ *     enumerate: (G, ctx) => G.board.map((v, i) => v === null ? { move: 'makeMove', args: [i] } : null).filter(Boolean),
+ *   },
+ * };
  *
- * export function app({ G, ctx, moves }: BoardProps) {
- *   const settings = useSettings<{ difficulty: string }>();
- *   // ...
+ * export function app({ G, ctx, moves, botState, botDifficulty }: BoardPropsWithBots) {
+ *   return (
+ *     <div>
+ *       {botState.isThinking && <span>Thinking...</span>}
+ *       <Board disabled={botState.isThinking} />
+ *     </div>
+ *   );
  * }
  * ```
  */
@@ -59,3 +71,22 @@ export {
   type P2PTransportOpts,
   type TransportConfig,
 } from './p2p/index.js';
+export {
+  BotManager,
+  resolveBotConfig,
+  computeBotPlayerIDs,
+  DIFFICULTY_PRESETS,
+  type BotConfig,
+  type ResolvedBotConfig,
+  type BotState,
+  type BotStrategy,
+  type BotDifficulty,
+  type DifficultyPreset,
+  type BoardgameState,
+} from './bot-manager.js';
+export {
+  type BoardPropsWithBots,
+  type BoardProps,
+  type BotGameSettings,
+  type Ctx,
+} from './types.js';

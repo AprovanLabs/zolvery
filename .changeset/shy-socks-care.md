@@ -1,5 +1,5 @@
 ---
-'@kossabos/vue': patch
+'@zolvery/vue': patch
 ---
 
 Initial component structure

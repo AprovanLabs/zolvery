@@ -1,0 +1,41 @@
+{
+  "appId": "classics/tic-tac-toe",
+  "name": "Tic Tac Toe",
+  "description": "A classic game of Tic Tac Toe, also known as Noughts and Crosses.",
+  "runnerTag": "boardgameio",
+  "version": "0.0.1",
+  "authorId": "jsampson",
+  "visibility": "public",
+  "tags": ["game", "classics"],
+  "players": { "min": 2, "max": 2, "maxLocal": 2 },
+  "settings": [
+    {
+      "id": "bot-count",
+      "label": "Number of Bots",
+      "type": "number",
+      "min": 0,
+      "max": 1,
+      "default": 1
+    },
+    {
+      "id": "bot-difficulty",
+      "label": "Bot Difficulty",
+      "options": [
+        { "value": "easy", "label": "Easy" },
+        { "value": "medium", "label": "Medium" },
+        { "value": "hard", "label": "Hard" }
+      ],
+      "default": "medium"
+    },
+    {
+      "id": "cats-game",
+      "label": "Cat's Game",
+      "help": "How are ties handled",
+      "options": [
+        { "value": "restart", "label": "Restart" },
+        { "value": "game-over", "label": "Game Over" }
+      ],
+      "default": "game-over"
+    }
+  ]
+}
