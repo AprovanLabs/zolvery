@@ -3,8 +3,6 @@ name: Publish Packages to NPM
 on:
   push:
     branches: [main]
-    paths:
-      - 'packages/images/**'
   workflow_dispatch:
 
 env:
