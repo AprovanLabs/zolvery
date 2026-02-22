@@ -15,7 +15,7 @@ export interface WidgetPlayerProps {
 const IMAGE_MAP: Record<string, string> = {
   shadcn: '@aprovan/patchwork-image-shadcn',
   vanilla: '@aprovan/patchwork-vanilla',
-  boardgameio: '@zolvery/patchwork-image-boardgameio@0.1.0',
+  boardgameio: '@aprovan/patchwork-image-boardgameio@0.1.0',
 };
 
 // Use local npm serving in dev, public CDN in production

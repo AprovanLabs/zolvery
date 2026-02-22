@@ -9,7 +9,7 @@ const BASE_PATH = '/';
 
 // Map npm package names to local directories
 const LOCAL_NPM_PACKAGES: Record<string, string> = {
-  '@zolvery/patchwork-image-boardgameio': path.join(
+  '@aprovan/patchwork-image-boardgameio': path.join(
     __dirname,
     '../../packages/images/boardgameio',
   ),

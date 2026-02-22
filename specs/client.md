@@ -344,7 +344,7 @@ emit('card.play', { cardId });
 The new `Client` class provides a comprehensive event-driven interface:
 
 ```typescript
-import { Client, ClientConfig, CoreEventType } from '@zolvery/core';
+import { Client, ClientConfig, CoreEventType } from '@aprovan/core';
 
 const config: ClientConfig = {
   appId: 'my-game',
@@ -506,7 +506,7 @@ class BoardgameIORunner {
 ### Unit Testing
 
 ```typescript
-import { Client, ClientConfig } from '@zolvery/core';
+import { Client, ClientConfig } from '@aprovan/core';
 
 describe('Zolvery Client', () => {
   let client: Client;

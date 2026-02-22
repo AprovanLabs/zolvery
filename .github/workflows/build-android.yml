@@ -77,7 +77,7 @@ jobs:
           EOF
 
       - name: Build client
-        run: pnpm --filter @zolvery/client run build
+        run: pnpm --filter @aprovan/client run build
 
       - name: Remove existing Android directory
         working-directory: apps/mobile

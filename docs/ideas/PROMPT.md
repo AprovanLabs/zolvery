@@ -36,7 +36,7 @@ Notes:
 
 ## Elements
 
-Use the provided Vue components wherever possible. Import from `@zolvery/vue`.
+Use the provided Vue components wherever possible. Import from `@aprovan/vue`.
 Here's the component documentation. These are based on Prime Vue components. At any time, you can reference a Prime Vue component by using the upper camelcase name (e.g. `PrimeColorPicker`).
 
 ### Misc

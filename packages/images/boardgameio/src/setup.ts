@@ -1,5 +1,5 @@
 /**
- * @zolvery/patchwork-image-boardgameio
+ * @aprovan/patchwork-image-boardgameio
  *
  * Setup function for the Boardgame.io image.
  * Uses Tailwind Play CDN for runtime CSS generation.

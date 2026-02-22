@@ -1,5 +1,5 @@
 ---
-'@zolvery/vue': patch
+'@aprovan/vue': patch
 ---
 
 Add UMD build

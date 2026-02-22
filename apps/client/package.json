@@ -1,5 +1,5 @@
 {
-    "name": "@zolvery/client",
+    "name": "@aprovan/client",
     "private": true,
     "type": "module",
     "version": "0.0.1",
@@ -18,8 +18,8 @@
         "@capacitor/core": "^6.0.0",
         "@capacitor/preferences": "^6.0.0",
         "@heroicons/react": "^2.2.0",
-        "@zolvery/core": "*",
-        "@zolvery/patchwork-image-boardgameio": "workspace:*",
+        "@aprovan/core": "*",
+        "@aprovan/patchwork-image-boardgameio": "workspace:*",
         "@tailwindcss/typography": "^0.5.16",
         "@aprovan/bobbin": "catalog:",
         "@aprovan/patchwork-editor": "catalog:",

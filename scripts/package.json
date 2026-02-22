@@ -1,5 +1,5 @@
 {
-  "name": "@zolvery/scripts",
+  "name": "@aprovan/scripts",
   "version": "1.0.0",
   "description": "Development scripts for Zolvery",
   "type": "module",

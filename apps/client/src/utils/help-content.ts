@@ -1,4 +1,4 @@
-import { App as ZolveryApp } from '@zolvery/core';
+import { App as ZolveryApp } from '@aprovan/core';
 
 export enum Locale {
   EN_US = 'en-US',

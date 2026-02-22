@@ -1,5 +1,5 @@
 {
-  "name": "@zolvery/platform",
+  "name": "@aprovan/platform",
   "version": "1.0.0",
   "description": "Zolvery CDK Infrastructure in TypeScript",
   "main": "app.js",

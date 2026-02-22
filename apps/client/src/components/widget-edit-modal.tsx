@@ -7,7 +7,7 @@ import type { Manifest, InputSpec, VirtualProject } from '@aprovan/patchwork-com
 const IMAGE_MAP: Record<string, string> = {
   shadcn: '@aprovan/patchwork-image-shadcn',
   vanilla: '@aprovan/patchwork-vanilla',
-  boardgameio: '@zolvery/patchwork-image-boardgameio@0.1.0',
+  boardgameio: '@aprovan/patchwork-image-boardgameio@0.1.0',
 };
 
 const CDN_BASE_URL = import.meta.env.DEV ? '/npm' : 'https://esm.sh';

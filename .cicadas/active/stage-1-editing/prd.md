@@ -40,7 +40,7 @@ Zolvery currently supports **running** widgets (games) through the Patchwork com
 - Must use existing `@aprovan/patchwork-editor` components from NPM
 - Must run Stitchery service locally for edit requests (no external API dependency)
 - Save only to local filesystem (examples package) — no cloud storage
-- Edits must work with the existing `@zolvery/patchwork-image-boardgameio` image
+- Edits must work with the existing `@aprovan/patchwork-image-boardgameio` image
 
 ## Dependencies
 

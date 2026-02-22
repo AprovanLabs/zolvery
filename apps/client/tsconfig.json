@@ -15,7 +15,7 @@
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
     "skipLibCheck": true,
     "paths": {
-      "@zolvery/core": ["../../packages/core/src"]
+      "@aprovan/core": ["../../packages/core/src"]
     }
   },
   "exclude": ["public/apps"]

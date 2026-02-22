@@ -1,5 +1,5 @@
 import React from 'react';
-import type { BotState } from '@zolvery/patchwork-image-boardgameio';
+import type { BotState } from '@aprovan/patchwork-image-boardgameio';
 
 type Player = 0 | 1;
 

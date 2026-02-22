@@ -1,5 +1,5 @@
 ---
-'@zolvery/vue': patch
+'@aprovan/vue': patch
 ---
 
 Initial component structure

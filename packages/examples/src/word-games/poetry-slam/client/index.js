@@ -1,4 +1,4 @@
-import { connect } from '@zolvery/mcp';
+import { connect } from '@aprovan/mcp';
 import { createApp, computed, ref } from 'vue';
 
 const games = await connect('zolvery/games');

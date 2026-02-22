@@ -1,5 +1,5 @@
 import { DynamoDBDocumentClient, GetCommand } from '@aws-sdk/lib-dynamodb';
-import type { App } from '@zolvery/core';
+import type { App } from '@aprovan/core';
 import { appConfig } from '@/config';
 import logger from '@/logger';
 import {

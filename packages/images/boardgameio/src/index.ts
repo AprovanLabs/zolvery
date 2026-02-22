@@ -1,5 +1,5 @@
 /**
- * @zolvery/patchwork-image-boardgameio
+ * @aprovan/patchwork-image-boardgameio
  *
  * Boardgame.io image for browser widgets with React.
  *
