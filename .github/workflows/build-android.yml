@@ -1,14 +1,6 @@
 name: Build Android
 
 on:
-  # push:
-  #   branches:
-  #     - main
-  #   paths:
-  #     - 'apps/client/**'
-  #     - 'apps/mobile/**'
-  #     - 'packages/**'
-  #     - '.github/workflows/build-android.yml'
   workflow_dispatch:
     inputs:
       build_type:
@@ -33,6 +25,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Set short SHA
+        run: echo "SHORT_SHA=${GITHUB_SHA::7}" >> $GITHUB_ENV
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -87,6 +82,39 @@ jobs:
         working-directory: apps/mobile
         run: pnpm exec cap add android
 
+      - name: Configure release signing
+        if: github.event.inputs.build_type == 'release'
+        working-directory: apps/mobile/android/app
+        run: |
+          node << 'EOF'
+          const fs = require('fs');
+          let gradle = fs.readFileSync('build.gradle', 'utf8');
+          
+          const signingConfig = `
+    signingConfigs {
+        release {
+            storeFile file(System.getenv("KEYSTORE_FILE") ?: "keystore.jks")
+            storePassword System.getenv("KEYSTORE_PASSWORD")
+            keyAlias System.getenv("KEY_ALIAS")
+            keyPassword System.getenv("KEY_PASSWORD")
+        }
+    }
+
+    `;
+          
+          // Insert signingConfigs before buildTypes
+          gradle = gradle.replace('buildTypes {', signingConfig + 'buildTypes {');
+          
+          // Add signingConfig to release buildType
+          gradle = gradle.replace(
+            /release\s*\{\s*\n(\s*)minifyEnabled/,
+            'release {\n$1signingConfig signingConfigs.release\n$1minifyEnabled'
+          );
+          
+          fs.writeFileSync('build.gradle', gradle);
+          console.log('Signing config added to build.gradle');
+          EOF
+
       - name: Generate app assets
         working-directory: apps/mobile
         run: pnpm run assets
@@ -106,7 +134,7 @@ jobs:
         if: github.event.inputs.build_type != 'release'
         uses: actions/upload-artifact@v4
         with:
-          name: zolvery-debug-${{ github.sha }}
+          name: zolvery-debug-${{ env.SHORT_SHA }}
           path: apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 14
 
@@ -132,12 +160,12 @@ jobs:
         run: |
           VERSION=$(node -p "require('./apps/mobile/package.json').version")
           mv apps/mobile/android/app/build/outputs/bundle/release/app-release.aab \
-             apps/mobile/android/app/build/outputs/bundle/release/zolvery-${VERSION}-${{ github.sha }}.aab
+             apps/mobile/android/app/build/outputs/bundle/release/zolvery-${VERSION}-${{ env.SHORT_SHA }}.aab
 
       - name: Upload release AAB
         if: github.event.inputs.build_type == 'release'
         uses: actions/upload-artifact@v4
         with:
-          name: zolvery-release-${{ github.sha }}
+          name: zolvery-release-${{ env.SHORT_SHA }}
           path: apps/mobile/android/app/build/outputs/bundle/release/*.aab
           retention-days: 30
