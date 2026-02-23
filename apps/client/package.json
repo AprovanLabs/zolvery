@@ -11,12 +11,12 @@
         "build:clean": "rm -rf public/apps && npm run build"
     },
     "dependencies": {
-        "@aprovan/bobbin": "catalog:*",
+        "@aprovan/bobbin": "catalog:",
         "@zolver/core": "workspace:*",
-        "@aprovan/patchwork-compiler": "catalog:*",
-        "@aprovan/patchwork-editor": "catalog:*",
+        "@aprovan/patchwork-compiler": "catalog:",
+        "@aprovan/patchwork-editor": "catalog:",
         "@aprovan/patchwork-image-boardgameio": "workspace:*",
-        "@aprovan/patchwork-image-shadcn": "catalog:*",
+        "@aprovan/patchwork-image-shadcn": "catalog:",
         "@capacitor/app": "^6.0.0",
         "@capacitor/browser": "^6.0.0",
         "@capacitor/core": "^6.0.0",

@@ -3,6 +3,7 @@
   "packageManager": "pnpm@9.14.4",
   "scripts": {
     "prepare": "husky install",
+    "link:patchwork": "./scripts/link-patchwork.sh",
     "check-types": "tsc --noEmit",
     "setup": "tailscale up",
     "expose": "tailscale serve --http 3701 localhost:3700",
