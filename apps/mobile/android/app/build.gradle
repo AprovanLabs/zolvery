@@ -44,6 +44,7 @@ dependencies {
   implementation project(':capacitor-android')
   implementation project(':capacitor-cordova-android-plugins')
   implementation 'androidx.appcompat:appcompat:1.6.1'
+  implementation 'androidx.core:core-splashscreen:1.0.1'
 }
 
 apply from: 'capacitor.build.gradle'

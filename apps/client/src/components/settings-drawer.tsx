@@ -7,7 +7,7 @@ import { Checkbox } from 'primereact/checkbox';
 import { Slider } from 'primereact/slider';
 import { Divider } from 'primereact/divider';
 import { ScrollPanel } from 'primereact/scrollpanel';
-import { type Settings } from '@aprovan/core';
+import { type Settings } from '@zolver/core';
 
 export interface SettingsDrawerProps {
   /** Whether the drawer is visible */

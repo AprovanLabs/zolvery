@@ -45,6 +45,7 @@ export function WidgetEditModal({
   onClose,
   onSaveProject,
 }: WidgetEditModalProps) {
+  console.log('[WidgetEditModal] project:', project.id, 'files:', Array.from(project.files.keys()));
   const source = project.files.get(project.entry)?.content ?? '';
   const imageName = IMAGE_MAP[manifest.runnerTag] ?? manifest.runnerTag;
   const { compiler, isReady, error: compilerError } = usePatchwork({
@@ -97,12 +98,6 @@ export function WidgetEditModal({
     );
   }, [manifest, compilerManifest, imageName]);
 
-  const patchworkProject: VirtualProject = useMemo(() => ({
-    id: project.id,
-    entry: project.entry,
-    files: new Map(project.files),
-  }), [project.id, project.entry, project.files]);
-
   if (!isOpen) return null;
 
   if (compilerError) {
@@ -123,10 +118,11 @@ export function WidgetEditModal({
 
   return (
     <EditModal
+      key={`${project.id}-${project.files.size}`}
       isOpen={isOpen}
       onClose={onClose}
       onSaveProject={onSaveProject}
-      originalProject={patchworkProject}
+      originalProject={project}
       compile={compile}
       apiEndpoint="/api/edit"
       renderPreview={renderPreview}

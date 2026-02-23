@@ -22,9 +22,11 @@ if [ -d "$backup_dir" ]; then
   if [ -f "$backup_dir/app/src/main/AndroidManifest.xml" ]; then
     cp "$backup_dir/app/src/main/AndroidManifest.xml" "${root_dir}/android/app/src/main/AndroidManifest.xml"
   fi
-  # Restore customized res files
+  # Restore specific customized res files (not styles.xml - let Capacitor generate it)
   if [ -d "$backup_dir/app/src/main/res" ]; then
-    cp -r "$backup_dir/app/src/main/res/values" "${root_dir}/android/app/src/main/res/" 2>/dev/null || true
+    # Only restore strings.xml and colors.xml, not styles.xml which Capacitor generates
+    cp "$backup_dir/app/src/main/res/values/strings.xml" "${root_dir}/android/app/src/main/res/values/" 2>/dev/null || true
+    cp "$backup_dir/app/src/main/res/values/colors.xml" "${root_dir}/android/app/src/main/res/values/" 2>/dev/null || true
     cp -r "$backup_dir/app/src/main/res/xml" "${root_dir}/android/app/src/main/res/" 2>/dev/null || true
   fi
   rm -rf "$backup_dir"

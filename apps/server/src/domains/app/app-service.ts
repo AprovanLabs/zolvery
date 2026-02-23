@@ -1,4 +1,4 @@
-import type { App } from '@aprovan/core';
+import type { App } from '@zolver/core';
 import { getAppStore } from './app-store';
 import { NotFoundError, UnauthorizedError } from '../common/errors';
 
