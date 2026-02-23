@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/zsh
 # Links local patchwork packages for development
 # Run after pnpm install
 
@@ -13,20 +13,23 @@ if [ ! -d "$PATCHWORK_ROOT" ]; then
   exit 1
 fi
 
-# Packages to link
-declare -A PACKAGES=(
-  ["@aprovan/patchwork-compiler"]="packages/compiler"
-  ["@aprovan/patchwork-editor"]="packages/editor"
-  ["@aprovan/bobbin"]="packages/bobbin"
-  ["@aprovan/patchwork-image-shadcn"]="packages/images/shadcn"
+# Packages to link (name:path pairs)
+PACKAGES=(
+  "@aprovan/patchwork-compiler:packages/compiler"
+  "@aprovan/patchwork-editor:packages/editor"
+  "@aprovan/bobbin:packages/bobbin"
+  "@aprovan/patchwork-image-shadcn:packages/images/shadcn"
 )
 
 echo "Linking patchwork packages..."
 
-for pkg in "${!PACKAGES[@]}"; do
-  src="$PATCHWORK_ROOT/${PACKAGES[$pkg]}"
+for entry in "${PACKAGES[@]}"; do
+  pkg="${entry%%:*}"
+  path="${entry#*:}"
+  src="$PATCHWORK_ROOT/$path"
+  
   # Find and replace in node_modules
-  find "$ZOLVERY_ROOT" -path "*/node_modules/$pkg" -type l -o -path "*/node_modules/$pkg" -type d 2>/dev/null | while read dest; do
+  find "$ZOLVERY_ROOT" \( -path "*/node_modules/$pkg" -type l -o -path "*/node_modules/$pkg" -type d \) 2>/dev/null | while read dest; do
     if [ -e "$src" ]; then
       rm -rf "$dest"
       ln -s "$src" "$dest"

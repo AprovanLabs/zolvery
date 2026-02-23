@@ -30,6 +30,7 @@ interface BuckEuchreState {
   bidding: boolean;
   highestBid: number;
   highestBidder: number;
+  biddingOrder: number[]; // Players who still need to bid
 }
 
 interface GameSettings {
@@ -239,14 +240,17 @@ export const game = {
       cardsWon: [] as Card[],
       bidding: true,
       highestBid: 0,
-      highestBidder: -1
+      highestBidder: -1,
+      biddingOrder: Array.from({ length: ctx.numPlayers }, (_, i) => i), // All players need to bid
     };
   },
   
   turn: {
     onBegin: ({ G, events }: { G: BuckEuchreState; events: { setActivePlayers: (opts: unknown) => void } }) => {
       if (G.bidding) {
-        events.setActivePlayers({ all: 'bidding' });
+        // Sequential bidding: start with first player who hasn't bid yet
+        const firstBidder = G.biddingOrder[0] ?? G.leadPlayer;
+        events.setActivePlayers({ value: { [firstBidder]: 'bidding' } });
       } else if (G.trumpSuit === '' && G.highestBidder !== -1) {
         events.setActivePlayers({ value: { [G.highestBidder]: 'selectingTrump' } });
       } else if (G.trickCards.length === 0) {
@@ -257,35 +261,44 @@ export const game = {
     stages: {
       bidding: {
         moves: {
-          placeBid: ({ G, playerID, events, ctx }: { G: BuckEuchreState; playerID: string; events: { endStage: () => void; endTurn: () => void }; ctx: { activePlayers?: Record<string, string> } }, bidAmount: number) => {
+          placeBid: ({ G, playerID, events }: { G: BuckEuchreState; playerID: string; events: { endStage: () => void; endTurn: () => void; setActivePlayers: (opts: unknown) => void } }, bidAmount: number) => {
             if (bidAmount <= G.highestBid || bidAmount > CARDS_PER_HAND) return;
             const pid = parseInt(playerID);
             G.players[pid].bid = bidAmount;
             G.highestBid = bidAmount;
             G.highestBidder = pid;
+            // Remove this player from bidding order
+            G.biddingOrder = G.biddingOrder.filter(id => id !== pid);
             events.endStage();
-            const activePlayers = ctx.activePlayers ? Object.keys(ctx.activePlayers) : [];
-            const remainingPlayers = Math.max(activePlayers.length - 1, 0);
-            if (remainingPlayers === 0 && G.highestBidder !== -1) {
+            if (G.biddingOrder.length === 0) {
               G.bidding = false;
               events.endTurn();
+            } else {
+              // Activate next player in bidding order
+              events.setActivePlayers({ value: { [G.biddingOrder[0]]: 'bidding' } });
             }
           },
-          passBid: ({ G, playerID, events, ctx }: { G: BuckEuchreState; playerID: string; events: { endStage: () => void; endTurn: () => void }; ctx: { activePlayers?: Record<string, string> } }) => {
+          passBid: ({ G, playerID, events }: { G: BuckEuchreState; playerID: string; events: { endStage: () => void; endTurn: () => void; setActivePlayers: (opts: unknown) => void } }) => {
             const pid = parseInt(playerID);
             G.players[pid].bid = 0;
+            // Remove this player from bidding order
+            G.biddingOrder = G.biddingOrder.filter(id => id !== pid);
             events.endStage();
-            const activePlayers = ctx.activePlayers ? Object.keys(ctx.activePlayers) : [];
-            const remainingPlayers = Math.max(activePlayers.length - 1, 0);
-            if (remainingPlayers === 0 && G.highestBidder !== -1) {
-              G.bidding = false;
-              events.endTurn();
-            } else if (remainingPlayers === 0 && G.highestBidder === -1) {
-              G.highestBidder = G.leadPlayer;
-              G.highestBid = 1;
-              G.players[G.leadPlayer].bid = 1;
-              G.bidding = false;
-              events.endTurn();
+            if (G.biddingOrder.length === 0) {
+              if (G.highestBidder !== -1) {
+                G.bidding = false;
+                events.endTurn();
+              } else {
+                // Everyone passed - dealer (leadPlayer) is forced to bid 1
+                G.highestBidder = G.leadPlayer;
+                G.highestBid = 1;
+                G.players[G.leadPlayer].bid = 1;
+                G.bidding = false;
+                events.endTurn();
+              }
+            } else {
+              // Activate next player in bidding order
+              events.setActivePlayers({ value: { [G.biddingOrder[0]]: 'bidding' } });
             }
           }
         }
@@ -385,6 +398,7 @@ export const game = {
           G.bidding = true;
           G.highestBid = 0;
           G.highestBidder = -1;
+          G.biddingOrder = Array.from({ length: ctx.numPlayers }, (_, i) => i); // Reset bidding order
           events.setPhase('play');
           events.endTurn();
         }
