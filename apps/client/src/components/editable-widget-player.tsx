@@ -54,6 +54,7 @@ export function EditableWidgetPlayer({
     const filesToSave = Array.from(editedProject.files.values()).map((f) => ({
       path: f.path,
       content: f.content,
+      encoding: f.encoding,
     }));
     await project.save(filesToSave);
   }, [project]);

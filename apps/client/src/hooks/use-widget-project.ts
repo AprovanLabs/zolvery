@@ -153,7 +153,13 @@ export function useWidgetProject(appId: string | null): UseWidgetProjectReturn {
   }, [originalFiles]);
 
   const save = useCallback(
-    async (explicitFiles?: Array<{ path: string; content: string }>) => {
+    async (
+      explicitFiles?: Array<{
+        path: string;
+        content: string;
+        encoding?: 'utf8' | 'base64';
+      }>,
+    ) => {
       if (!appId) return;
 
       const filesToSave =
@@ -163,6 +169,7 @@ export function useWidgetProject(appId: string | null): UseWidgetProjectReturn {
           return {
             path: file.path,
             content: file.content,
+            encoding: file.encoding,
           };
         });
 
