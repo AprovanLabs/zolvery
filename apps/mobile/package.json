@@ -1,7 +1,7 @@
 {
   "name": "@aprovan/mobile",
   "private": true,
-  "version": "0.0.5",
+  "version": "0.0.6",
   "scripts": {
     "build": "pnpm --filter @zolvery/client run build",
     "sync:android": "pnpm --filter @zolvery/client run build && pnpm exec cap sync android",

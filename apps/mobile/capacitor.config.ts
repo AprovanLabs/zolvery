@@ -4,7 +4,13 @@ const config: CapacitorConfig = {
   appId: 'com.aprovan.zolvery',
   appName: 'Zolvery',
   webDir: '../client/dist',
+  server: {
+    androidScheme: 'https',
+  },
   plugins: {
+    CapacitorHttp: {
+      enabled: false,
+    },
     StatusBar: {
       style: 'DARK',
       backgroundColor: '#3059d4',

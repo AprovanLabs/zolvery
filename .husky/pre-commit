@@ -1,5 +1,8 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
+# Bump mobile version if apps/mobile has staged changes
+./scripts/bump-mobile-version.sh
+
 npx lint-staged
 npx --no -- vitest --changed --run -r packages/core/
