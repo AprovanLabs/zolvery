@@ -28,7 +28,7 @@ export interface AppConfig {
     dataBucket: string;
   };
   cors: {
-    origin: string[];
+    origin: (string | RegExp)[];
     credentials: boolean;
   };
 }
@@ -76,8 +76,9 @@ const getConfig = (): AppConfig => {
     },
     cors: {
       origin: process.env.CORS_ORIGINS?.split(',') || [
-        'http://localhost:3000',
-        'http://localhost:5173',
+        // Allow localhost on any port for dev
+        /^http:\/\/localhost:\d+$/,
+        /^http:\/\/127\.0\.0\.1:\d+$/,
       ],
       credentials: process.env.CORS_CREDENTIALS === 'true',
     },

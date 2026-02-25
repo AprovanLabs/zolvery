@@ -7,6 +7,10 @@ import { defineConfig } from 'vite';
 // process.env.GITHUB_PAGES_CUSTOM_DOMAIN or GITHUB_ACTIONS
 const BASE_PATH = '/';
 
+// Port configuration from environment
+const SERVER_URL = process.env.SERVER_URL ?? 'http://localhost:3000';
+const STITCHERY_URL = process.env.STITCHERY_URL ?? 'http://127.0.0.1:6434';
+
 // Map npm package names to local directories
 const LOCAL_NPM_PACKAGES: Record<string, string> = {
   '@aprovan/patchwork-image-boardgameio': path.join(
@@ -152,25 +156,25 @@ export default defineConfig({
     proxy: {
       // Proxy non-source app requests to the server
       '^/apps/.*/zolvery\\.json': {
-        target: 'http://localhost:3000',
+        target: SERVER_URL,
         rewrite: (path) => path.replace(/^\/apps/, ''),
       },
       '^/apps/apps\\.json': {
-        target: 'http://localhost:3000',
+        target: SERVER_URL,
         rewrite: (path) => path.replace(/^\/apps/, ''),
       },
       // Proxy API v1 to backend server
       '/api/v1': {
-        target: 'http://localhost:3000',
+        target: SERVER_URL,
         changeOrigin: true,
       },
       // Proxy edit API to Stitchery service
       '/api/edit': {
-        target: 'http://127.0.0.1:6434',
+        target: STITCHERY_URL,
         changeOrigin: true,
       },
       '/api/chat': {
-        target: 'http://127.0.0.1:6434',
+        target: STITCHERY_URL,
         changeOrigin: true,
       },
     },

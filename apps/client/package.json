@@ -4,7 +4,7 @@
     "type": "module",
     "version": "0.0.1",
     "scripts": {
-        "dev": "vite --port 3700 --open",
+        "dev": "vite --port ${CLIENT_PORT:-3700} --open",
         "prebuild": "node scripts/embed-examples.js",
         "build": "vite build",
         "build:check": "tsc && vite build",

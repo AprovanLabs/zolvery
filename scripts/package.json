@@ -4,11 +4,13 @@
   "description": "Development scripts for Zolvery",
   "type": "module",
   "scripts": {
+    "start-dev": "tsx start-dev.ts",
     "load-apps": "tsx dynamodb/load-apps.ts",
     "wipe-table": "tsx dynamodb/wipe-table.ts",
     "setup-aws": "./setup-local-aws.sh"
   },
   "dependencies": {
+    "@aprovan/copilot-proxy": "link:../../copilot-proxy",
     "@aws-sdk/client-dynamodb": "^3.0.0",
     "@aws-sdk/lib-dynamodb": "^3.0.0",
     "@aws-sdk/util-dynamodb": "^3.0.0",
