@@ -18,6 +18,7 @@
     "mobile:sync": "pnpm --filter @aprovan/mobile run sync:android",
     "mobile:run": "pnpm --filter @aprovan/mobile run run:android",
     "mobile:android:regen": "pnpm --filter @aprovan/mobile run android:regen",
+    "mobile:bump-version": "./scripts/bump-mobile-version.sh",
     "core:build": "pnpx turbo run build --filter=@zolver/core",
     "core:test": "pnpx turbo run test --filter=@zolver/core",
     "docs:serve": "pnpx turbo run serve --filter=@aprovan/docs",
