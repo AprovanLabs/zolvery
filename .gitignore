@@ -15,6 +15,7 @@ pnpm-lock.yaml
 
 # Generated during build
 apps/client/public/apps
+apps/client/public/esbuild.wasm
 
 __pycache__
 

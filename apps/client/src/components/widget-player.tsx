@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useState, useMemo } from 'react';
 import { usePatchwork } from '../hooks/use-patchwork';
 import type { Manifest, InputSpec } from '@aprovan/patchwork-compiler';
 import type { ZolveryManifest } from '../hooks/use-widget-source';
+import { isMobile } from '../services/mobile-auth';
 
 export interface WidgetPlayerProps {
   appId: string;
@@ -20,6 +21,9 @@ const IMAGE_MAP: Record<string, string> = {
 
 // Use local npm serving in dev, public CDN in production
 const CDN_BASE_URL = import.meta.env.DEV ? '/npm' : 'https://esm.sh';
+
+  // Use bundled esbuild.wasm on mobile for offline support
+const URL_OVERRIDES = (isMobile() ? { 'esbuild-wasm/esbuild.wasm': '/esbuild.wasm' } : undefined)
 
 const normalizeInputType = (settingType?: string): InputSpec['type'] => {
   switch (settingType) {
@@ -56,6 +60,7 @@ export function WidgetPlayer({
     image: imageName,
     cdnBaseUrl: CDN_BASE_URL,
     widgetCdnBaseUrl: 'https://esm.sh',
+    urlOverrides: URL_OVERRIDES
   });
 
   const inputs = useMemo(() => {

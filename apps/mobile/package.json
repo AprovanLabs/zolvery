@@ -3,8 +3,9 @@
   "private": true,
   "version": "0.0.6",
   "scripts": {
+    "prebuild": "cp ./node_modules/esbuild-wasm/esbuild.wasm ../client/public/esbuild.wasm",
     "build": "pnpm --filter @zolvery/client run build",
-    "sync:android": "pnpm --filter @zolvery/client run build && pnpm exec cap sync android",
+    "sync:android": "pnpm run build && pnpm exec cap sync android",
     "run:android": "pnpm exec cap run android",
     "android:regen": "bash ./scripts/android-regen.sh",
     "assets": "pnpm exec capacitor-assets generate --iconBackgroundColor '#3059d4' --splashBackgroundColor '#3059d4' --android"
@@ -19,6 +20,7 @@
   },
   "devDependencies": {
     "@capacitor/assets": "^3.0.5",
-    "@capacitor/cli": "^6.0.0"
+    "@capacitor/cli": "^6.0.0",
+    "esbuild-wasm": "^0.27.2"
   }
 }

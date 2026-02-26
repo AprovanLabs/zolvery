@@ -13,6 +13,11 @@ export interface UsePatchworkOptions {
   cdnBaseUrl?: string;
   /** Base URL for widget imports (e.g., 'https://esm.sh') */
   widgetCdnBaseUrl?: string;
+  /**
+   * URL overrides for bundled assets/packages.
+   * Keys are asset identifiers (e.g., 'esbuild-wasm/esbuild.wasm'), values are local URLs.
+   */
+  urlOverrides?: Record<string, string>;
 }
 
 export interface UsePatchworkReturn {
@@ -41,6 +46,7 @@ export function usePatchwork(options: UsePatchworkOptions): UsePatchworkReturn {
       proxyUrl: options.proxyUrl ?? '/api/proxy',
       cdnBaseUrl: options.cdnBaseUrl,
       widgetCdnBaseUrl: options.widgetCdnBaseUrl,
+      urlOverrides: options.urlOverrides,
     })
       .then((c) => {
         if (cancelled) return;
@@ -63,6 +69,7 @@ export function usePatchwork(options: UsePatchworkOptions): UsePatchworkReturn {
     options.proxyUrl,
     options.cdnBaseUrl,
     options.widgetCdnBaseUrl,
+    options.urlOverrides,
   ]);
 
   const mount = useCallback(
