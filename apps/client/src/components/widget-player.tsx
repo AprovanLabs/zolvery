@@ -19,11 +19,11 @@ const IMAGE_MAP: Record<string, string> = {
   boardgameio: '@aprovan/patchwork-image-boardgameio@0.1.0',
 };
 
-// Use local npm serving in dev, public CDN in production
-const CDN_BASE_URL = import.meta.env.DEV ? '/npm' : 'https://esm.sh';
+// Use local npm serving in dev and on mobile for offline support, public CDN otherwise
+const CDN_BASE_URL = import.meta.env.DEV || isMobile() ? '/npm' : 'https://esm.sh';
 
-  // Use bundled esbuild.wasm on mobile for offline support
-const URL_OVERRIDES = (isMobile() ? { 'esbuild-wasm/esbuild.wasm': '/esbuild.wasm' } : undefined)
+// Use bundled esbuild.wasm on mobile for offline support
+const URL_OVERRIDES = isMobile() ? { 'esbuild-wasm/esbuild.wasm': '/esbuild.wasm' } : undefined;
 
 const normalizeInputType = (settingType?: string): InputSpec['type'] => {
   switch (settingType) {

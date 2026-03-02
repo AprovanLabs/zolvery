@@ -1,9 +1,10 @@
 {
   "name": "@aprovan/mobile",
   "private": true,
-  "version": "0.0.7",
+  "type": "module",
+  "version": "0.0.8",
   "scripts": {
-    "prebuild": "cp ./node_modules/esbuild-wasm/esbuild.wasm ../client/public/esbuild.wasm",
+    "prebuild": "cp ./node_modules/esbuild-wasm/esbuild.wasm ../client/public/esbuild.wasm && node ./scripts/bundle-images.js",
     "build": "pnpm --filter @zolvery/client run build",
     "sync:android": "pnpm run build && pnpm exec cap sync android",
     "run:android": "pnpm exec cap run android",
