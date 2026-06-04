@@ -10,16 +10,17 @@ jobs:
     name: Deploy
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
         with:
-          node-version: 18
-          cache: npm
-      - run: npm ci
-      - run: npx nx run build
-      - run: npx run examples:build
-      - run: npx run ui:showcase
-      - run: npx run docs:build
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm turbo run build
+      - run: pnpm turbo run docs:build
         env:
           NODE_OPTIONS: "--max-old-space-size=8192"
       - uses: peaceiris/actions-gh-pages@v3
