@@ -54,13 +54,28 @@ export function cleanup(container: HTMLElement): void {
   // No-op for now
 }
 
+/**
+ * Check if we're running in a local/mobile context where CDN access may be restricted
+ */
+function isLocalContext(): boolean {
+  return (
+    typeof window !== 'undefined' &&
+    (window.location.hostname === 'localhost' ||
+      window.location.hostname === '127.0.0.1' ||
+      window.location.protocol === 'file:' ||
+      window.location.protocol === 'capacitor:')
+  );
+}
+
 async function loadTailwindPlayCDN(): Promise<void> {
-  if (document.querySelector('script[src*="tailwindcss.com/play"]')) {
+  // Check if Tailwind is already loaded
+  if (document.querySelector('script[src*="tailwindcss"]') || window.tailwind) {
     return;
   }
 
   const script = document.createElement('script');
-  script.src = 'https://cdn.tailwindcss.com';
+  // Use local bundled version on localhost/mobile, CDN otherwise
+  script.src = isLocalContext() ? '/tailwind.js' : 'https://cdn.tailwindcss.com';
   script.async = true;
 
   return new Promise((resolve, reject) => {
@@ -87,7 +102,10 @@ async function loadPeerJS(): Promise<void> {
   }
 
   const script = document.createElement('script');
-  script.src = 'https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js';
+  // Use local bundled version on localhost/mobile, CDN otherwise
+  script.src = isLocalContext()
+    ? '/peerjs.min.js'
+    : 'https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js';
   script.async = true;
 
   return new Promise((resolve, reject) => {

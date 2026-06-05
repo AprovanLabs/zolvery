@@ -7,6 +7,7 @@ import { useGamesCatalog, type GameEntry } from './src/hooks/use-games-catalog';
 import { GameCatalog } from './src/components/game-catalog';
 import { GameSetup, type GameConfig } from './src/components/game-setup';
 import { GameLobby, type GameLobbyConfig } from './src/components/game-lobby';
+import { initPreloadInjector } from './src/services/preload-injector';
 
 import './style.css';
 
@@ -497,5 +498,8 @@ function App() {
   );
 }
 
-const root = createRoot(document.getElementById('root')!);
-root.render(<App />);
+// Initialize preload injector before rendering (for mobile/offline support)
+initPreloadInjector().then(() => {
+  const root = createRoot(document.getElementById('root')!);
+  root.render(<App />);
+});
