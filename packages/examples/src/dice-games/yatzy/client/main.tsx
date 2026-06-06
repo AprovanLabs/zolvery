@@ -73,14 +73,11 @@ const isEqual = (arr1: number[], arr2: number[]) =>
   arr1.every((val, index) => val === arr2[index]);
 
 const groupBy = (arr: number[]): Record<number, number[]> =>
-  arr.reduce(
-    (acc, item) => {
-      if (!acc[item]) acc[item] = [];
-      acc[item].push(item);
-      return acc;
-    },
-    {} as Record<number, number[]>,
-  );
+  arr.reduce((acc, item) => {
+    if (!acc[item]) acc[item] = [];
+    acc[item].push(item);
+    return acc;
+  }, {} as Record<number, number[]>);
 
 const groupDice = (dice: number[]): number[][] => {
   const grouped = groupBy(dice);
@@ -178,10 +175,20 @@ export const ScoreCalculator = {
     },
 
     smallStraight: (dice: number[]) =>
-      isEqual([...dice].sort((a, b) => a - b), [1, 2, 3, 4, 5]) ? 15 : 0,
+      isEqual(
+        [...dice].sort((a, b) => a - b),
+        [1, 2, 3, 4, 5],
+      )
+        ? 15
+        : 0,
 
     largeStraight: (dice: number[]) =>
-      isEqual([...dice].sort((a, b) => a - b), [2, 3, 4, 5, 6]) ? 20 : 0,
+      isEqual(
+        [...dice].sort((a, b) => a - b),
+        [2, 3, 4, 5, 6],
+      )
+        ? 20
+        : 0,
 
     fullHouse: (dice: number[]) => {
       const grouped = groupDice(dice);
@@ -290,7 +297,13 @@ export const game = {
   },
 
   moves: {
-    rollDice: ({ G, random }: { G: GameState; random: { D6: () => number } }) => {
+    rollDice: ({
+      G,
+      random,
+    }: {
+      G: GameState;
+      random: { D6: () => number };
+    }) => {
       if (G.totalRolls >= 3) return;
       for (let d = 0; d < G.dice.length; d++) {
         if (!G.diceHeld[d]) G.dice[d] = random.D6();
@@ -346,7 +359,6 @@ export const game = {
       G.isDraw = false;
     },
   },
-
 };
 
 // Dice face SVG component
@@ -412,23 +424,34 @@ const DiceFace = ({ value }: { value: number }) => {
   );
 };
 
-export function app({ G, moves, playerID, isMultiplayer, botCount = 0 }: BoardProps) {
-  const myPlayerIndex = playerID !== null && playerID !== undefined ? parseInt(playerID, 10) : 0;
+export function app({
+  G,
+  moves,
+  playerID,
+  isMultiplayer,
+  botCount = 0,
+}: BoardProps) {
+  const myPlayerIndex =
+    playerID !== null && playerID !== undefined ? parseInt(playerID, 10) : 0;
   const currentPlayer = G.players[G.currentPlayer];
-  
+
   // Determine which players are bots based on botCount (last N players are bots, excluding human)
   const numPlayers = G.players.length;
   const botPlayerIDs = useMemo(
-    () => new Set(
-      Array.from({ length: Math.min(botCount, numPlayers - 1) }, (_, i) => numPlayers - 1 - i)
-    ),
-    [botCount, numPlayers]
+    () =>
+      new Set(
+        Array.from(
+          { length: Math.min(botCount, numPlayers - 1) },
+          (_, i) => numPlayers - 1 - i,
+        ),
+      ),
+    [botCount, numPlayers],
   );
   const isBot = useCallback(
     (id: number) => id !== myPlayerIndex && botPlayerIDs.has(id),
-    [myPlayerIndex, botPlayerIDs]
+    [myPlayerIndex, botPlayerIDs],
   );
-  
+
   const isMyTurn = G.currentPlayer === myPlayerIndex && !isBot(G.currentPlayer);
   const gameOver = G.winner !== null || G.isDraw;
   const shouldRunBots = !isMultiplayer && botCount > 0;
@@ -472,7 +495,16 @@ export function app({ G, moves, playerID, isMultiplayer, botCount = 0 }: BoardPr
 
     const timer = setTimeout(botAction, BOT_DELAY_MS);
     return () => clearTimeout(timer);
-  }, [G.dice, G.totalRolls, G.currentPlayer, gameOver, shouldRunBots, isBot, moves, currentPlayer.scoring]);
+  }, [
+    G.dice,
+    G.totalRolls,
+    G.currentPlayer,
+    gameOver,
+    shouldRunBots,
+    isBot,
+    moves,
+    currentPlayer.scoring,
+  ]);
 
   return (
     <div className="flex min-h-full w-full flex-col bg-white p-4 pb-8">
@@ -488,7 +520,13 @@ export function app({ G, moves, playerID, isMultiplayer, botCount = 0 }: BoardPr
               style={{ backgroundColor: PLAYER_COLORS[G.currentPlayer] }}
             />
             <span className="text-xs text-slate-500">
-              {G.currentPlayer === myPlayerIndex ? 'You' : isMultiplayer ? `Player ${G.currentPlayer + 1}` : isBot(G.currentPlayer) ? `Bot ${G.currentPlayer}` : currentPlayer.name}
+              {G.currentPlayer === myPlayerIndex
+                ? 'You'
+                : isMultiplayer
+                ? `Player ${G.currentPlayer + 1}`
+                : isBot(G.currentPlayer)
+                ? `Bot ${G.currentPlayer}`
+                : currentPlayer.name}
             </span>
           </div>
           <button
@@ -511,7 +549,13 @@ export function app({ G, moves, playerID, isMultiplayer, botCount = 0 }: BoardPr
             >
               <div className="rounded-md bg-white/95 p-2">
                 <div className="mb-1 text-center text-[10px] font-medium text-slate-600 truncate">
-                  {idx === myPlayerIndex ? 'You' : isMultiplayer ? `Player ${idx + 1}` : isBot(idx) ? `Bot ${idx}` : player.name}
+                  {idx === myPlayerIndex
+                    ? 'You'
+                    : isMultiplayer
+                    ? `Player ${idx + 1}`
+                    : isBot(idx)
+                    ? `Bot ${idx}`
+                    : player.name}
                 </div>
                 <div className="grid grid-cols-5 gap-0.5 text-[9px]">
                   {scoringCategories.map((cat) => (
@@ -546,7 +590,11 @@ export function app({ G, moves, playerID, isMultiplayer, botCount = 0 }: BoardPr
                 onClick={() => canToggle && moves.toggleDie(index)}
                 disabled={!canToggle}
                 className={`aspect-square rounded-xl border-2 flex items-center justify-center transition-all duration-200
-                  ${isHeld ? 'border-emerald-500 bg-emerald-50 scale-95' : 'border-slate-200 bg-white'}
+                  ${
+                    isHeld
+                      ? 'border-emerald-500 bg-emerald-50 scale-95'
+                      : 'border-slate-200 bg-white'
+                  }
                   ${canToggle ? 'hover:border-slate-400 active:scale-95' : ''}
                 `}
               >
@@ -587,7 +635,8 @@ export function app({ G, moves, playerID, isMultiplayer, botCount = 0 }: BoardPr
           {scoringCategories.map((cat) => {
             const isValid = validCategories.has(cat.key);
             const potentialScore = ScoreCalculator.calculators[cat.key](G.dice);
-            const canSelect = isValid && G.totalRolls > 0 && isMyTurn && !gameOver;
+            const canSelect =
+              isValid && G.totalRolls > 0 && isMyTurn && !gameOver;
 
             return (
               <button
@@ -638,8 +687,16 @@ export function app({ G, moves, playerID, isMultiplayer, botCount = 0 }: BoardPr
                 />
                 <span className="font-bold text-slate-800">
                   {(() => {
-                    const winnerIdx = G.players.findIndex((p) => p.id === G.winner);
-                    return winnerIdx === myPlayerIndex ? 'You' : isMultiplayer ? `Player ${winnerIdx + 1}` : isBot(winnerIdx) ? `Bot ${winnerIdx}` : G.players[winnerIdx]?.name;
+                    const winnerIdx = G.players.findIndex(
+                      (p) => p.id === G.winner,
+                    );
+                    return winnerIdx === myPlayerIndex
+                      ? 'You'
+                      : isMultiplayer
+                      ? `Player ${winnerIdx + 1}`
+                      : isBot(winnerIdx)
+                      ? `Bot ${winnerIdx}`
+                      : G.players[winnerIdx]?.name;
                   })()}
                 </span>
               </div>

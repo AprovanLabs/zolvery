@@ -4,13 +4,15 @@
 export interface ClientEventMessage {
   id: string;
   type: string;
-  payload: any;
+  payload: unknown;
   timestamp: number;
   source: 'client' | 'server';
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
-export type ClientEventHandler = (message: ClientEventMessage) => Promise<void> | void;
+export type ClientEventHandler = (
+  message: ClientEventMessage,
+) => Promise<void> | void;
 
 export interface ClientEventSubscription {
   id: string;
@@ -29,8 +31,8 @@ export class ClientEventBus {
    */
   public async publish(
     eventType: string,
-    payload: any,
-    metadata?: Record<string, any>
+    payload: unknown,
+    metadata?: Record<string, unknown>,
   ): Promise<void> {
     const message: ClientEventMessage = {
       id: this.generateId(),
@@ -48,7 +50,10 @@ export class ClientEventBus {
   /**
    * Subscribe to events
    */
-  public subscribe(eventType: string, handler: ClientEventHandler): ClientEventSubscription {
+  public subscribe(
+    eventType: string,
+    handler: ClientEventHandler,
+  ): ClientEventSubscription {
     const subscription: ClientEventSubscription = {
       id: this.generateId(),
       eventType,

@@ -8,14 +8,14 @@ let dynamoDBDocumentClient: DynamoDBDocumentClient | null = null;
 export function getDynamoDBClient(): DynamoDBClient {
   if (!dynamoDBClient) {
     const config: {
-        region: string;
-        endpoint?: string;
-        forcePathStyle?: boolean;
-        tls?: boolean;
-        credentials?: {
-            accessKeyId: string;
-            secretAccessKey: string;
-        };
+      region: string;
+      endpoint?: string;
+      forcePathStyle?: boolean;
+      tls?: boolean;
+      credentials?: {
+        accessKeyId: string;
+        secretAccessKey: string;
+      };
     } = {
       region: appConfig.aws.region,
     };
@@ -49,17 +49,23 @@ export function getDynamoDBDocumentClient(): DynamoDBDocumentClient {
   return dynamoDBDocumentClient;
 }
 
-export const generatePartitionKey = (type: string, ...parts: (string | number)[]): string => {
-  const cleanParts = parts.map(p => String(p).replace(/[:#]/g, '_'));
+export const generatePartitionKey = (
+  type: string,
+  ...parts: (string | number)[]
+): string => {
+  const cleanParts = parts.map((p) => String(p).replace(/[:#]/g, '_'));
   return [type, ...cleanParts].join('#');
 };
 
-export const generateSortKey = (type: string, ...parts: (string | number)[]): string => {
-  const cleanParts = parts.map(p => String(p).replace(/[:#]/g, '_'));
+export const generateSortKey = (
+  type: string,
+  ...parts: (string | number)[]
+): string => {
+  const cleanParts = parts.map((p) => String(p).replace(/[:#]/g, '_'));
   return [type, ...cleanParts].join('#');
 };
 
 export type DynamoDbRecord<T> = {
-  PK: string,
-  SK: string
-} & T
+  PK: string;
+  SK: string;
+} & T;

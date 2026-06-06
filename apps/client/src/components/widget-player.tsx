@@ -3,6 +3,7 @@ import { usePatchwork } from '../hooks/use-patchwork';
 import type { Manifest, InputSpec } from '@aprovan/patchwork-compiler';
 import type { ZolveryManifest } from '../hooks/use-widget-source';
 import { isMobile } from '../services/mobile-auth';
+import { WIDGET_CDN_URL } from '../constants';
 
 export interface WidgetPlayerProps {
   appId: string;
@@ -16,14 +17,17 @@ export interface WidgetPlayerProps {
 const IMAGE_MAP: Record<string, string> = {
   shadcn: '@aprovan/patchwork-image-shadcn',
   vanilla: '@aprovan/patchwork-vanilla',
-  boardgameio: '@aprovan/patchwork-image-boardgameio',
+  boardgameio: '@aprovan/patchwork-image-boardgameio@0.1.0',
 };
 
 // Use local npm serving in dev and on mobile for offline support, public CDN otherwise
-const CDN_BASE_URL = import.meta.env.DEV || isMobile() ? '/npm' : 'https://esm.sh';
+const CDN_BASE_URL =
+  import.meta.env.DEV || isMobile() ? '/npm' : WIDGET_CDN_URL;
 
 // Use bundled esbuild.wasm on mobile for offline support
-const URL_OVERRIDES = isMobile() ? { 'esbuild-wasm/esbuild.wasm': '/esbuild.wasm' } : undefined;
+const URL_OVERRIDES = isMobile()
+  ? { 'esbuild-wasm/esbuild.wasm': '/esbuild.wasm' }
+  : undefined;
 
 const normalizeInputType = (settingType?: string): InputSpec['type'] => {
   switch (settingType) {
@@ -56,23 +60,24 @@ export function WidgetPlayer({
 
   const imageName = IMAGE_MAP[manifest.runnerTag] ?? manifest.runnerTag;
 
-  const { isReady, error: compilerError, mount } = usePatchwork({
+  const {
+    isReady,
+    error: compilerError,
+    mount,
+  } = usePatchwork({
     image: imageName,
     cdnBaseUrl: CDN_BASE_URL,
-    widgetCdnBaseUrl: 'https://esm.sh',
-    urlOverrides: URL_OVERRIDES
+    widgetCdnBaseUrl: WIDGET_CDN_URL,
+    urlOverrides: URL_OVERRIDES,
   });
 
   const inputs = useMemo(() => {
-    const defaults = (manifest.settings ?? []).reduce(
-      (acc, setting) => {
-        if (setting.id && setting.default !== undefined) {
-          acc[setting.id] = setting.default;
-        }
-        return acc;
-      },
-      {} as Record<string, unknown>,
-    );
+    const defaults = (manifest.settings ?? []).reduce((acc, setting) => {
+      if (setting.id && setting.default !== undefined) {
+        acc[setting.id] = setting.default;
+      }
+      return acc;
+    }, {} as Record<string, unknown>);
     return { ...defaults, ...inputsProp };
   }, [manifest.settings, inputsProp]);
 
@@ -84,18 +89,15 @@ export function WidgetPlayer({
       platform: 'browser' as const,
       image: imageName,
       services: manifest.servers,
-      inputs: (manifest.settings ?? []).reduce(
-        (acc, setting) => {
-          if (setting.id) {
-            acc[setting.id] = {
-              type: normalizeInputType(setting.type),
-              default: setting.default,
-            };
-          }
-          return acc;
-        },
-        {} as Record<string, InputSpec>,
-      ),
+      inputs: (manifest.settings ?? []).reduce((acc, setting) => {
+        if (setting.id) {
+          acc[setting.id] = {
+            type: normalizeInputType(setting.type),
+            default: setting.default,
+          };
+        }
+        return acc;
+      }, {} as Record<string, InputSpec>),
     }),
     [manifest, imageName],
   );

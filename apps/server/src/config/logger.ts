@@ -1,4 +1,4 @@
-import pino from 'pino';
+import pino, { Logger as PinoLogger } from 'pino';
 import { appConfig } from './index';
 import { v7 as uuid } from 'uuid';
 import { AsyncLocalStorage } from 'async_hooks';
@@ -83,7 +83,7 @@ const createLogger = () => {
   return pino(loggerOptions);
 };
 
-export type Logger = ExtendedLogger;
+export type Logger = PinoLogger;
 
 export const logger = createLogger() as Logger;
 

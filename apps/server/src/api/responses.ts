@@ -17,27 +17,42 @@ export interface SuccessResponse<T = unknown> {
 }
 
 // Helper functions for standardized responses
-export const createErrorResponse = (message: string, requestId?: string): ErrorResponse => ({
+export const createErrorResponse = (
+  message: string,
+  requestId?: string,
+): ErrorResponse => ({
   success: false,
   error: message,
   timestamp: new Date().toISOString(),
   ...(requestId && { requestId }),
 });
 
-export const createSuccessResponse = <T>(data: T, message?: string): SuccessResponse<T> => ({
+export const createSuccessResponse = <T>(
+  data: T,
+  message?: string,
+): SuccessResponse<T> => ({
   success: true,
   data,
   timestamp: new Date().toISOString(),
   ...(message && { message }),
 });
 
-export const sendErrorResponse = (ctx: Context, status: number, message: string): void => {
+export const sendErrorResponse = (
+  ctx: Context,
+  status: number,
+  message: string,
+): void => {
   const requestId = (ctx as LogContext).requestId;
   ctx.status = status;
   ctx.body = createErrorResponse(message, requestId);
 };
 
-export const sendSuccessResponse = <T>(ctx: Context, status: number, data: T, message?: string): void => {
+export const sendSuccessResponse = <T>(
+  ctx: Context,
+  status: number,
+  data: T,
+  message?: string,
+): void => {
   ctx.status = status;
   ctx.body = createSuccessResponse(data, message);
 };

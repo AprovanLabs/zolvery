@@ -5,7 +5,13 @@ import { Duration } from 'aws-cdk-lib';
 import { Table } from 'aws-cdk-lib/aws-dynamodb';
 import { StringParameter, ParameterTier } from 'aws-cdk-lib/aws-ssm';
 import * as path from 'path';
-import { DOMAIN_NAME, ENVIRONMENT, ORG_ID, PROJECT_ID, REGION_SHORT_CODE } from '../core/constants';
+import {
+  DOMAIN_NAME,
+  ENVIRONMENT,
+  ORG_ID,
+  PROJECT_ID,
+  REGION_SHORT_CODE,
+} from '../core/constants';
 import { Auth } from '../constructs/auth';
 import { namer } from '../core/utils';
 
@@ -43,9 +49,8 @@ export class AppLambda extends Construct {
           .join('\n'),
         description: 'Environment variables for the app',
         tier: ParameterTier.STANDARD,
-      }
+      },
     );
-    
 
     const lambdaDir = path.join(__dirname, '../../../server');
     this.function = new NodejsFunction(this, 'AppFunction', {

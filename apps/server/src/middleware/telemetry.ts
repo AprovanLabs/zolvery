@@ -16,7 +16,7 @@ export const telemetryMiddleware = () => {
 
     try {
       await next();
-      
+
       // Add response attributes
       addSpanAttributes(ctx, {
         'http.status_code': ctx.status,
@@ -26,10 +26,11 @@ export const telemetryMiddleware = () => {
       // Add error attributes
       addSpanAttributes(ctx, {
         'error.name': error instanceof Error ? error.name : 'Unknown',
-        'error.message': error instanceof Error ? error.message : 'Unknown error',
+        'error.message':
+          error instanceof Error ? error.message : 'Unknown error',
         'http.status_code': ctx.status || 500,
       });
-      
+
       throw error;
     }
   };

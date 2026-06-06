@@ -1,6 +1,17 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { ClipboardDocumentIcon, CheckIcon, LinkIcon, UserIcon } from '@heroicons/react/24/outline';
-import { codeToWords, fuzzyMatch, isValidWord, LETTERS, wordsToCode } from '../utils/code-words';
+import {
+  ClipboardDocumentIcon,
+  CheckIcon,
+  LinkIcon,
+  UserIcon,
+} from '@heroicons/react/24/outline';
+import {
+  codeToWords,
+  fuzzyMatch,
+  isValidWord,
+  LETTERS,
+  wordsToCode,
+} from '../utils/code-words';
 import { useP2PLobby, type LobbyPlayer } from '../hooks/use-p2p-lobby';
 
 export interface GameLobbyConfig {
@@ -20,8 +31,9 @@ interface GameLobbyProps {
 }
 
 function generateMatchID(): string {
-  return Array.from({ length: 6 }, () =>
-    LETTERS[Math.floor(Math.random() * LETTERS.length)],
+  return Array.from(
+    { length: 6 },
+    () => LETTERS[Math.floor(Math.random() * LETTERS.length)],
   ).join('');
 }
 
@@ -45,7 +57,11 @@ function PlayerList({ players }: { players: LobbyPlayer[] }) {
             key={player.id}
             className="flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-2"
           >
-            <div className={`w-2 h-2 rounded-full ${player.isReady ? 'bg-emerald-500' : 'bg-amber-400'}`} />
+            <div
+              className={`w-2 h-2 rounded-full ${
+                player.isReady ? 'bg-emerald-500' : 'bg-amber-400'
+              }`}
+            />
             <UserIcon className="h-4 w-4 text-slate-400" />
             <span className="text-sm text-slate-700 flex-1">{player.name}</span>
             {player.isHost && (
@@ -79,19 +95,36 @@ function LoadingCard({ title, message }: { title: string; message: string }) {
   );
 }
 
-function ErrorCard({ title, message, detail }: { title: string; message: string; detail?: string }) {
+function ErrorCard({
+  title,
+  message,
+  detail,
+}: {
+  title: string;
+  message: string;
+  detail?: string;
+}) {
   return (
     <div className="rounded-xl border-2 border-rose-200 bg-rose-50 p-4">
       <div className="text-sm font-semibold text-rose-700">{title}</div>
       <div className="text-xs text-rose-600 mt-1">{message}</div>
       {detail && (
-        <div className="text-[11px] text-rose-500 mt-2 break-words">{detail}</div>
+        <div className="text-[11px] text-rose-500 mt-2 break-words">
+          {detail}
+        </div>
       )}
     </div>
   );
 }
 
-export function GameLobby({ gameId, initialMode, initialCode, onStart, onCancel, onCodeGenerated }: GameLobbyProps) {
+export function GameLobby({
+  gameId,
+  initialMode,
+  initialCode,
+  onStart,
+  onCancel,
+  onCodeGenerated,
+}: GameLobbyProps) {
   // Determine initial mode based on provided props
   // - If host mode with code: restore hosting with that code
   // - If join mode with code: start in waiting (client connected to host)
@@ -109,8 +142,12 @@ export function GameLobby({ gameId, initialMode, initialCode, onStart, onCancel,
     if (initialMode === 'host') return generateMatchID();
     return '';
   });
-  const [inputCode, setInputCode] = useState(() => (initialCode || '').toUpperCase());
-  const [phraseInputs, setPhraseInputs] = useState<string[]>(() => codeToWords(initialCode || '') || ['', '', '']);
+  const [inputCode, setInputCode] = useState(() =>
+    (initialCode || '').toUpperCase(),
+  );
+  const [phraseInputs, setPhraseInputs] = useState<string[]>(
+    () => codeToWords(initialCode || '') || ['', '', ''],
+  );
   const [copied, setCopied] = useState<'code' | 'link' | null>(null);
   const [credentials] = useState(() => generateCredentials());
   const [gameStarted, setGameStarted] = useState(false);
@@ -123,7 +160,7 @@ export function GameLobby({ gameId, initialMode, initialCode, onStart, onCancel,
   const handleGameStart = useCallback(() => {
     if (gameStarted) return;
     setGameStarted(true);
-    
+
     onStart({
       matchID: isHost ? matchID : inputCode.toUpperCase(),
       playerID: isHost ? '0' : '1',
@@ -132,21 +169,15 @@ export function GameLobby({ gameId, initialMode, initialCode, onStart, onCancel,
     });
   }, [gameStarted, onStart, isHost, matchID, inputCode, credentials]);
 
-  const {
-    isConnecting,
-    isConnected,
-    players,
-    error,
-    startGame,
-    debug,
-  } = useP2PLobby({
-    gameId,
-    matchID: isHost ? matchID : inputCode.toUpperCase(),
-    isHost,
-    playerName: isHost ? 'Host' : 'Player 2',
-    enabled: shouldConnect,
-    onGameStart: handleGameStart,
-  });
+  const { isConnecting, isConnected, players, error, startGame, debug } =
+    useP2PLobby({
+      gameId,
+      matchID: isHost ? matchID : inputCode.toUpperCase(),
+      isHost,
+      playerName: isHost ? 'Host' : 'Player 2',
+      enabled: shouldConnect,
+      onGameStart: handleGameStart,
+    });
 
   // Auto-connect when entering join code
   const handleJoinSubmit = () => {
@@ -171,9 +202,12 @@ export function GameLobby({ gameId, initialMode, initialCode, onStart, onCancel,
     if (words) setPhraseInputs(words);
   }, [inputCode]);
 
-  useEffect(() => () => {
-    if (blurTimeout.current) clearTimeout(blurTimeout.current);
-  }, []);
+  useEffect(
+    () => () => {
+      if (blurTimeout.current) clearTimeout(blurTimeout.current);
+    },
+    [],
+  );
 
   const copyCode = async () => {
     try {
@@ -227,7 +261,9 @@ export function GameLobby({ gameId, initialMode, initialCode, onStart, onCancel,
       <div className="flex min-h-full w-full flex-col items-center justify-center bg-white p-6">
         <div className="w-full max-w-sm space-y-6">
           <div className="text-center space-y-2">
-            <h2 className="text-lg font-semibold text-slate-800">Multiplayer</h2>
+            <h2 className="text-lg font-semibold text-slate-800">
+              Multiplayer
+            </h2>
             <p className="text-sm text-slate-500">{gameId}</p>
           </div>
 
@@ -337,7 +373,8 @@ export function GameLobby({ gameId, initialMode, initialCode, onStart, onCancel,
               Peer ID: {debug.peerId ?? '—'}
             </div>
             <div className="text-[11px] font-mono text-slate-500">
-              ICE: {debug.lastIceState ?? 'n/a'} | Relay: {debug.usingRelayOnly ? 'on' : 'off'}
+              ICE: {debug.lastIceState ?? 'n/a'} | Relay:{' '}
+              {debug.usingRelayOnly ? 'on' : 'off'}
             </div>
             <div className="max-h-32 overflow-y-auto rounded bg-slate-50 p-2 text-[11px] font-mono text-slate-600">
               {debug.log.length === 0 ? (
@@ -382,7 +419,9 @@ export function GameLobby({ gameId, initialMode, initialCode, onStart, onCancel,
           <input
             type="text"
             value={inputCode}
-            onChange={(e) => setInputCode(e.target.value.toUpperCase().replace(/[^A-Z]/g, ''))}
+            onChange={(e) =>
+              setInputCode(e.target.value.toUpperCase().replace(/[^A-Z]/g, ''))
+            }
             placeholder="ABCDEF"
             maxLength={6}
             className="w-full rounded-xl border-2 border-slate-200 bg-slate-50 p-4 text-center font-mono text-2xl font-bold tracking-widest text-slate-800 placeholder:text-slate-300 focus:border-emerald-400 focus:outline-none"
@@ -393,13 +432,28 @@ export function GameLobby({ gameId, initialMode, initialCode, onStart, onCancel,
               {phraseInputs.map((word, index) => {
                 const state = phraseStates[index];
                 const suggestions = phraseSuggestions[index];
-                const showDropdown = focusedInput === index && word && suggestions.length > 0 && suggestions.length <= 6 && !isValidWord(word);
-                const border = state === 'valid' ? 'border-emerald-300 focus:border-emerald-400' : state === 'invalid' ? 'border-rose-200 focus:border-rose-300' : 'border-slate-200 focus:border-emerald-300';
+                const showDropdown =
+                  focusedInput === index &&
+                  word &&
+                  suggestions.length > 0 &&
+                  suggestions.length <= 6 &&
+                  !isValidWord(word);
+                const border =
+                  state === 'valid'
+                    ? 'border-emerald-300 focus:border-emerald-400'
+                    : state === 'invalid'
+                    ? 'border-rose-200 focus:border-rose-300'
+                    : 'border-slate-200 focus:border-emerald-300';
                 return (
-                  <div key={index} className="relative space-y-1">
+                  <div
+                    key={index}
+                    className="relative space-y-1"
+                  >
                     <input
                       value={word}
-                      onChange={(e) => handlePhraseChange(e.target.value, index)}
+                      onChange={(e) =>
+                        handlePhraseChange(e.target.value, index)
+                      }
                       onFocus={() => {
                         if (blurTimeout.current) {
                           clearTimeout(blurTimeout.current);
@@ -505,36 +559,35 @@ export function GameLobby({ gameId, initialMode, initialCode, onStart, onCancel,
         </div>
 
         <div className="space-y-3">
-
-        <div className="rounded-xl border-2 border-slate-200 p-4 space-y-2">
-          <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-            Debug
+          <div className="rounded-xl border-2 border-slate-200 p-4 space-y-2">
+            <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+              Debug
+            </div>
+            <div className="text-[11px] font-mono text-slate-500">
+              Host ID: {debug.hostId}
+            </div>
+            <div className="text-[11px] font-mono text-slate-500">
+              Peer ID: {debug.peerId ?? '—'}
+            </div>
+            <div className="text-[11px] font-mono text-slate-500">
+              ICE: {debug.lastIceState ?? 'n/a'} | Relay:{' '}
+              {debug.usingRelayOnly ? 'on' : 'off'}
+            </div>
+            <div className="max-h-32 overflow-y-auto rounded bg-slate-50 p-2 text-[11px] font-mono text-slate-600">
+              {debug.log.length === 0 ? (
+                <div>No events yet</div>
+              ) : (
+                debug.log.map((entry, idx) => <div key={idx}>{entry}</div>)
+              )}
+            </div>
           </div>
-          <div className="text-[11px] font-mono text-slate-500">
-            Host ID: {debug.hostId}
-          </div>
-          <div className="text-[11px] font-mono text-slate-500">
-            Peer ID: {debug.peerId ?? '—'}
-          </div>
-          <div className="text-[11px] font-mono text-slate-500">
-            ICE: {debug.lastIceState ?? 'n/a'} | Relay: {debug.usingRelayOnly ? 'on' : 'off'}
-          </div>
-          <div className="max-h-32 overflow-y-auto rounded bg-slate-50 p-2 text-[11px] font-mono text-slate-600">
-            {debug.log.length === 0 ? (
-              <div>No events yet</div>
-            ) : (
-              debug.log.map((entry, idx) => <div key={idx}>{entry}</div>)
-            )}
-          </div>
-        </div>
-        <button
+          <button
             onClick={() => {
               setMode('join');
               setInputCode('');
             }}
             className="w-full rounded-lg px-4 py-2 text-sm text-slate-400 transition-colors hover:text-slate-600"
           >
-
             Leave
           </button>
         </div>

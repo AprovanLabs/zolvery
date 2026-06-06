@@ -50,14 +50,17 @@ export function EditableWidgetPlayer({
     [source, onSourceChange, setIsEditing, project, entryFile],
   );
 
-  const handleSaveProject = useCallback(async (editedProject: VirtualProject) => {
-    const filesToSave = Array.from(editedProject.files.values()).map((f) => ({
-      path: f.path,
-      content: f.content,
-      encoding: f.encoding,
-    }));
-    await project.save(filesToSave);
-  }, [project]);
+  const handleSaveProject = useCallback(
+    async (editedProject: VirtualProject) => {
+      const filesToSave = Array.from(editedProject.files.values()).map((f) => ({
+        path: f.path,
+        content: f.content,
+        encoding: f.encoding,
+      }));
+      await project.save(filesToSave);
+    },
+    [project],
+  );
 
   return (
     <div className="relative w-full h-full">

@@ -165,10 +165,25 @@ export const game = {
   },
 };
 
-export function app({ G, moves, botState, botCount = 0, botPlayerIDs, playerID, isMultiplayer }: BoardProps) {
+export function app({
+  G,
+  moves,
+  botState,
+  botCount = 0,
+  botPlayerIDs,
+  playerID,
+  isMultiplayer,
+}: BoardProps) {
   // Ensure botPlayerIDs is always an array
   const safeBotPlayerIDs = Array.isArray(botPlayerIDs) ? botPlayerIDs : [];
-  console.log('[mancala] Props received:', { botCount, botPlayerIDs, safeBotPlayerIDs, current: G.current, playerID, isMultiplayer });
+  console.log('[mancala] Props received:', {
+    botCount,
+    botPlayerIDs,
+    safeBotPlayerIDs,
+    current: G.current,
+    playerID,
+    isMultiplayer,
+  });
 
   const over = G.winner !== null;
   const isBotThinking = botState?.isThinking ?? false;
@@ -207,7 +222,12 @@ export function app({ G, moves, botState, botCount = 0, botPlayerIDs, playerID, 
     const isCurrentPlayersTurn = owner === G.current;
     // In multiplayer, only allow clicking if it's the local player's turn
     const isClickable =
-      isCurrentPlayersTurn && isLocalPlayersTurn && !isOwnerBot && stones > 0 && !over && !isBotThinking;
+      isCurrentPlayersTurn &&
+      isLocalPlayersTurn &&
+      !isOwnerBot &&
+      stones > 0 &&
+      !over &&
+      !isBotThinking;
     const isActive = owner === G.current && !over;
 
     return (
@@ -215,21 +235,30 @@ export function app({ G, moves, botState, botCount = 0, botPlayerIDs, playerID, 
         onClick={() => moves.sow(index)}
         disabled={!isClickable}
         className={`relative flex aspect-[3/4] w-full flex-col items-center justify-center rounded-xl border-2 transition-all duration-200
-          ${isClickable ? 'cursor-pointer hover:scale-105 hover:border-slate-400' : 'cursor-default'}
-          ${isActive && stones > 0 ? 'border-slate-300 bg-white' : 'border-slate-200 bg-slate-50'}
+          ${
+            isClickable
+              ? 'cursor-pointer hover:scale-105 hover:border-slate-400'
+              : 'cursor-default'
+          }
+          ${
+            isActive && stones > 0
+              ? 'border-slate-300 bg-white'
+              : 'border-slate-200 bg-slate-50'
+          }
         `}
       >
         <div className="flex-1 flex items-center justify-center p-1">
           {renderStones(stones)}
         </div>
-        <span className="text-xs font-medium text-slate-500 pb-1">{stones}</span>
+        <span className="text-xs font-medium text-slate-500 pb-1">
+          {stones}
+        </span>
       </button>
     );
   };
 
   const Home = ({ player, stones }: { player: Player; stones: number }) => {
-    const isWinning =
-      over && G.winner === player;
+    const isWinning = over && G.winner === player;
 
     return (
       <div
@@ -237,7 +266,8 @@ export function app({ G, moves, botState, botCount = 0, botPlayerIDs, playerID, 
           ${isWinning ? 'scale-105 border-slate-900' : 'border-slate-200'}
         `}
         style={{
-          backgroundColor: over && G.winner === player ? COLORS[player] + '20' : undefined,
+          backgroundColor:
+            over && G.winner === player ? COLORS[player] + '20' : undefined,
         }}
       >
         <div
@@ -282,12 +312,20 @@ export function app({ G, moves, botState, botCount = 0, botPlayerIDs, playerID, 
         {/* Board - Vertical Layout for Mobile */}
         <div className="rounded-2xl border-2 border-slate-200 bg-slate-50 p-3 space-y-3">
           {/* Bot's Home (top) */}
-          <Home player={1} stones={G.homes[1]} />
+          <Home
+            player={1}
+            stones={G.homes[1]}
+          />
 
           {/* Bot's pits (top row, right to left visually but displayed left to right) */}
           <div className="grid grid-cols-6 gap-1.5">
             {[11, 10, 9, 8, 7, 6].map((i) => (
-              <Pit key={i} index={i} stones={G.pits[i]} owner={1} />
+              <Pit
+                key={i}
+                index={i}
+                stones={G.pits[i]}
+                owner={1}
+              />
             ))}
           </div>
 
@@ -303,12 +341,20 @@ export function app({ G, moves, botState, botCount = 0, botPlayerIDs, playerID, 
           {/* Human's pits (bottom row, left to right) */}
           <div className="grid grid-cols-6 gap-1.5">
             {[0, 1, 2, 3, 4, 5].map((i) => (
-              <Pit key={i} index={i} stones={G.pits[i]} owner={0} />
+              <Pit
+                key={i}
+                index={i}
+                stones={G.pits[i]}
+                owner={0}
+              />
             ))}
           </div>
 
           {/* Human's Home (bottom) */}
-          <Home player={0} stones={G.homes[0]} />
+          <Home
+            player={0}
+            stones={G.homes[0]}
+          />
         </div>
 
         {/* Status */}
@@ -342,21 +388,30 @@ export function app({ G, moves, botState, botCount = 0, botPlayerIDs, playerID, 
               viewBox="0 0 24 24"
               stroke="currentColor"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 9l-7 7-7-7"
+              />
             </svg>
           </summary>
           <div className="mt-3 space-y-2 text-xs text-slate-500">
             <p>
-              <span className="font-medium text-slate-600">Goal:</span> Collect the most stones in your home.
+              <span className="font-medium text-slate-600">Goal:</span> Collect
+              the most stones in your home.
             </p>
             <p>
-              <span className="font-medium text-slate-600">Play:</span> Tap a pit on your side to sow stones counter-clockwise.
+              <span className="font-medium text-slate-600">Play:</span> Tap a
+              pit on your side to sow stones counter-clockwise.
             </p>
             <p>
-              <span className="font-medium text-slate-600">Extra turn:</span> Land your last stone in your home.
+              <span className="font-medium text-slate-600">Extra turn:</span>{' '}
+              Land your last stone in your home.
             </p>
             <p>
-              <span className="font-medium text-slate-600">Capture:</span> Land in an empty pit on your side to capture opposite stones.
+              <span className="font-medium text-slate-600">Capture:</span> Land
+              in an empty pit on your side to capture opposite stones.
             </p>
           </div>
         </details>

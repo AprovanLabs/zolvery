@@ -12,7 +12,20 @@ interface Ctx {
 }
 
 type Suit = 'hearts' | 'diamonds' | 'spades' | 'clubs';
-type Rank = '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '10' | 'J' | 'Q' | 'K' | 'A';
+type Rank =
+  | '2'
+  | '3'
+  | '4'
+  | '5'
+  | '6'
+  | '7'
+  | '8'
+  | '9'
+  | '10'
+  | 'J'
+  | 'Q'
+  | 'K'
+  | 'A';
 
 interface Card {
   name: Rank;
@@ -59,12 +72,26 @@ const INITIAL_CHIPS = 100;
 const DEFAULT_NUM_PLAYERS = 3;
 
 const CARD_RANK: Record<Rank, number> = {
-  '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, '10': 10,
-  J: 10, Q: 10, K: 10, A: 11,
+  '2': 2,
+  '3': 3,
+  '4': 4,
+  '5': 5,
+  '6': 6,
+  '7': 7,
+  '8': 8,
+  '9': 9,
+  '10': 10,
+  J: 10,
+  Q: 10,
+  K: 10,
+  A: 11,
 };
 
 const SUIT_SYMBOLS: Record<Suit, string> = {
-  hearts: '♥', diamonds: '♦', spades: '♠', clubs: '♣',
+  hearts: '♥',
+  diamonds: '♦',
+  spades: '♠',
+  clubs: '♣',
 };
 
 const SUIT_COLORS: Record<Suit, string> = {
@@ -77,13 +104,27 @@ const SUIT_COLORS: Record<Suit, string> = {
 const PLAYER_COLORS = [
   'oklch(72.3% 0.219 149.579)', // emerald
   'oklch(62.3% 0.214 259.815)', // blue
-  'oklch(70.5% 0.213 47.604)',  // amber
+  'oklch(70.5% 0.213 47.604)', // amber
   'oklch(65.6% 0.241 354.308)', // pink
 ];
 
 const createDeck = (): Card[] => {
   const suits: Suit[] = ['hearts', 'diamonds', 'spades', 'clubs'];
-  const ranks: Rank[] = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+  const ranks: Rank[] = [
+    '2',
+    '3',
+    '4',
+    '5',
+    '6',
+    '7',
+    '8',
+    '9',
+    '10',
+    'J',
+    'Q',
+    'K',
+    'A',
+  ];
   const deck: Card[] = [];
   for (const suit of suits) {
     for (const name of ranks) {
@@ -160,18 +201,26 @@ export const game = {
   name: 'blackjack',
   minPlayers: 1,
   maxPlayers: 4,
-  setup: ({ ctx }: { ctx: { numPlayers?: number } }): GameState => createInitialState(ctx),
+  setup: ({ ctx }: { ctx: { numPlayers?: number } }): GameState =>
+    createInitialState(ctx),
   // Moves validate themselves based on phase and playerID.
   // Mark all players as active so anyone can make moves (validated in move logic).
   turn: {
     activePlayers: { all: '' },
   },
   moves: {
-    bet: ({ G, ctx }: { G: GameState; ctx: Ctx }, playerId: number, amount: number) => {
+    bet: (
+      { G, ctx }: { G: GameState; ctx: Ctx },
+      playerId: number,
+      amount: number,
+    ) => {
       const player = G.players[playerId];
       if (!player) return;
-      const isCallerValid = ctx.playerID === null || ctx.playerID === undefined || 
-        parseInt(ctx.playerID, 10) === playerId || player.isBot;
+      const isCallerValid =
+        ctx.playerID === null ||
+        ctx.playerID === undefined ||
+        parseInt(ctx.playerID, 10) === playerId ||
+        player.isBot;
       if (!isCallerValid) return;
       if (amount > player.chips || G.phase !== 'betting') return;
       updatePlayer(G, playerId, (p) => {
@@ -181,7 +230,12 @@ export const game = {
     },
     deal: ({ G, ctx }: { G: GameState; ctx: Ctx }) => {
       if (G.phase !== 'betting') return;
-      if (ctx.playerID !== null && ctx.playerID !== undefined && ctx.playerID !== '0') return;
+      if (
+        ctx.playerID !== null &&
+        ctx.playerID !== undefined &&
+        ctx.playerID !== '0'
+      )
+        return;
       const deck = shuffle(createDeck());
       G.deck = deck;
       const nextPlayers = G.players.map((player) => {
@@ -207,8 +261,11 @@ export const game = {
     hit: ({ G, ctx }: { G: GameState; ctx: Ctx }) => {
       if (G.phase !== 'playing') return;
       const currentPlayer = G.players[G.currentPlayer];
-      const isCallerValid = ctx.playerID === null || ctx.playerID === undefined || 
-        parseInt(ctx.playerID, 10) === G.currentPlayer || currentPlayer?.isBot;
+      const isCallerValid =
+        ctx.playerID === null ||
+        ctx.playerID === undefined ||
+        parseInt(ctx.playerID, 10) === G.currentPlayer ||
+        currentPlayer?.isBot;
       if (!isCallerValid) return;
       const card = G.deck.pop();
       if (!card) return;
@@ -228,8 +285,11 @@ export const game = {
     stand: ({ G, ctx }: { G: GameState; ctx: Ctx }) => {
       if (G.phase !== 'playing') return;
       const currentPlayer = G.players[G.currentPlayer];
-      const isCallerValid = ctx.playerID === null || ctx.playerID === undefined || 
-        parseInt(ctx.playerID, 10) === G.currentPlayer || currentPlayer?.isBot;
+      const isCallerValid =
+        ctx.playerID === null ||
+        ctx.playerID === undefined ||
+        parseInt(ctx.playerID, 10) === G.currentPlayer ||
+        currentPlayer?.isBot;
       if (!isCallerValid) return;
       G.currentPlayer = findNextActivePlayer(G.players, G.currentPlayer + 1);
       if (G.currentPlayer >= G.players.length) {
@@ -239,8 +299,11 @@ export const game = {
     double: ({ G, ctx }: { G: GameState; ctx: Ctx }) => {
       if (G.phase !== 'playing') return;
       const currentPlayer = G.players[G.currentPlayer];
-      const isCallerValid = ctx.playerID === null || ctx.playerID === undefined || 
-        parseInt(ctx.playerID, 10) === G.currentPlayer || currentPlayer?.isBot;
+      const isCallerValid =
+        ctx.playerID === null ||
+        ctx.playerID === undefined ||
+        parseInt(ctx.playerID, 10) === G.currentPlayer ||
+        currentPlayer?.isBot;
       if (!isCallerValid) return;
       const player = G.players[G.currentPlayer];
       if (player.bet > player.chips) return;
@@ -260,7 +323,12 @@ export const game = {
     },
     dealerPlay: ({ G, ctx }: { G: GameState; ctx: Ctx }) => {
       if (G.phase !== 'dealer') return;
-      if (ctx.playerID !== null && ctx.playerID !== undefined && ctx.playerID !== '0') return;
+      if (
+        ctx.playerID !== null &&
+        ctx.playerID !== undefined &&
+        ctx.playerID !== '0'
+      )
+        return;
       G.dealerHand = G.dealerHand.map((c) => ({ ...c, hidden: false }));
       G.dealerScore = calculateScore(G.dealerHand);
       while (G.dealerScore < 17 && G.deck.length > 0) {
@@ -270,10 +338,18 @@ export const game = {
       const nextPlayers: Player[] = G.players.map((player) => {
         if (player.result === 'lose') return player;
         if (G.dealerScore > 21 || player.score > G.dealerScore) {
-          return { ...player, result: 'win' as const, chips: player.chips + player.bet * 2 };
+          return {
+            ...player,
+            result: 'win' as const,
+            chips: player.chips + player.bet * 2,
+          };
         }
         if (player.score === G.dealerScore) {
-          return { ...player, result: 'push' as const, chips: player.chips + player.bet };
+          return {
+            ...player,
+            result: 'push' as const,
+            chips: player.chips + player.bet,
+          };
         }
         return { ...player, result: 'lose' as const };
       });
@@ -281,7 +357,12 @@ export const game = {
       G.phase = 'results';
     },
     nextRound: ({ G, ctx }: { G: GameState; ctx: Ctx }) => {
-      if (ctx.playerID !== null && ctx.playerID !== undefined && ctx.playerID !== '0') return;
+      if (
+        ctx.playerID !== null &&
+        ctx.playerID !== undefined &&
+        ctx.playerID !== '0'
+      )
+        return;
       if (areAllHumansOut(G.players)) {
         G.phase = 'gameOver';
         return;
@@ -300,7 +381,12 @@ export const game = {
       }));
     },
     newGame: ({ G, ctx }: { G: GameState; ctx: Ctx }) => {
-      if (ctx.playerID !== null && ctx.playerID !== undefined && ctx.playerID !== '0') return;
+      if (
+        ctx.playerID !== null &&
+        ctx.playerID !== undefined &&
+        ctx.playerID !== '0'
+      )
+        return;
       G.deck = [];
       G.dealerHand = [];
       G.dealerScore = 0;
@@ -342,7 +428,9 @@ function PlayingCard({ card, small }: { card: Card; small?: boolean }) {
   if (card.hidden) {
     return (
       <div
-        className={`${small ? 'w-10 h-14' : 'w-14 h-20'} rounded-lg border-2 border-slate-300 bg-gradient-to-br from-slate-600 to-slate-800 flex items-center justify-center`}
+        className={`${
+          small ? 'w-10 h-14' : 'w-14 h-20'
+        } rounded-lg border-2 border-slate-300 bg-gradient-to-br from-slate-600 to-slate-800 flex items-center justify-center`}
       >
         <div className="w-6 h-6 rounded-full border-2 border-slate-400" />
       </div>
@@ -350,7 +438,9 @@ function PlayingCard({ card, small }: { card: Card; small?: boolean }) {
   }
   return (
     <div
-      className={`${small ? 'w-10 h-14 text-xs' : 'w-14 h-20 text-sm'} rounded-lg border-2 border-slate-200 bg-white flex flex-col items-center justify-center font-mono shadow-sm`}
+      className={`${
+        small ? 'w-10 h-14 text-xs' : 'w-14 h-20 text-sm'
+      } rounded-lg border-2 border-slate-200 bg-white flex flex-col items-center justify-center font-mono shadow-sm`}
     >
       <span className={`font-bold ${SUIT_COLORS[card.suit]}`}>{card.name}</span>
       <span className={SUIT_COLORS[card.suit]}>{SUIT_SYMBOLS[card.suit]}</span>
@@ -362,8 +452,14 @@ function Hand({ cards, small }: { cards: Card[]; small?: boolean }) {
   return (
     <div className="flex -space-x-4">
       {cards.map((card, i) => (
-        <div key={i} style={{ zIndex: i }}>
-          <PlayingCard card={card} small={small} />
+        <div
+          key={i}
+          style={{ zIndex: i }}
+        >
+          <PlayingCard
+            card={card}
+            small={small}
+          />
         </div>
       ))}
     </div>
@@ -392,33 +488,50 @@ function Badge({
   );
 }
 
-export function app({ G, playerID, isMultiplayer, botCount = 0, moves }: BoardProps) {
+export function app({
+  G,
+  playerID,
+  isMultiplayer,
+  botCount = 0,
+  moves,
+}: BoardProps) {
   const [currentBet, setCurrentBet] = useState(BET_INCREMENT);
   const myPlayerIndex = playerID !== null ? parseInt(playerID, 10) : 0;
   const myPlayer = G.players[myPlayerIndex];
   const amIOut = myPlayer && isPlayerOut(myPlayer);
-  const isMyTurn = G.phase === 'playing' && G.currentPlayer === myPlayerIndex && !amIOut;
-  const canBet = G.phase === 'betting' && myPlayer && myPlayer.chips >= currentBet && !amIOut;
-  
+  const isMyTurn =
+    G.phase === 'playing' && G.currentPlayer === myPlayerIndex && !amIOut;
+  const canBet =
+    G.phase === 'betting' &&
+    myPlayer &&
+    myPlayer.chips >= currentBet &&
+    !amIOut;
+
   // Determine which players are bots based on botCount (last N players are bots, excluding human)
   const numPlayers = G.players.length;
   const botPlayerIDs = useMemo(
-    () => new Set(
-      Array.from({ length: Math.min(botCount, numPlayers - 1) }, (_, i) => numPlayers - 1 - i)
-    ),
-    [botCount, numPlayers]
+    () =>
+      new Set(
+        Array.from(
+          { length: Math.min(botCount, numPlayers - 1) },
+          (_, i) => numPlayers - 1 - i,
+        ),
+      ),
+    [botCount, numPlayers],
   );
   const isBot = useCallback(
     (id: number) => id !== myPlayerIndex && botPlayerIDs.has(id),
-    [myPlayerIndex, botPlayerIDs]
+    [myPlayerIndex, botPlayerIDs],
   );
-  
+
   // Bot automation only runs in single-player mode with bots configured
   const shouldRunBots = !isMultiplayer && botCount > 0;
 
   // Bot betting during betting phase (single player only)
   // Use a ref to track which bots have bet this round to prevent multiple bets
-  const [botsBetThisRound, setBotsBetThisRound] = useState<Set<number>>(new Set());
+  const [botsBetThisRound, setBotsBetThisRound] = useState<Set<number>>(
+    new Set(),
+  );
 
   // Reset bot bet tracking when phase changes to betting
   useEffect(() => {
@@ -430,7 +543,11 @@ export function app({ G, playerID, isMultiplayer, botCount = 0, moves }: BoardPr
   useEffect(() => {
     if (!shouldRunBots || G.phase !== 'betting') return;
     const bots = G.players.filter(
-      (p) => isBot(p.id) && p.bet === 0 && p.chips > 0 && !botsBetThisRound.has(p.id)
+      (p) =>
+        isBot(p.id) &&
+        p.bet === 0 &&
+        p.chips > 0 &&
+        !botsBetThisRound.has(p.id),
     );
     if (bots.length === 0) return;
     const bot = bots[0];
@@ -447,7 +564,8 @@ export function app({ G, playerID, isMultiplayer, botCount = 0, moves }: BoardPr
 
   // Bot playing during playing phase
   // Include score in deps so effect re-runs after each hit
-  const currentBotScore = G.phase === 'playing' ? G.players[G.currentPlayer]?.score : null;
+  const currentBotScore =
+    G.phase === 'playing' ? G.players[G.currentPlayer]?.score : null;
   useEffect(() => {
     if (!shouldRunBots || G.phase !== 'playing') return;
     const current = G.players[G.currentPlayer];
@@ -460,7 +578,15 @@ export function app({ G, playerID, isMultiplayer, botCount = 0, moves }: BoardPr
       }
     }, BOT_DELAY_MS);
     return () => clearTimeout(timer);
-  }, [G.phase, G.currentPlayer, currentBotScore, shouldRunBots, moves, G.players, isBot]);
+  }, [
+    G.phase,
+    G.currentPlayer,
+    currentBotScore,
+    shouldRunBots,
+    moves,
+    G.players,
+    isBot,
+  ]);
 
   // Dealer plays automatically (host triggers in multiplayer, or single player)
   useEffect(() => {
@@ -517,8 +643,8 @@ export function app({ G, playerID, isMultiplayer, botCount = 0, moves }: BoardPr
                   isBusted
                     ? 'border-slate-200 bg-slate-50 opacity-60'
                     : isActive
-                      ? 'border-slate-400 shadow-md'
-                      : 'border-slate-100'
+                    ? 'border-slate-400 shadow-md'
+                    : 'border-slate-100'
                 }`}
               >
                 {isBusted && (
@@ -535,12 +661,21 @@ export function app({ G, playerID, isMultiplayer, botCount = 0, moves }: BoardPr
                       style={{ backgroundColor: PLAYER_COLORS[idx] }}
                     />
                     <span className="text-xs font-medium text-slate-600">
-                      {idx === myPlayerIndex ? 'You' : isMultiplayer ? `Player ${player.id + 1}` : isBot(idx) ? `Bot ${player.id}` : `Player ${player.id + 1}`}
+                      {idx === myPlayerIndex
+                        ? 'You'
+                        : isMultiplayer
+                        ? `Player ${player.id + 1}`
+                        : isBot(idx)
+                        ? `Bot ${player.id}`
+                        : `Player ${player.id + 1}`}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
                     {player.bet > 0 && (
-                      <Badge value={`$${player.bet}`} variant="muted" />
+                      <Badge
+                        value={`$${player.bet}`}
+                        variant="muted"
+                      />
                     )}
                     <Badge value={`$${player.chips}`} />
                   </div>
@@ -548,7 +683,10 @@ export function app({ G, playerID, isMultiplayer, botCount = 0, moves }: BoardPr
 
                 {player.hand.length > 0 ? (
                   <div className="flex items-center justify-between">
-                    <Hand cards={player.hand} small />
+                    <Hand
+                      cards={player.hand}
+                      small
+                    />
                     <div className="flex items-center gap-2">
                       {player.result ? (
                         <Badge
@@ -557,8 +695,8 @@ export function app({ G, playerID, isMultiplayer, botCount = 0, moves }: BoardPr
                             player.result === 'win'
                               ? 'success'
                               : player.result === 'lose'
-                                ? 'danger'
-                                : 'muted'
+                              ? 'danger'
+                              : 'muted'
                           }
                         />
                       ) : (
@@ -600,7 +738,9 @@ export function app({ G, playerID, isMultiplayer, botCount = 0, moves }: BoardPr
                   ${currentBet}
                 </span>
               </div>
-              <div className={myPlayerIndex === 0 ? 'grid grid-cols-2 gap-2' : ''}>
+              <div
+                className={myPlayerIndex === 0 ? 'grid grid-cols-2 gap-2' : ''}
+              >
                 <button
                   onClick={() => moves.bet(myPlayerIndex, currentBet)}
                   disabled={!canBet || !myPlayer || myPlayer.bet > 0 || amIOut}
@@ -621,8 +761,8 @@ export function app({ G, playerID, isMultiplayer, botCount = 0, moves }: BoardPr
             </>
           )}
 
-          {G.phase === 'playing' && (
-            amIOut ? (
+          {G.phase === 'playing' &&
+            (amIOut ? (
               <div className="text-center text-sm text-slate-400">
                 You are out of chips
               </div>
@@ -644,14 +784,15 @@ export function app({ G, playerID, isMultiplayer, botCount = 0, moves }: BoardPr
                 </button>
                 <button
                   onClick={() => moves.double()}
-                  disabled={!isMyTurn || !myPlayer || myPlayer.bet > myPlayer.chips}
+                  disabled={
+                    !isMyTurn || !myPlayer || myPlayer.bet > myPlayer.chips
+                  }
                   className="rounded-lg border-2 border-amber-400 px-4 py-2.5 text-sm font-medium text-amber-600 transition-colors hover:bg-amber-50 disabled:border-slate-100 disabled:text-slate-300"
                 >
                   Double
                 </button>
               </div>
-            )
-          )}
+            ))}
 
           {G.phase === 'results' && (
             <button
@@ -671,8 +812,12 @@ export function app({ G, playerID, isMultiplayer, botCount = 0, moves }: BoardPr
           {G.phase === 'gameOver' && (
             <div className="flex flex-col items-center gap-4 py-6">
               <div className="text-center">
-                <span className="text-2xl font-bold text-slate-800">Game Over</span>
-                <p className="text-sm text-slate-500 mt-1">You ran out of chips!</p>
+                <span className="text-2xl font-bold text-slate-800">
+                  Game Over
+                </span>
+                <p className="text-sm text-slate-500 mt-1">
+                  You ran out of chips!
+                </p>
               </div>
               <button
                 onClick={() => moves.newGame()}

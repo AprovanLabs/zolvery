@@ -2,15 +2,20 @@ import { useMemo, useRef, useEffect, useState, useCallback } from 'react';
 import { EditModal, type CompileFn } from '@aprovan/patchwork-editor';
 import { usePatchwork } from '../hooks/use-patchwork';
 import type { ZolveryManifest } from '../hooks/use-widget-source';
-import type { Manifest, InputSpec, VirtualProject } from '@aprovan/patchwork-compiler';
+import type {
+  Manifest,
+  InputSpec,
+  VirtualProject,
+} from '@aprovan/patchwork-compiler';
+import { WIDGET_CDN_URL } from '../constants';
 
 const IMAGE_MAP: Record<string, string> = {
   shadcn: '@aprovan/patchwork-image-shadcn',
   vanilla: '@aprovan/patchwork-vanilla',
-  boardgameio: '@aprovan/patchwork-image-boardgameio',
+  boardgameio: '@aprovan/patchwork-image-boardgameio@0.1.0',
 };
 
-const CDN_BASE_URL = import.meta.env.DEV ? '/npm' : 'https://esm.sh';
+const CDN_BASE_URL = import.meta.env.DEV ? '/npm' : WIDGET_CDN_URL;
 
 const normalizeInputType = (settingType?: string): InputSpec['type'] => {
   switch (settingType) {
@@ -45,13 +50,22 @@ export function WidgetEditModal({
   onClose,
   onSaveProject,
 }: WidgetEditModalProps) {
-  console.log('[WidgetEditModal] project:', project.id, 'files:', Array.from(project.files.keys()));
+  console.log(
+    '[WidgetEditModal] project:',
+    project.id,
+    'files:',
+    Array.from(project.files.keys()),
+  );
   const source = project.files.get(project.entry)?.content ?? '';
   const imageName = IMAGE_MAP[manifest.runnerTag] ?? manifest.runnerTag;
-  const { compiler, isReady, error: compilerError } = usePatchwork({
+  const {
+    compiler,
+    isReady,
+    error: compilerError,
+  } = usePatchwork({
     image: imageName,
     cdnBaseUrl: CDN_BASE_URL,
-    widgetCdnBaseUrl: 'https://esm.sh',
+    widgetCdnBaseUrl: WIDGET_CDN_URL,
   });
 
   const compilerManifest: Manifest = useMemo(
@@ -61,18 +75,15 @@ export function WidgetEditModal({
       platform: 'browser' as const,
       image: imageName,
       services: manifest.servers,
-      inputs: (manifest.settings ?? []).reduce(
-        (acc, setting) => {
-          if (setting.id) {
-            acc[setting.id] = {
-              type: normalizeInputType(setting.type),
-              default: setting.default,
-            };
-          }
-          return acc;
-        },
-        {} as Record<string, InputSpec>,
-      ),
+      inputs: (manifest.settings ?? []).reduce((acc, setting) => {
+        if (setting.id) {
+          acc[setting.id] = {
+            type: normalizeInputType(setting.type),
+            default: setting.default,
+          };
+        }
+        return acc;
+      }, {} as Record<string, InputSpec>),
     }),
     [manifest, imageName],
   );
@@ -83,20 +94,26 @@ export function WidgetEditModal({
       await compiler.compile(code, compilerManifest);
       return { success: true };
     } catch (e) {
-      return { success: false, error: e instanceof Error ? e.message : String(e) };
+      return {
+        success: false,
+        error: e instanceof Error ? e.message : String(e),
+      };
     }
   };
 
-  const renderPreview = useCallback((code: string) => {
-    return (
-      <WidgetPreview
-        code={code}
-        manifest={manifest}
-        compilerManifest={compilerManifest}
-        imageName={imageName}
-      />
-    );
-  }, [manifest, compilerManifest, imageName]);
+  const renderPreview = useCallback(
+    (code: string) => {
+      return (
+        <WidgetPreview
+          code={code}
+          manifest={manifest}
+          compilerManifest={compilerManifest}
+          imageName={imageName}
+        />
+      );
+    },
+    [manifest, compilerManifest, imageName],
+  );
 
   if (!isOpen) return null;
 
@@ -104,7 +121,9 @@ export function WidgetEditModal({
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-8">
         <div className="bg-white rounded-lg p-6 max-w-md">
-          <p className="text-red-500">Compiler error: {compilerError.message}</p>
+          <p className="text-red-500">
+            Compiler error: {compilerError.message}
+          </p>
           <button
             onClick={() => onClose(source, 0)}
             className="mt-4 px-4 py-2 bg-slate-200 rounded hover:bg-slate-300"
@@ -139,26 +158,28 @@ interface WidgetPreviewProps {
   imageName: string;
 }
 
-function WidgetPreview({ code, manifest, compilerManifest, imageName }: WidgetPreviewProps) {
+function WidgetPreview({
+  code,
+  manifest,
+  compilerManifest,
+  imageName,
+}: WidgetPreviewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [error, setError] = useState<string | null>(null);
 
   const { isReady, mount } = usePatchwork({
     image: imageName,
     cdnBaseUrl: CDN_BASE_URL,
-    widgetCdnBaseUrl: 'https://esm.sh',
+    widgetCdnBaseUrl: WIDGET_CDN_URL,
   });
 
   const inputs = useMemo(() => {
-    return (manifest.settings ?? []).reduce(
-      (acc, setting) => {
-        if (setting.id && setting.default !== undefined) {
-          acc[setting.id] = setting.default;
-        }
-        return acc;
-      },
-      {} as Record<string, unknown>,
-    );
+    return (manifest.settings ?? []).reduce((acc, setting) => {
+      if (setting.id && setting.default !== undefined) {
+        acc[setting.id] = setting.default;
+      }
+      return acc;
+    }, {} as Record<string, unknown>);
   }, [manifest.settings]);
 
   useEffect(() => {

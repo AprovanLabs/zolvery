@@ -1,5 +1,6 @@
 import React from 'react';
 import type { GameCategory, GameEntry } from '../hooks/use-games-catalog';
+import { GITHUB_REPO_URL } from '../constants';
 
 interface GameCatalogProps {
   categories: GameCategory[];
@@ -7,13 +8,7 @@ interface GameCatalogProps {
   onSelectGame: (game: GameEntry) => void;
 }
 
-function GameCard({
-  game,
-  onClick,
-}: {
-  game: GameEntry;
-  onClick: () => void;
-}) {
+function GameCard({ game, onClick }: { game: GameEntry; onClick: () => void }) {
   return (
     <button
       onClick={onClick}
@@ -60,12 +55,21 @@ export function GameCatalog({
     <div className="h-full overflow-auto">
       <div className="p-4 space-y-6 max-w-lg mx-auto">
         <header className="text-center space-y-1 flex space-between gap-4 items-center justify-center">
-          <img src={`${import.meta.env.BASE_URL}logo.png`} alt="Zolvery Logo" className="w-8 h-8" />
-          <span className="text-sm uppercase tracking-widest text-slate-400">Zolvery</span>
+          <img
+            src={`${import.meta.env.BASE_URL}logo.png`}
+            alt="Zolvery Logo"
+            className="w-8 h-8"
+          />
+          <span className="text-sm uppercase tracking-widest text-slate-400">
+            Zolvery
+          </span>
         </header>
 
         {categories.map((category) => (
-          <section key={category.id} className="space-y-2">
+          <section
+            key={category.id}
+            className="space-y-2"
+          >
             <h2 className="text-xs font-medium text-slate-400 uppercase tracking-wide px-1">
               {category.label}
             </h2>
@@ -86,7 +90,7 @@ export function GameCatalog({
             Want more games? Build your own!
           </p>
           <a
-            href="https://github.com/JacobSampson/zolvery"
+            href={GITHUB_REPO_URL}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-700 transition-colors"

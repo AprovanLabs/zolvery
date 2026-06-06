@@ -35,7 +35,10 @@ function SettingInput({
         className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-slate-400 focus:outline-none"
       >
         {setting.options.map((opt) => (
-          <option key={opt.value} value={opt.value}>
+          <option
+            key={opt.value}
+            value={opt.value}
+          >
             {opt.label}
           </option>
         ))}
@@ -127,7 +130,9 @@ export function GameSetup({ game, onStart, onBack }: GameSetupProps) {
               {game.name ?? game.appId}
             </h1>
             {game.description && (
-              <p className="text-sm text-slate-500 mt-0.5">{game.description}</p>
+              <p className="text-sm text-slate-500 mt-0.5">
+                {game.description}
+              </p>
             )}
           </div>
         </header>
@@ -151,7 +156,10 @@ export function GameSetup({ game, onStart, onBack }: GameSetupProps) {
                   { length: maxPlayers - minPlayers + 1 },
                   (_, i) => minPlayers + i,
                 ).map((n) => (
-                  <option key={n} value={n}>
+                  <option
+                    key={n}
+                    value={n}
+                  >
                     {n} {n === 1 ? 'Player' : 'Players'}
                   </option>
                 ))}
@@ -170,16 +178,21 @@ export function GameSetup({ game, onStart, onBack }: GameSetupProps) {
                 className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-slate-400 focus:outline-none"
               >
                 {Array.from({ length: playerCount }, (_, i) => i).map((n) => (
-                  <option key={n} value={n}>
+                  <option
+                    key={n}
+                    value={n}
+                  >
                     {n} {n === 1 ? 'Bot' : 'Bots'}
                   </option>
                 ))}
               </select>
               <p className="text-xs text-slate-400">
-                {humanPlayers} {humanPlayers === 1 ? 'player' : 'players needed'}
-                {!localPlayValid && (
-                    ` This game supports ${maxLocalPlayers} local ${maxLocalPlayers === 1 ? 'player' : 'players'}.`
-                )}
+                {humanPlayers}{' '}
+                {humanPlayers === 1 ? 'player' : 'players needed'}
+                {!localPlayValid &&
+                  ` This game supports ${maxLocalPlayers} local ${
+                    maxLocalPlayers === 1 ? 'player' : 'players'
+                  }.`}
               </p>
             </div>
           )}
@@ -190,8 +203,13 @@ export function GameSetup({ game, onStart, onBack }: GameSetupProps) {
                 Settings
               </h2>
               {filteredSettings.map((setting) => (
-                <div key={setting.id} className="space-y-1">
-                  <label className="text-sm text-slate-700">{setting.label}</label>
+                <div
+                  key={setting.id}
+                  className="space-y-1"
+                >
+                  <label className="text-sm text-slate-700">
+                    {setting.label}
+                  </label>
                   <SettingInput
                     setting={setting}
                     value={settings[setting.id]}

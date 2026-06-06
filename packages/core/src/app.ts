@@ -9,13 +9,13 @@ export type Settings = {
   type: 'select' | 'checkbox' | 'input' | 'slider';
   // If true, the setting is required and must be set by the user
   required?: boolean;
-}
+};
 
 export type Server = {
-  version: string,
-  features?: string[],
-  config?: { [key: string]: any },
-}
+  version: string;
+  features?: string[];
+  config?: Record<string, unknown>;
+};
 
 export type App = {
   appId: string;
@@ -26,6 +26,6 @@ export type App = {
   runnerTag: string;
   authorId: string;
   visibility: 'public' | 'private';
-  settings: Settings[],
-  servers?: { [serverId: string]: string | Server },
+  settings: Settings[];
+  servers?: { [serverId: string]: string | Server };
 };

@@ -2525,14 +2525,14 @@ export function app({ G, moves }: BoardProps) {
           fb === 'correct'
             ? COLORS.correct
             : fb === 'wrong-position'
-              ? COLORS.wrongPosition
-              : COLORS.incorrect,
+            ? COLORS.wrongPosition
+            : COLORS.incorrect,
         borderColor:
           fb === 'correct'
             ? COLORS.correct
             : fb === 'wrong-position'
-              ? COLORS.wrongPosition
-              : COLORS.incorrect,
+            ? COLORS.wrongPosition
+            : COLORS.incorrect,
         color: '#fff',
       };
     }
@@ -2555,7 +2555,10 @@ export function app({ G, moves }: BoardProps) {
         {/* Game Grid */}
         <div className="grid gap-1.5">
           {Array.from({ length: MAX_GUESSES }).map((_, rowIndex) => (
-            <div key={rowIndex} className="grid grid-cols-5 gap-1.5">
+            <div
+              key={rowIndex}
+              className="grid grid-cols-5 gap-1.5"
+            >
               {Array.from({ length: WORD_LENGTH }).map((_, colIndex) => {
                 const isCurrentRow = rowIndex === G.guesses.length;
                 const isSelected = isCurrentRow && colIndex === selectedBox;
@@ -2574,17 +2577,29 @@ export function app({ G, moves }: BoardProps) {
                     className={`aspect-square rounded-xl border-2 text-lg font-bold uppercase transition-all duration-150
                       ${G.guesses[rowIndex] ? 'text-white' : 'text-slate-700'}
                       ${isSelected ? 'border-slate-500 bg-slate-50' : ''}
-                      ${hasLetter && !isSelected ? 'border-slate-300 bg-slate-50' : ''}
-                      ${!G.guesses[rowIndex] && !isCurrentRow ? 'border-slate-200' : ''}
-                      ${isCurrentRow && !hasLetter && !isSelected ? 'border-slate-200' : ''}
+                      ${
+                        hasLetter && !isSelected
+                          ? 'border-slate-300 bg-slate-50'
+                          : ''
+                      }
+                      ${
+                        !G.guesses[rowIndex] && !isCurrentRow
+                          ? 'border-slate-200'
+                          : ''
+                      }
+                      ${
+                        isCurrentRow && !hasLetter && !isSelected
+                          ? 'border-slate-200'
+                          : ''
+                      }
                     `}
                     style={getCellStyle(rowIndex, colIndex)}
                   >
                     {G.guesses[rowIndex]
                       ? G.guesses[rowIndex][colIndex]
                       : isCurrentRow
-                        ? currentGuess[colIndex]
-                        : ''}
+                      ? currentGuess[colIndex]
+                      : ''}
                   </button>
                 );
               })}
@@ -2613,7 +2628,11 @@ export function app({ G, moves }: BoardProps) {
         {/* Keyboard */}
         <div className="space-y-1.5 pt-2">
           {KEYBOARD_LAYOUT.map((row, rowIndex) => (
-            <div key={rowIndex} className="flex justify-center gap-1" style={{ width: '100%' }}>
+            <div
+              key={rowIndex}
+              className="flex justify-center gap-1"
+              style={{ width: '100%' }}
+            >
               {row.map((key) => {
                 const status = getKeyboardStatus(key);
                 return (
@@ -2622,7 +2641,10 @@ export function app({ G, moves }: BoardProps) {
                     onClick={() => handleKeyPress(key)}
                     disabled={over}
                     className="flex-1 rounded-lg py-3 text-xs font-semibold text-white transition-all duration-150 active:scale-95 disabled:opacity-50"
-                    style={{ backgroundColor: getKeyColor(status), maxWidth: '10%' }}
+                    style={{
+                      backgroundColor: getKeyColor(status),
+                      maxWidth: '10%',
+                    }}
                   >
                     {key}
                   </button>
@@ -2630,12 +2652,19 @@ export function app({ G, moves }: BoardProps) {
               })}
             </div>
           ))}
-          <div className="flex justify-center gap-1" style={{ width: '100%' }}>
+          <div
+            className="flex justify-center gap-1"
+            style={{ width: '100%' }}
+          >
             <button
               onClick={handleBackspace}
               disabled={over}
               className="rounded-lg py-3 text-xs font-semibold text-white transition-all duration-150 active:scale-95 disabled:opacity-50"
-              style={{ backgroundColor: 'oklch(70% 0.01 264)', flex: '1.5', maxWidth: '15%' }}
+              style={{
+                backgroundColor: 'oklch(70% 0.01 264)',
+                flex: '1.5',
+                maxWidth: '15%',
+              }}
             >
               ←
             </button>
@@ -2655,7 +2684,7 @@ export function app({ G, moves }: BoardProps) {
             </button>
           </div>
         </div>
-</div>
+      </div>
     </div>
   );
 }

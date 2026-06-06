@@ -79,7 +79,9 @@ export function saveSession(session: PersistedSession): void {
     console.error('[P2PSessionStorage] Failed to save session:', err);
     // Check for quota exceeded
     if (err instanceof DOMException && err.name === 'QuotaExceededError') {
-      console.warn('[P2PSessionStorage] Storage quota exceeded, cleaning up old sessions');
+      console.warn(
+        '[P2PSessionStorage] Storage quota exceeded, cleaning up old sessions',
+      );
       cleanupExpiredSessions();
     }
   }

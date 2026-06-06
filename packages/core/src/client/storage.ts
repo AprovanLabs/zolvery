@@ -2,7 +2,7 @@
  * Client-side storage for caching data
  */
 export class ClientStorage {
-  private cache = new Map<string, any>();
+  private cache = new Map<string, unknown>();
   private readonly storageKey = 'zolvery-client-cache';
 
   public constructor() {
@@ -12,14 +12,14 @@ export class ClientStorage {
   /**
    * Get value from cache
    */
-  public get(key: string): any {
+  public get(key: string): unknown {
     return this.cache.get(key) || null;
   }
 
   /**
    * Set value in cache
    */
-  public set(key: string, value: any): void {
+  public set(key: string, value: unknown): void {
     this.cache.set(key, value);
     this.saveToLocalStorage();
   }

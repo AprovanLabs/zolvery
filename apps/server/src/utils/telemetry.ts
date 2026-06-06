@@ -14,7 +14,10 @@ export const createSpan = (
     attributes?: Record<string, string | number | boolean>;
   },
 ) => {
-  const spanOptions: any = {
+  const spanOptions: {
+    kind: SpanKind;
+    attributes?: Record<string, string | number | boolean>;
+  } = {
     kind: options?.kind || SpanKind.INTERNAL,
   };
 
@@ -67,7 +70,7 @@ export const addSpanAttributes = (
     span.setAttributes({
       'http.route': ctx.routerPath || ctx.path,
       'user.id': ctx.state?.user?.userId || 'anonymous',
-      'app.request_id': (ctx as any).requestId || 'unknown',
+      'app.request_id': (ctx as { requestId?: string }).requestId || 'unknown',
       ...attributes,
     });
   }
@@ -79,7 +82,7 @@ export const addSpanAttributes = (
 export const createChildSpan = (
   ctx: Context,
   spanName: string,
-  fn: () => Promise<any>,
+  fn: () => Promise<unknown>,
 ) => {
   return instrumentAsync(spanName, fn, {
     kind: SpanKind.INTERNAL,

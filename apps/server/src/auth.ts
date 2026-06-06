@@ -1,4 +1,4 @@
-import { Context } from "koa";
+import { Context } from 'koa';
 
 export enum Group {
   ADMIN = 'admin',
@@ -15,4 +15,4 @@ export type AuthContext = Context & {
     username: string;
     groups: GroupType[];
   };
-}
+};
