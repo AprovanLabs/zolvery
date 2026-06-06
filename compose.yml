@@ -3,8 +3,8 @@ services:
     image: localstack/localstack
     container_name: localstack
     ports:
-      - '4566:4566'
-      - '4510-4559:4510-4559'
+      - "4566:4566"
+      - "4510-4559:4510-4559"
     environment:
       - ORG_ID=aprovan
       - PROJECT_ID=zolvery
@@ -19,14 +19,14 @@ services:
       - AWS_DEFAULT_REGION=us-east-2
     volumes:
       - localstack_data://var/lib/localstack/state
-      - './scripts/init-aws.sh:/etc/localstack/init/ready.d/init-aws.sh'
+      - "./scripts/init-aws.sh:/etc/localstack/init/ready.d/init-aws.sh"
 
   lgtm:
     image: grafana/otel-lgtm
     container_name: lgtm
     ports:
-      - '3001:3000'
-      - '4317:4317'
+      - "3001:3000"
+      - "4317:4317"
     volumes:
       - lgtm_data:/data
 

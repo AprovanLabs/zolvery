@@ -8,9 +8,6 @@
  * Uses window.React at runtime (preloaded by the compiler).
  */
 
-import { SettingsProvider, useSettings, type GameSettings } from './context.js';
-import { createP2PTransport } from './p2p/index.js';
-import { ensurePeerJS } from './setup.js';
 import {
   BotManager,
   resolveBotConfig,
@@ -18,10 +15,13 @@ import {
   type BotState,
   type BotDifficulty,
   type DifficultyPreset,
-} from './bot-manager.js';
+} from "./bot-manager.js";
+import { SettingsProvider, useSettings, type GameSettings } from "./context.js";
+import { createP2PTransport } from "./p2p/index.js";
+import { ensurePeerJS } from "./setup.js";
 
 // Re-export for convenience
-export { SettingsProvider, useSettings, type GameSettings } from './context.js';
+export { SettingsProvider, useSettings, type GameSettings } from "./context.js";
 
 /** Multiplayer configuration passed via inputs */
 export interface MultiplayerInput {
@@ -45,10 +45,7 @@ export interface BoardgameGame {
   setup: (context: unknown) => unknown;
   ai?: {
     /** Enumerate legal moves for bot players */
-    enumerate: (
-      G: unknown,
-      ctx: unknown,
-    ) => Array<{ move: string; args: unknown[] }>;
+    enumerate: (G: unknown, ctx: unknown) => Array<{ move: string; args: unknown[] }>;
     /** Optional game-specific difficulty presets */
     difficulty?: Partial<Record<BotDifficulty, Partial<DifficultyPreset>>>;
   };
@@ -64,25 +61,23 @@ export interface WidgetManifest {
 }
 
 // Generic component type (avoids importing React types)
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 type BoardComponent = (props: any) => unknown;
 
 declare global {
   interface Window {
     BoardgameReact?: {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       Client: (opts: {
         game: BoardgameGame;
         board: BoardComponent;
         numPlayers?: number;
         multiplayer?: unknown;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       }) => any;
     };
     BoardgameMultiplayer?: {
       Local?: () => unknown;
     };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     React?: any;
     ReactDOM?: {
       createRoot: (el: HTMLElement) => {
@@ -111,33 +106,28 @@ declare global {
 export function createGameMount(
   game: BoardgameGame,
   Board: BoardComponent,
-  options: GameMountOptions = {},
+  options: GameMountOptions = {}
 ): (container: HTMLElement, inputs?: GameSettings) => () => void {
   const {
     numPlayers: defaultNumPlayers = game.maxPlayers ?? game.minPlayers ?? 2,
-    defaultPlayerID = '0',
+    defaultPlayerID = "0",
   } = options;
 
   return (container: HTMLElement, inputs: GameSettings = {}): (() => void) => {
-    const { BoardgameReact, BoardgameMultiplayer, React: R, ReactDOM } = window;
+    const { BoardgameReact, React: R, ReactDOM } = window;
 
     if (!BoardgameReact || !R || !ReactDOM) {
-      console.error(
-        '[boardgameio] Missing globals: BoardgameReact, React, or ReactDOM',
-      );
+      console.error("[boardgameio] Missing globals: BoardgameReact, React, or ReactDOM");
       container.innerHTML =
         '<div style="color: red; padding: 16px;">Missing required dependencies</div>';
       return () => {};
     }
 
     // Player configuration
-    const numPlayers =
-      (inputs.numPlayers as number | undefined) ?? defaultNumPlayers;
+    const numPlayers = (inputs.numPlayers as number | undefined) ?? defaultNumPlayers;
 
     // Check for multiplayer configuration first (needed for bot count default)
-    const multiplayerConfig = inputs.multiplayer as
-      | MultiplayerInput
-      | undefined;
+    const multiplayerConfig = inputs.multiplayer as MultiplayerInput | undefined;
     const isMultiplayer = !!multiplayerConfig?.matchID;
     const transportErrorListeners = new Set<(error: Error | null) => void>();
     let transportError: Error | null = null;
@@ -147,30 +137,21 @@ export function createGameMount(
         listener(transportError);
       }
     };
-    const subscribeTransportError = (
-      listener: (error: Error | null) => void,
-    ): (() => void) => {
+    const subscribeTransportError = (listener: (error: Error | null) => void): (() => void) => {
       transportErrorListeners.add(listener);
       return () => transportErrorListeners.delete(listener);
     };
 
     // Bot count: explicit input, or default to numPlayers - 1 (0 for multiplayer)
-    const botCountInput = inputs['bot-count'] ?? inputs.botCount;
+    const botCountInput = inputs["bot-count"] ?? inputs.botCount;
     const botCount =
-      typeof botCountInput === 'number'
-        ? botCountInput
-        : isMultiplayer
-        ? 0
-        : numPlayers - 1;
-    const playerID =
-      (inputs.playerID as string) ??
-      multiplayerConfig?.playerID ??
-      defaultPlayerID;
+      typeof botCountInput === "number" ? botCountInput : isMultiplayer ? 0 : numPlayers - 1;
+    const playerID = (inputs.playerID as string) ?? multiplayerConfig?.playerID ?? defaultPlayerID;
 
     // Compute which players are bots
     const botPlayerIDs = computeBotPlayerIDs(numPlayers, botCount, playerID);
 
-    console.log('[boardgameio] Bot configuration:', {
+    console.log("[boardgameio] Bot configuration:", {
       numPlayers,
       botCount,
       botCountInput,
@@ -178,12 +159,12 @@ export function createGameMount(
       playerID,
       botPlayerIDs,
       hasBotEnumerate: !!game.ai?.enumerate,
-      inputsBotCount: inputs['bot-count'],
+      inputsBotCount: inputs["bot-count"],
       hasMultiplayerConfig: !!multiplayerConfig,
     });
 
     // Resolve bot configuration from difficulty presets + explicit overrides
-    const botDifficulty = (inputs.botDifficulty as BotDifficulty) ?? 'medium';
+    const botDifficulty = (inputs.botDifficulty as BotDifficulty) ?? "medium";
     const botConfig = resolveBotConfig(inputs, game.ai?.difficulty);
 
     // Create bot manager (only if game has ai.enumerate and we have bots)
@@ -198,7 +179,7 @@ export function createGameMount(
     // to the client's playerID, preventing bots and turn-taking from working
     let multiplayer: unknown;
     if (isMultiplayer && multiplayerConfig) {
-      const isHost = multiplayerConfig.isHost ?? playerID === '0';
+      const isHost = multiplayerConfig.isHost ?? playerID === "0";
       multiplayer = createP2PTransport({
         isHost,
         onError: reportTransportError,
@@ -226,7 +207,7 @@ export function createGameMount(
         }
 
         if (!botManager || !props.G) {
-          console.log('[boardgameio] Bot effect skipped:', {
+          console.log("[boardgameio] Bot effect skipped:", {
             hasBotManager: !!botManager,
             hasG: !!props.G,
           });
@@ -241,18 +222,13 @@ export function createGameMount(
           gameover?: unknown;
         };
         const currentPlayer =
-          gState.current !== undefined
-            ? String(gState.current)
-            : ctxState.currentPlayer;
+          gState.current !== undefined ? String(gState.current) : ctxState.currentPlayer;
 
         // Detect gameover from G.winner (internal tracking) or ctx.gameover
-        const gameover =
-          gState.winner !== undefined
-            ? gState.winner !== null
-            : ctxState.gameover;
+        const gameover = gState.winner !== undefined ? gState.winner !== null : ctxState.gameover;
 
         const isBotTurn = botPlayerIDs.includes(currentPlayer);
-        console.log('[boardgameio] Bot effect running:', {
+        console.log("[boardgameio] Bot effect running:", {
           currentPlayer,
           botPlayerIDs,
           isBotTurn,
@@ -269,11 +245,8 @@ export function createGameMount(
         };
 
         botManager.maybePlayBot(state, botPlayerIDs, (type, ...args) => {
-          console.log('[boardgameio] Bot making move:', { type, args });
-          const moves = props.moves as Record<
-            string,
-            (...a: unknown[]) => void
-          >;
+          console.log("[boardgameio] Bot making move:", { type, args });
+          const moves = props.moves as Record<string, (...a: unknown[]) => void>;
           moves[type]?.(...args);
         });
       }, [
@@ -304,7 +277,7 @@ export function createGameMount(
     // Wrapper that provides settings via context
     const GameWithSettings = () => {
       const [p2pError, setP2pError] = R.useState(null as Error | null);
-      const isHost = multiplayerConfig?.isHost ?? playerID === '0';
+      const isHost = multiplayerConfig?.isHost ?? playerID === "0";
       R.useEffect(() => subscribeTransportError(setP2pError), []);
       const clientProps: Record<string, unknown> = {
         // In local play with bots, allow moves for any player.
@@ -313,7 +286,7 @@ export function createGameMount(
       if (isMultiplayer && multiplayerConfig) {
         clientProps.matchID = multiplayerConfig.matchID;
         clientProps.credentials = multiplayerConfig.credentials;
-        console.log('[boardgameio] Multiplayer props:', {
+        console.log("[boardgameio] Multiplayer props:", {
           matchID: multiplayerConfig.matchID,
           playerID,
           isHost,
@@ -324,43 +297,43 @@ export function createGameMount(
         SettingsProvider,
         { settings: inputs },
         R.createElement(
-          'div',
-          { className: 'relative w-full h-full' },
+          "div",
+          { className: "relative w-full h-full" },
           p2pError && isMultiplayer
             ? R.createElement(
-                'div',
+                "div",
                 {
                   className:
-                    'absolute inset-0 z-10 flex items-center justify-center bg-white/80 backdrop-blur-sm',
+                    "absolute inset-0 z-10 flex items-center justify-center bg-white/80 backdrop-blur-sm",
                 },
                 R.createElement(
-                  'div',
+                  "div",
                   {
                     className:
-                      'w-[min(90%,24rem)] rounded-xl border border-rose-200 bg-white p-5 shadow-sm',
+                      "w-[min(90%,24rem)] rounded-xl border border-rose-200 bg-white p-5 shadow-sm",
                   },
                   R.createElement(
-                    'div',
-                    { className: 'text-sm font-semibold text-rose-700' },
-                    isHost ? 'Host error' : 'Connection error',
+                    "div",
+                    { className: "text-sm font-semibold text-rose-700" },
+                    isHost ? "Host error" : "Connection error"
                   ),
                   R.createElement(
-                    'div',
-                    { className: 'mt-1 text-xs text-rose-600' },
+                    "div",
+                    { className: "mt-1 text-xs text-rose-600" },
                     isHost
-                      ? 'The host failed to initialize the game. Try refreshing and hosting again.'
-                      : 'We could not connect to the host. Ask them to refresh and retry.',
+                      ? "The host failed to initialize the game. Try refreshing and hosting again."
+                      : "We could not connect to the host. Ask them to refresh and retry."
                   ),
                   R.createElement(
-                    'div',
-                    { className: 'mt-2 text-[11px] text-rose-500 break-words' },
-                    p2pError.message,
-                  ),
-                ),
+                    "div",
+                    { className: "mt-2 text-[11px] text-rose-500 break-words" },
+                    p2pError.message
+                  )
+                )
               )
             : null,
-          R.createElement(GameClient, clientProps),
-        ),
+          R.createElement(GameClient, clientProps)
+        )
       );
     };
 
@@ -394,26 +367,22 @@ export interface BoardgameWidgetModule {
  */
 export function createMountFromExports(
   module: BoardgameWidgetModule,
-  manifest?: WidgetManifest,
+  manifest?: WidgetManifest
 ): ((container: HTMLElement, inputs?: GameSettings) => () => void) | null {
   const { game, app, default: defaultExport } = module;
 
-  if (!game || typeof game.setup !== 'function') {
+  if (!game || typeof game.setup !== "function") {
     return null;
   }
 
   const Board = app || defaultExport;
-  if (!Board || typeof Board !== 'function') {
+  if (!Board || typeof Board !== "function") {
     return null;
   }
 
   // Get numPlayers from manifest, falling back to game definition
   const numPlayers =
-    manifest?.players?.max ??
-    manifest?.players?.min ??
-    game.maxPlayers ??
-    game.minPlayers ??
-    2;
+    manifest?.players?.max ?? manifest?.players?.min ?? game.maxPlayers ?? game.minPlayers ?? 2;
 
   return createGameMount(game, Board, { numPlayers });
 }
@@ -446,18 +415,15 @@ export function injectMountHelper(): void {
 export async function mount(
   module: Record<string, unknown>,
   container: HTMLElement,
-  inputs: Record<string, unknown>,
+  inputs: Record<string, unknown>
 ): Promise<void | (() => void)> {
   const { React: R, ReactDOM } = window;
 
   // 1. Custom mount function takes priority
-  if (typeof module.mount === 'function') {
-    const mountFn = module.mount as (
-      el: HTMLElement,
-      inp: Record<string, unknown>,
-    ) => unknown;
+  if (typeof module.mount === "function") {
+    const mountFn = module.mount as (el: HTMLElement, inp: Record<string, unknown>) => unknown;
     const result = await mountFn(container, inputs);
-    if (typeof result === 'function') {
+    if (typeof result === "function") {
       return result as () => void;
     }
     return;
@@ -465,20 +431,15 @@ export async function mount(
 
   // 2. Boardgame.io widget: exports `game` and `app`/`default`
   const game = module.game as BoardgameGame | undefined;
-  if (game && typeof game.setup === 'function') {
+  if (game && typeof game.setup === "function") {
     const Board = (module.app || module.default) as BoardComponent | undefined;
-    if (Board && typeof Board === 'function') {
+    if (Board && typeof Board === "function") {
       // Get numPlayers from inputs or game definition
       const numPlayers =
-        (inputs.numPlayers as number | undefined) ??
-        game.maxPlayers ??
-        game.minPlayers ??
-        2;
+        (inputs.numPlayers as number | undefined) ?? game.maxPlayers ?? game.minPlayers ?? 2;
 
       // Load PeerJS if multiplayer is requested
-      const multiplayerInput = inputs.multiplayer as
-        | MultiplayerInput
-        | undefined;
+      const multiplayerInput = inputs.multiplayer as MultiplayerInput | undefined;
       if (multiplayerInput?.matchID) {
         await ensurePeerJS();
       }
@@ -489,7 +450,7 @@ export async function mount(
   }
 
   // 3. Default export React component
-  if (typeof module.default === 'function' && R && ReactDOM) {
+  if (typeof module.default === "function" && R && ReactDOM) {
     const Component = module.default as BoardComponent;
     const root = ReactDOM.createRoot(container);
     root.render(R.createElement(Component, inputs));
@@ -497,6 +458,6 @@ export async function mount(
   }
 
   console.warn(
-    '[boardgameio] Widget does not export a recognized entry point (mount, game+app, or default)',
+    "[boardgameio] Widget does not export a recognized entry point (mount, game+app, or default)"
   );
 }

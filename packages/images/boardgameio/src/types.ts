@@ -2,7 +2,7 @@
  * Type definitions for boardgame.io widgets with bot support.
  */
 
-import type { BotDifficulty, BotState } from './bot-manager.js';
+import type { BotDifficulty, BotState } from "./bot-manager.js";
 
 /**
  * BoardGame.io context object
@@ -87,7 +87,7 @@ export interface BotGameSettings {
   botDifficulty?: BotDifficulty;
 
   /** Bot strategy override */
-  botStrategy?: 'random' | 'mcts' | 'custom';
+  botStrategy?: "random" | "mcts" | "custom";
 
   /** Delay before bot move (ms) */
   botDelay?: number;

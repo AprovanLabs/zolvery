@@ -12,25 +12,19 @@ export type GameSettings = Record<string, unknown>;
 interface ReactLike {
   createContext: (defaultValue: unknown) => unknown;
   useContext: (context: unknown) => unknown;
-  createElement: (
-    type: unknown,
-    props?: unknown,
-    ...children: unknown[]
-  ) => unknown;
+  createElement: (type: unknown, props?: unknown, ...children: unknown[]) => unknown;
 }
 
 const getReact = (): ReactLike => {
   const win = window as unknown as { React?: ReactLike };
   if (!win.React) {
-    throw new Error(
-      '[boardgameio] React not found on window. Ensure React is preloaded.',
-    );
+    throw new Error("[boardgameio] React not found on window. Ensure React is preloaded.");
   }
   return win.React;
 };
 
 // Lazy-init context to ensure React is available
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 let SettingsContext: any = null;
 
 function getSettingsContext(): unknown {
@@ -45,18 +39,11 @@ export interface SettingsProviderProps {
   children: unknown;
 }
 
-export function SettingsProvider({
-  settings,
-  children,
-}: SettingsProviderProps): unknown {
+export function SettingsProvider({ settings, children }: SettingsProviderProps): unknown {
   const React = getReact();
   const Context = getSettingsContext();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return React.createElement(
-    (Context as any).Provider,
-    { value: settings },
-    children,
-  );
+
+  return React.createElement((Context as any).Provider, { value: settings }, children);
 }
 
 /**

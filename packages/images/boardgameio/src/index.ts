@@ -38,7 +38,7 @@
  * ```
  */
 
-export { setup, cleanup, ensurePeerJS, type SetupOptions } from './setup.js';
+export { setup, cleanup, ensurePeerJS, type SetupOptions } from "./setup.js";
 export {
   mount,
   createGameMount,
@@ -49,18 +49,14 @@ export {
   type BoardgameWidgetModule,
   type WidgetManifest,
   type MultiplayerInput,
-} from './mount.js';
+} from "./mount.js";
 export {
   SettingsProvider,
   useSettings,
   type GameSettings,
   type SettingsProviderProps,
-} from './context.js';
-export {
-  getMultiplayer,
-  generateMatchID,
-  type MultiplayerConfig,
-} from './multiplayer.js';
+} from "./context.js";
+export { getMultiplayer, generateMatchID, type MultiplayerConfig } from "./multiplayer.js";
 export {
   P2PTransport,
   P2PHost,
@@ -70,7 +66,7 @@ export {
   generateKeyPair,
   type P2PTransportOpts,
   type TransportConfig,
-} from './p2p/index.js';
+} from "./p2p/index.js";
 export {
   BotManager,
   resolveBotConfig,
@@ -83,10 +79,10 @@ export {
   type BotDifficulty,
   type DifficultyPreset,
   type BoardgameState,
-} from './bot-manager.js';
+} from "./bot-manager.js";
 export {
   type BoardPropsWithBots,
   type BoardProps,
   type BotGameSettings,
   type Ctx,
-} from './types.js';
+} from "./types.js";

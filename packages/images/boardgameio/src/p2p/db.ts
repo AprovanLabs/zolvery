@@ -1,4 +1,4 @@
-import type { LogEntry, Server, State, StorageAPI } from 'boardgame.io';
+import type { LogEntry, Server, State, StorageAPI } from "boardgame.io";
 
 export class P2PDB {
   private initialState = new Map<string, State>();
@@ -27,9 +27,7 @@ export class P2PDB {
     this.metadata.set(matchID, metadata);
   }
 
-  public fetch<O extends StorageAPI.FetchOpts>(
-    matchID: string,
-  ): StorageAPI.FetchResult<O> {
+  public fetch<O extends StorageAPI.FetchOpts>(matchID: string): StorageAPI.FetchResult<O> {
     return {
       state: this.state.get(matchID),
       initialState: this.initialState.get(matchID),

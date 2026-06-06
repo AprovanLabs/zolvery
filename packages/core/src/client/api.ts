@@ -1,4 +1,4 @@
-import { User } from '../user.js';
+import { type User } from "../user.js";
 
 /**
  * API request/response types
@@ -54,9 +54,9 @@ export class ClientAPI {
   public constructor(
     baseUrl: string,
     private user: User,
-    private appId?: string,
+    private appId?: string
   ) {
-    this.baseUrl = baseUrl.replace(/\/$/, ''); // Remove trailing slash
+    this.baseUrl = baseUrl.replace(/\/$/, ""); // Remove trailing slash
   }
 
   /**
@@ -81,7 +81,7 @@ export class ClientAPI {
       ? `${this.baseUrl}/app-data/${this.getAppId()}/${day}/${key}`
       : `${this.baseUrl}/app-data/${this.getAppId()}/${day}`;
 
-    return this.request('GET', url);
+    return this.request("GET", url);
   }
 
   /**
@@ -89,7 +89,7 @@ export class ClientAPI {
    */
   public async createEvent(request: CreateEventRequest): Promise<AppEvent> {
     const url = `${this.baseUrl}/events/${request.appId}`;
-    return this.request('POST', url, request) as Promise<AppEvent>;
+    return this.request("POST", url, request) as Promise<AppEvent>;
   }
 
   /**
@@ -97,18 +97,15 @@ export class ClientAPI {
    */
   public async getEvents(day: string): Promise<AppEvent[]> {
     const url = `${this.baseUrl}/events/${this.getAppId()}/${day}`;
-    return this.request('GET', url) as Promise<AppEvent[]>;
+    return this.request("GET", url) as Promise<AppEvent[]>;
   }
 
   /**
    * Get a specific event
    */
-  public async getEvent(
-    day: string,
-    eventKey: string,
-  ): Promise<AppEvent | null> {
+  public async getEvent(day: string, eventKey: string): Promise<AppEvent | null> {
     const url = `${this.baseUrl}/events/${this.getAppId()}/${day}/${eventKey}`;
-    return this.request('GET', url) as Promise<AppEvent | null>;
+    return this.request("GET", url) as Promise<AppEvent | null>;
   }
 
   /**
@@ -116,7 +113,7 @@ export class ClientAPI {
    */
   public async submitScore(request: SubmitScoreRequest): Promise<unknown> {
     const url = `${this.baseUrl}/leaderboard/score`;
-    return this.request('POST', url, {
+    return this.request("POST", url, {
       appId: this.getAppId(),
       ...request,
     });
@@ -125,11 +122,9 @@ export class ClientAPI {
   /**
    * Get leaderboard
    */
-  public async getLeaderboard(
-    type: 'global' | 'friends' = 'global',
-  ): Promise<LeaderboardEntry[]> {
+  public async getLeaderboard(type: "global" | "friends" = "global"): Promise<LeaderboardEntry[]> {
     const url = `${this.baseUrl}/leaderboard/${this.getAppId()}?type=${type}`;
-    return this.request('GET', url) as Promise<LeaderboardEntry[]>;
+    return this.request("GET", url) as Promise<LeaderboardEntry[]>;
   }
 
   /**
@@ -137,7 +132,7 @@ export class ClientAPI {
    */
   public async getI18nData(locale: string): Promise<Record<string, string>> {
     const url = `${this.baseUrl}/i18n/${this.getAppId()}/${locale}`;
-    return this.request('GET', url) as Promise<Record<string, string>>;
+    return this.request("GET", url) as Promise<Record<string, string>>;
   }
 
   /**
@@ -152,18 +147,14 @@ export class ClientAPI {
   /**
    * Make HTTP request with error handling
    */
-  private async request(
-    method: string,
-    url: string,
-    body?: unknown,
-  ): Promise<unknown> {
+  private async request(method: string, url: string, body?: unknown): Promise<unknown> {
     try {
       const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       };
 
       if (this.authToken) {
-        headers['Authorization'] = `Bearer ${this.authToken}`;
+        headers["Authorization"] = `Bearer ${this.authToken}`;
       }
 
       const response = await fetch(url, {
@@ -189,7 +180,7 @@ export class ClientAPI {
    */
   private getAppId(): string {
     if (!this.appId) {
-      throw new Error('App ID not set. Call setAppId() first.');
+      throw new Error("App ID not set. Call setAppId() first.");
     }
     return this.appId;
   }

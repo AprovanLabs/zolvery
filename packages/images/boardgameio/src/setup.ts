@@ -5,10 +5,10 @@
  * Uses Tailwind Play CDN for runtime CSS generation.
  */
 
-import { injectMountHelper } from './mount.js';
+import { injectMountHelper } from "./mount.js";
 
 export interface SetupOptions {
-  darkMode?: boolean | 'system';
+  darkMode?: boolean | "system";
   cssRuntime?: boolean;
   multiplayer?: boolean;
 }
@@ -26,10 +26,7 @@ declare global {
   }
 }
 
-export async function setup(
-  container: HTMLElement,
-  options: SetupOptions = {},
-): Promise<void> {
+export async function setup(container: HTMLElement, options: SetupOptions = {}): Promise<void> {
   const { cssRuntime = true, multiplayer = false } = options;
 
   // Inject the mount helper for games to use
@@ -50,7 +47,7 @@ export async function setup(
   await Promise.all([tailwindLoadPromise, peerJSLoadPromise].filter(Boolean));
 }
 
-export function cleanup(container: HTMLElement): void {
+export function cleanup(_container: HTMLElement): void {
   // No-op for now
 }
 
@@ -59,13 +56,13 @@ async function loadTailwindPlayCDN(): Promise<void> {
     return;
   }
 
-  const script = document.createElement('script');
-  script.src = 'https://cdn.tailwindcss.com';
+  const script = document.createElement("script");
+  script.src = "https://cdn.tailwindcss.com";
   script.async = true;
 
   return new Promise((resolve, reject) => {
     script.onload = () => resolve();
-    script.onerror = () => reject(new Error('Failed to load Tailwind CDN'));
+    script.onerror = () => reject(new Error("Failed to load Tailwind CDN"));
     document.head.appendChild(script);
   });
 }
@@ -86,13 +83,13 @@ async function loadPeerJS(): Promise<void> {
     });
   }
 
-  const script = document.createElement('script');
-  script.src = 'https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js';
+  const script = document.createElement("script");
+  script.src = "https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js";
   script.async = true;
 
   return new Promise((resolve, reject) => {
     script.onload = () => resolve();
-    script.onerror = () => reject(new Error('Failed to load PeerJS'));
+    script.onerror = () => reject(new Error("Failed to load PeerJS"));
     document.head.appendChild(script);
   });
 }

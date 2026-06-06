@@ -1,18 +1,7 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import {
-  ClipboardDocumentIcon,
-  CheckIcon,
-  LinkIcon,
-  UserIcon,
-} from '@heroicons/react/24/outline';
-import {
-  codeToWords,
-  fuzzyMatch,
-  isValidWord,
-  LETTERS,
-  wordsToCode,
-} from '../utils/code-words';
-import { useP2PLobby, type LobbyPlayer } from '../hooks/use-p2p-lobby';
+import { ClipboardDocumentIcon, CheckIcon, LinkIcon, UserIcon } from "@heroicons/react/24/outline";
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import { useP2PLobby, type LobbyPlayer } from "../hooks/use-p2p-lobby";
+import { codeToWords, fuzzyMatch, isValidWord, LETTERS, wordsToCode } from "../utils/code-words";
 
 export interface GameLobbyConfig {
   matchID: string;
@@ -23,7 +12,7 @@ export interface GameLobbyConfig {
 
 interface GameLobbyProps {
   gameId: string;
-  initialMode?: 'host' | 'join';
+  initialMode?: "host" | "join";
   initialCode?: string;
   onStart: (config: GameLobbyConfig) => void;
   onCancel?: () => void;
@@ -31,10 +20,9 @@ interface GameLobbyProps {
 }
 
 function generateMatchID(): string {
-  return Array.from(
-    { length: 6 },
-    () => LETTERS[Math.floor(Math.random() * LETTERS.length)],
-  ).join('');
+  return Array.from({ length: 6 }, () => LETTERS[Math.floor(Math.random() * LETTERS.length)]).join(
+    ""
+  );
 }
 
 function generateCredentials(): string {
@@ -43,7 +31,7 @@ function generateCredentials(): string {
   return btoa(String.fromCharCode(...bytes));
 }
 
-type LobbyMode = 'choose' | 'host' | 'join' | 'waiting';
+type LobbyMode = "choose" | "host" | "join" | "waiting";
 
 function PlayerList({ players }: { players: LobbyPlayer[] }) {
   return (
@@ -53,29 +41,22 @@ function PlayerList({ players }: { players: LobbyPlayer[] }) {
       </div>
       <div className="space-y-1">
         {players.map((player) => (
-          <div
-            key={player.id}
-            className="flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-2"
-          >
+          <div key={player.id} className="flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-2">
             <div
               className={`w-2 h-2 rounded-full ${
-                player.isReady ? 'bg-emerald-500' : 'bg-amber-400'
+                player.isReady ? "bg-emerald-500" : "bg-amber-400"
               }`}
             />
             <UserIcon className="h-4 w-4 text-slate-400" />
             <span className="text-sm text-slate-700 flex-1">{player.name}</span>
             {player.isHost && (
-              <span className="text-xs text-slate-400 bg-slate-200 px-2 py-0.5 rounded">
-                Host
-              </span>
+              <span className="text-xs text-slate-400 bg-slate-200 px-2 py-0.5 rounded">Host</span>
             )}
           </div>
         ))}
       </div>
       {players.length < 2 && (
-        <div className="text-xs text-slate-400 text-center py-2">
-          Waiting for more players...
-        </div>
+        <div className="text-xs text-slate-400 text-center py-2">Waiting for more players...</div>
       )}
     </div>
   );
@@ -108,11 +89,7 @@ function ErrorCard({
     <div className="rounded-xl border-2 border-rose-200 bg-rose-50 p-4">
       <div className="text-sm font-semibold text-rose-700">{title}</div>
       <div className="text-xs text-rose-600 mt-1">{message}</div>
-      {detail && (
-        <div className="text-[11px] text-rose-500 mt-2 break-words">
-          {detail}
-        </div>
-      )}
+      {detail && <div className="text-[11px] text-rose-500 mt-2 break-words">{detail}</div>}
     </div>
   );
 }
@@ -130,32 +107,30 @@ export function GameLobby({
   // - If join mode with code: start in waiting (client connected to host)
   // - Otherwise: show mode selection
   const [mode, setMode] = useState<LobbyMode>(() => {
-    if (initialMode === 'host' && initialCode) return 'host'; // Restore host lobby
-    if (initialCode) return 'waiting'; // Join with code
-    if (initialMode === 'join') return 'join';
-    if (initialMode === 'host') return 'host';
-    return 'choose';
+    if (initialMode === "host" && initialCode) return "host"; // Restore host lobby
+    if (initialCode) return "waiting"; // Join with code
+    if (initialMode === "join") return "join";
+    if (initialMode === "host") return "host";
+    return "choose";
   });
   const [matchID, setMatchID] = useState(() => {
     // If host mode with initial code, use that code; otherwise generate new
-    if (initialMode === 'host' && initialCode) return initialCode.toUpperCase();
-    if (initialMode === 'host') return generateMatchID();
-    return '';
+    if (initialMode === "host" && initialCode) return initialCode.toUpperCase();
+    if (initialMode === "host") return generateMatchID();
+    return "";
   });
-  const [inputCode, setInputCode] = useState(() =>
-    (initialCode || '').toUpperCase(),
-  );
+  const [inputCode, setInputCode] = useState(() => (initialCode || "").toUpperCase());
   const [phraseInputs, setPhraseInputs] = useState<string[]>(
-    () => codeToWords(initialCode || '') || ['', '', ''],
+    () => codeToWords(initialCode || "") || ["", "", ""]
   );
-  const [copied, setCopied] = useState<'code' | 'link' | null>(null);
+  const [copied, setCopied] = useState<"code" | "link" | null>(null);
   const [credentials] = useState(() => generateCredentials());
   const [gameStarted, setGameStarted] = useState(false);
   const [focusedInput, setFocusedInput] = useState<number | null>(null);
   const blurTimeout = useRef<number | null>(null);
 
-  const isHost = mode === 'host';
-  const shouldConnect = mode === 'host' || mode === 'waiting';
+  const isHost = mode === "host";
+  const shouldConnect = mode === "host" || mode === "waiting";
 
   const handleGameStart = useCallback(() => {
     if (gameStarted) return;
@@ -163,26 +138,25 @@ export function GameLobby({
 
     onStart({
       matchID: isHost ? matchID : inputCode.toUpperCase(),
-      playerID: isHost ? '0' : '1',
+      playerID: isHost ? "0" : "1",
       credentials,
       isHost,
     });
   }, [gameStarted, onStart, isHost, matchID, inputCode, credentials]);
 
-  const { isConnecting, isConnected, players, error, startGame, debug } =
-    useP2PLobby({
-      gameId,
-      matchID: isHost ? matchID : inputCode.toUpperCase(),
-      isHost,
-      playerName: isHost ? 'Host' : 'Player 2',
-      enabled: shouldConnect,
-      onGameStart: handleGameStart,
-    });
+  const { isConnecting, isConnected, players, error, startGame, debug } = useP2PLobby({
+    gameId,
+    matchID: isHost ? matchID : inputCode.toUpperCase(),
+    isHost,
+    playerName: isHost ? "Host" : "Player 2",
+    enabled: shouldConnect,
+    onGameStart: handleGameStart,
+  });
 
   // Auto-connect when entering join code
   const handleJoinSubmit = () => {
     if (!/^[A-Z]{6}$/.test(inputCode)) return;
-    setMode('waiting');
+    setMode("waiting");
   };
 
   // Notify parent when match code is set (for URL persistence)
@@ -206,16 +180,16 @@ export function GameLobby({
     () => () => {
       if (blurTimeout.current) clearTimeout(blurTimeout.current);
     },
-    [],
+    []
   );
 
   const copyCode = async () => {
     try {
       await navigator.clipboard.writeText(matchID);
-      setCopied('code');
+      setCopied("code");
       setTimeout(() => setCopied(null), 2000);
     } catch (err) {
-      console.error('Failed to copy:', err);
+      console.error("Failed to copy:", err);
     }
   };
 
@@ -224,46 +198,44 @@ export function GameLobby({
     const inviteLink = `${window.location.origin}/#/apps/${gameId}/join/${matchID}`;
     try {
       await navigator.clipboard.writeText(inviteLink);
-      setCopied('link');
+      setCopied("link");
       setTimeout(() => setCopied(null), 2000);
     } catch (err) {
-      console.error('Failed to copy:', err);
+      console.error("Failed to copy:", err);
     }
   };
 
   const hostGame = () => {
     const newMatchID = generateMatchID();
     setMatchID(newMatchID);
-    setMode('host');
+    setMode("host");
     onCodeGenerated?.(newMatchID);
   };
 
   const handlePhraseChange = (value: string, index: number) => {
-    const normalized = value.toLowerCase().replace(/[^a-z]/g, '');
+    const normalized = value.toLowerCase().replace(/[^a-z]/g, "");
     const next = [...phraseInputs];
     next[index] = normalized;
     setPhraseInputs(next);
     const code = wordsToCode(next);
-    setInputCode(code || '');
+    setInputCode(code || "");
   };
 
   const hostPhrase = codeToWords(matchID);
   const joinPhrase = codeToWords(inputCode);
   const phraseSuggestions = phraseInputs.map((word) => fuzzyMatch(word));
   const phraseStates = phraseInputs.map((word, i) => {
-    if (!word) return 'empty';
-    if (isValidWord(word)) return 'valid';
-    return phraseSuggestions[i].length > 0 ? 'partial' : 'invalid';
+    if (!word) return "empty";
+    if (isValidWord(word)) return "valid";
+    return phraseSuggestions[i].length > 0 ? "partial" : "invalid";
   });
 
-  if (mode === 'choose') {
+  if (mode === "choose") {
     return (
       <div className="flex min-h-full w-full flex-col items-center justify-center bg-white p-6">
         <div className="w-full max-w-sm space-y-6">
           <div className="text-center space-y-2">
-            <h2 className="text-lg font-semibold text-slate-800">
-              Multiplayer
-            </h2>
+            <h2 className="text-lg font-semibold text-slate-800">Multiplayer</h2>
             <p className="text-sm text-slate-500">{gameId}</p>
           </div>
 
@@ -275,7 +247,7 @@ export function GameLobby({
               Host Game
             </button>
             <button
-              onClick={() => setMode('join')}
+              onClick={() => setMode("join")}
               className="w-full rounded-lg border-2 border-slate-300 px-4 py-3 text-sm font-medium text-slate-600 transition-colors hover:border-slate-400"
             >
               Join Game
@@ -294,15 +266,13 @@ export function GameLobby({
     );
   }
 
-  if (mode === 'host') {
+  if (mode === "host") {
     return (
       <div className="flex min-h-full w-full flex-col items-center justify-center bg-white p-6">
         <div className="w-full max-w-sm space-y-6">
           <div className="text-center space-y-2">
             <h2 className="text-lg font-semibold text-slate-800">Share Code</h2>
-            <p className="text-sm text-slate-500">
-              Give this code to other players
-            </p>
+            <p className="text-sm text-slate-500">Give this code to other players</p>
           </div>
 
           <div className="rounded-xl border-2 border-slate-200 bg-slate-50 p-4 space-y-2">
@@ -316,7 +286,7 @@ export function GameLobby({
                   className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-200 hover:text-slate-600"
                   title="Copy code"
                 >
-                  {copied === 'code' ? (
+                  {copied === "code" ? (
                     <CheckIcon className="h-5 w-5 text-emerald-500" />
                   ) : (
                     <ClipboardDocumentIcon className="h-5 w-5" />
@@ -327,7 +297,7 @@ export function GameLobby({
                   className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-200 hover:text-slate-600"
                   title="Copy invite link"
                 >
-                  {copied === 'link' ? (
+                  {copied === "link" ? (
                     <CheckIcon className="h-5 w-5 text-emerald-500" />
                   ) : (
                     <LinkIcon className="h-5 w-5" />
@@ -336,9 +306,7 @@ export function GameLobby({
               </div>
             </div>
             {hostPhrase && (
-              <div className="text-xs text-center text-slate-500">
-                {hostPhrase.join(' ')}
-              </div>
+              <div className="text-xs text-center text-slate-500">{hostPhrase.join(" ")}</div>
             )}
           </div>
 
@@ -366,15 +334,12 @@ export function GameLobby({
             <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
               Debug
             </div>
+            <div className="text-[11px] font-mono text-slate-500">Host ID: {debug.hostId}</div>
             <div className="text-[11px] font-mono text-slate-500">
-              Host ID: {debug.hostId}
+              Peer ID: {debug.peerId ?? "—"}
             </div>
             <div className="text-[11px] font-mono text-slate-500">
-              Peer ID: {debug.peerId ?? '—'}
-            </div>
-            <div className="text-[11px] font-mono text-slate-500">
-              ICE: {debug.lastIceState ?? 'n/a'} | Relay:{' '}
-              {debug.usingRelayOnly ? 'on' : 'off'}
+              ICE: {debug.lastIceState ?? "n/a"} | Relay: {debug.usingRelayOnly ? "on" : "off"}
             </div>
             <div className="max-h-32 overflow-y-auto rounded bg-slate-50 p-2 text-[11px] font-mono text-slate-600">
               {debug.log.length === 0 ? (
@@ -394,7 +359,7 @@ export function GameLobby({
               Start
             </button>
             <button
-              onClick={() => setMode('choose')}
+              onClick={() => setMode("choose")}
               className="w-full rounded-lg px-4 py-2 text-sm text-slate-400 transition-colors hover:text-slate-600"
             >
               Cancel
@@ -405,23 +370,19 @@ export function GameLobby({
     );
   }
 
-  if (mode === 'join') {
+  if (mode === "join") {
     return (
       <div className="flex min-h-full w-full flex-col items-center justify-center bg-white p-6">
         <div className="w-full max-w-sm space-y-6">
           <div className="text-center space-y-2">
             <h2 className="text-lg font-semibold text-slate-800">Enter Code</h2>
-            <p className="text-sm text-slate-500">
-              Enter the code from the host
-            </p>
+            <p className="text-sm text-slate-500">Enter the code from the host</p>
           </div>
 
           <input
             type="text"
             value={inputCode}
-            onChange={(e) =>
-              setInputCode(e.target.value.toUpperCase().replace(/[^A-Z]/g, ''))
-            }
+            onChange={(e) => setInputCode(e.target.value.toUpperCase().replace(/[^A-Z]/g, ""))}
             placeholder="ABCDEF"
             maxLength={6}
             className="w-full rounded-xl border-2 border-slate-200 bg-slate-50 p-4 text-center font-mono text-2xl font-bold tracking-widest text-slate-800 placeholder:text-slate-300 focus:border-emerald-400 focus:outline-none"
@@ -439,21 +400,16 @@ export function GameLobby({
                   suggestions.length <= 6 &&
                   !isValidWord(word);
                 const border =
-                  state === 'valid'
-                    ? 'border-emerald-300 focus:border-emerald-400'
-                    : state === 'invalid'
-                    ? 'border-rose-200 focus:border-rose-300'
-                    : 'border-slate-200 focus:border-emerald-300';
+                  state === "valid"
+                    ? "border-emerald-300 focus:border-emerald-400"
+                    : state === "invalid"
+                      ? "border-rose-200 focus:border-rose-300"
+                      : "border-slate-200 focus:border-emerald-300";
                 return (
-                  <div
-                    key={index}
-                    className="relative space-y-1"
-                  >
+                  <div key={index} className="relative space-y-1">
                     <input
                       value={word}
-                      onChange={(e) =>
-                        handlePhraseChange(e.target.value, index)
-                      }
+                      onChange={(e) => handlePhraseChange(e.target.value, index)}
                       onFocus={() => {
                         if (blurTimeout.current) {
                           clearTimeout(blurTimeout.current);
@@ -498,7 +454,7 @@ export function GameLobby({
               Join
             </button>
             <button
-              onClick={() => setMode('choose')}
+              onClick={() => setMode("choose")}
               className="w-full rounded-lg px-4 py-2 text-sm text-slate-400 transition-colors hover:text-slate-600"
             >
               Back
@@ -524,9 +480,7 @@ export function GameLobby({
             </span>
           </div>
           {joinPhrase && (
-            <div className="text-xs text-center text-slate-500">
-              {joinPhrase.join(' ')}
-            </div>
+            <div className="text-xs text-center text-slate-500">{joinPhrase.join(" ")}</div>
           )}
         </div>
 
@@ -563,15 +517,12 @@ export function GameLobby({
             <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
               Debug
             </div>
+            <div className="text-[11px] font-mono text-slate-500">Host ID: {debug.hostId}</div>
             <div className="text-[11px] font-mono text-slate-500">
-              Host ID: {debug.hostId}
+              Peer ID: {debug.peerId ?? "—"}
             </div>
             <div className="text-[11px] font-mono text-slate-500">
-              Peer ID: {debug.peerId ?? '—'}
-            </div>
-            <div className="text-[11px] font-mono text-slate-500">
-              ICE: {debug.lastIceState ?? 'n/a'} | Relay:{' '}
-              {debug.usingRelayOnly ? 'on' : 'off'}
+              ICE: {debug.lastIceState ?? "n/a"} | Relay: {debug.usingRelayOnly ? "on" : "off"}
             </div>
             <div className="max-h-32 overflow-y-auto rounded bg-slate-50 p-2 text-[11px] font-mono text-slate-600">
               {debug.log.length === 0 ? (
@@ -583,8 +534,8 @@ export function GameLobby({
           </div>
           <button
             onClick={() => {
-              setMode('join');
-              setInputCode('');
+              setMode("join");
+              setInputCode("");
             }}
             className="w-full rounded-lg px-4 py-2 text-sm text-slate-400 transition-colors hover:text-slate-600"
           >

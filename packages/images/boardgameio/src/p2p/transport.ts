@@ -1,13 +1,8 @@
-import type {
-  ChatMessage,
-  CredentialedActionShape,
-  Game,
-  State,
-} from 'boardgame.io';
-import { generateKeyPair, signMessage } from './authentication.js';
-import { P2PHost } from './host.js';
-import type { ClientAction, ClientMetadata } from './types.js';
-import { hasValidSession, cleanupExpiredSessions } from './session-storage.js';
+import { generateKeyPair, signMessage } from "./authentication.js";
+import { P2PHost } from "./host.js";
+import { hasValidSession, cleanupExpiredSessions } from "./session-storage.js";
+import type { ClientAction, ClientMetadata } from "./types.js";
+import type { ChatMessage, CredentialedActionShape, Game, State } from "boardgame.io";
 
 declare global {
   interface Window {
@@ -23,29 +18,20 @@ declare global {
 }
 
 interface DataConnection {
-  on(
-    event: 'data' | 'open' | 'close' | 'error',
-    handler: (data?: unknown) => void,
-  ): void;
+  on(event: "data" | "open" | "close" | "error", handler: (data?: unknown) => void): void;
   send(data: unknown): void;
   close(): void;
 }
 
 interface PeerInstance {
-  on(
-    event: 'open' | 'connection' | 'error' | 'close',
-    handler: (data?: unknown) => void,
-  ): void;
-  connect(
-    peerId: string,
-    options?: { reliable?: boolean; serialization?: string },
-  ): DataConnection;
+  on(event: "open" | "connection" | "error" | "close", handler: (data?: unknown) => void): void;
+  connect(peerId: string, options?: { reliable?: boolean; serialization?: string }): DataConnection;
   destroy(): void;
   id: string;
 }
 
 type TransportData = {
-  type: 'sync' | 'update' | 'chat';
+  type: "sync" | "update" | "chat";
   args: unknown[];
 };
 
@@ -57,24 +43,24 @@ export interface P2PTransportOpts {
 
 // Default ICE servers for NAT traversal
 const DEFAULT_ICE_SERVERS = [
-  { urls: 'stun:stun.l.google.com:19302' },
-  { urls: 'stun:stun1.l.google.com:19302' },
-  { urls: 'stun:stun2.l.google.com:19302' },
+  { urls: "stun:stun.l.google.com:19302" },
+  { urls: "stun:stun1.l.google.com:19302" },
+  { urls: "stun:stun2.l.google.com:19302" },
   // Free TURN servers from Open Relay Project
   {
-    urls: 'turn:openrelay.metered.ca:80',
-    username: 'openrelayproject',
-    credential: 'openrelayproject',
+    urls: "turn:openrelay.metered.ca:80",
+    username: "openrelayproject",
+    credential: "openrelayproject",
   },
   {
-    urls: 'turn:openrelay.metered.ca:443',
-    username: 'openrelayproject',
-    credential: 'openrelayproject',
+    urls: "turn:openrelay.metered.ca:443",
+    username: "openrelayproject",
+    credential: "openrelayproject",
   },
   {
-    urls: 'turn:openrelay.metered.ca:443?transport=tcp',
-    username: 'openrelayproject',
-    credential: 'openrelayproject',
+    urls: "turn:openrelay.metered.ca:443?transport=tcp",
+    username: "openrelayproject",
+    credential: "openrelayproject",
   },
 ];
 
@@ -104,21 +90,20 @@ export class P2PTransport {
   private peerOptions?: object;
   private onError?: (error: Error) => void;
   private connected = false;
-  private connectionStatusCallbacks: Set<(connected: boolean) => void> =
-    new Set();
+  private connectionStatusCallbacks: Set<(connected: boolean) => void> = new Set();
   private hostRetryCount = 0;
   private maxHostRetries = 3;
   private lastPeerConfig: object | null = null;
 
   public constructor(config: TransportConfig, opts: P2PTransportOpts = {}) {
-    console.log('[P2PTransport] Constructor called with config:', {
+    console.log("[P2PTransport] Constructor called with config:", {
       gameName: config.gameName,
       playerID: config.playerID,
       matchID: config.matchID,
       numPlayers: config.numPlayers,
-      credentials: config.credentials ? '(present)' : '(none)',
+      credentials: config.credentials ? "(present)" : "(none)",
     });
-    console.log('[P2PTransport] Options:', {
+    console.log("[P2PTransport] Options:", {
       isHost: opts.isHost,
     });
 
@@ -153,9 +138,7 @@ export class P2PTransport {
       playerID: this.playerID,
       credentials: this.credentials,
       message:
-        this.privateKey && this.playerID
-          ? signMessage(this.playerID, this.privateKey)
-          : undefined,
+        this.privateKey && this.playerID ? signMessage(this.playerID, this.privateKey) : undefined,
     };
   }
 
@@ -165,7 +148,7 @@ export class P2PTransport {
 
     const Peer = window.Peer;
     if (!Peer) {
-      this.onError?.(new Error('PeerJS not loaded'));
+      this.onError?.(new Error("PeerJS not loaded"));
       return;
     }
 
@@ -203,29 +186,24 @@ export class P2PTransport {
 
     console.log(
       `[P2PTransport] Connecting as ${
-        this.isHost ? 'HOST' : 'CLIENT'
-      }, hostID: ${this.hostID}${isReconnection ? ' (reconnecting)' : ''}`,
+        this.isHost ? "HOST" : "CLIENT"
+      }, hostID: ${this.hostID}${isReconnection ? " (reconnecting)" : ""}`
     );
 
     // If host is reconnecting, delay to allow old PeerJS connection to clear
     if (isReconnection) {
-      console.log(
-        '[P2PTransport] Host reconnecting, waiting for PeerJS ID to clear...',
-      );
+      console.log("[P2PTransport] Host reconnecting, waiting for PeerJS ID to clear...");
       setTimeout(() => this.createPeer(Peer, peerConfig), 2000);
     } else {
       this.createPeer(Peer, peerConfig);
     }
   }
 
-  private createPeer(
-    Peer: NonNullable<typeof window.Peer>,
-    peerConfig: object,
-  ): void {
+  private createPeer(Peer: NonNullable<typeof window.Peer>, peerConfig: object): void {
     this.lastPeerConfig = peerConfig;
     this.peer = new Peer(this.isHost ? this.hostID : undefined, peerConfig);
 
-    this.peer.on('open', (id) => {
+    this.peer.on("open", (id) => {
       console.log(`[P2PTransport] Peer opened with ID: ${id}`);
       if (this.isHost) {
         try {
@@ -240,17 +218,12 @@ export class P2PTransport {
             send: (data) => this.notifyClient(data as TransportData),
           });
           // Host is ready immediately
-          console.log('[P2PTransport] Host ready, waiting for connections');
+          console.log("[P2PTransport] Host ready, waiting for connections");
           this.onConnect();
         } catch (error) {
           const transportError =
-            error instanceof Error
-              ? error
-              : new Error('Failed to initialize host');
-          console.error(
-            '[P2PTransport] Host initialization failed:',
-            transportError,
-          );
+            error instanceof Error ? error : new Error("Failed to initialize host");
+          console.error("[P2PTransport] Host initialization failed:", transportError);
           this.onError?.(transportError);
           this.disconnect();
         }
@@ -262,10 +235,10 @@ export class P2PTransport {
       }
     });
 
-    this.peer.on('connection', (conn) => {
+    this.peer.on("connection", (conn) => {
       console.log(
-        '[P2PTransport] Incoming connection from:',
-        (conn as DataConnection & { peer?: string }).peer,
+        "[P2PTransport] Incoming connection from:",
+        (conn as DataConnection & { peer?: string }).peer
       );
       const dataConn = conn as DataConnection;
       if (!this.host) return;
@@ -275,41 +248,39 @@ export class P2PTransport {
         send: (data: unknown) => dataConn.send(data),
       };
 
-      dataConn.on('open', () => {
-        console.log('[P2PTransport] Data connection opened');
+      dataConn.on("open", () => {
+        console.log("[P2PTransport] Data connection opened");
         this.host?.registerClient(client);
       });
 
-      dataConn.on('data', (data) => {
+      dataConn.on("data", (data) => {
         const action = data as ClientAction;
-        if (action.type === 'sync' && 'metadata' in (data as object)) {
+        if (action.type === "sync" && "metadata" in (data as object)) {
           client.metadata = (data as { metadata: ClientMetadata }).metadata;
         }
         this.host?.processAction(client, action);
       });
 
-      dataConn.on('close', () => {
+      dataConn.on("close", () => {
         this.host?.unregisterClient(client);
       });
     });
 
-    this.peer.on('error', (err) => {
+    this.peer.on("error", (err) => {
       const error = err as Error & { type?: string };
-      console.error('[P2PTransport] Peer error:', error.type, error.message);
+      console.error("[P2PTransport] Peer error:", error.type, error.message);
 
       // Handle specific PeerJS error types
-      if (error.type === 'peer-unavailable') {
-        console.error(
-          '[P2PTransport] Host peer not found. Is the host connected?',
-        );
+      if (error.type === "peer-unavailable") {
+        console.error("[P2PTransport] Host peer not found. Is the host connected?");
         this.onError?.(error);
-      } else if (error.type === 'unavailable-id') {
+      } else if (error.type === "unavailable-id") {
         // Host ID is still held by old connection - retry after delay
         if (this.isHost && this.hostRetryCount < this.maxHostRetries) {
           this.hostRetryCount++;
           const delay = 2000 * this.hostRetryCount; // Exponential backoff
           console.log(
-            `[P2PTransport] Peer ID unavailable, retrying in ${delay}ms (${this.hostRetryCount}/${this.maxHostRetries})...`,
+            `[P2PTransport] Peer ID unavailable, retrying in ${delay}ms (${this.hostRetryCount}/${this.maxHostRetries})...`
           );
           this.peer?.destroy();
           this.peer = null;
@@ -320,9 +291,7 @@ export class P2PTransport {
             }
           }, delay);
         } else {
-          console.error(
-            '[P2PTransport] Peer ID already taken, max retries reached',
-          );
+          console.error("[P2PTransport] Peer ID already taken, max retries reached");
           this.onError?.(error);
         }
       } else {
@@ -330,8 +299,8 @@ export class P2PTransport {
       }
     });
 
-    this.peer.on('close', () => {
-      console.log('[P2PTransport] Peer connection closed');
+    this.peer.on("close", () => {
+      console.log("[P2PTransport] Peer connection closed");
       this.connected = false;
       this.notifyConnectionStatus(false);
     });
@@ -347,13 +316,13 @@ export class P2PTransport {
     console.log(
       `[P2PTransport] Attempting connection to host (attempt ${
         this.retryCount + 1
-      }/${this.maxRetries + 1})`,
+      }/${this.maxRetries + 1})`
     );
 
     // Connect with reliable data channel
     this.connection = this.peer.connect(this.hostID, {
       reliable: true,
-      serialization: 'json',
+      serialization: "json",
     });
 
     // Connection timeout - retry if not connected within 10 seconds
@@ -362,52 +331,44 @@ export class P2PTransport {
         this.retryCount++;
         if (this.retryCount <= this.maxRetries) {
           console.warn(
-            `[P2PTransport] Connection timeout, retrying in ${this.retryDelayMs}ms (${this.retryCount}/${this.maxRetries})...`,
+            `[P2PTransport] Connection timeout, retrying in ${this.retryDelayMs}ms (${this.retryCount}/${this.maxRetries})...`
           );
           this.connection.close();
           // Delay before retry to give host time to reconnect
           setTimeout(() => this.connectToHost(), this.retryDelayMs);
         } else {
-          console.error(
-            '[P2PTransport] Max retries reached. Could not connect to host.',
-          );
+          console.error("[P2PTransport] Max retries reached. Could not connect to host.");
           this.onError?.(
-            new Error(
-              'Could not connect to host after multiple attempts. Is the host online?',
-            ),
+            new Error("Could not connect to host after multiple attempts. Is the host online?")
           );
         }
       }
     }, 10000);
 
-    this.connection.on('open', () => {
+    this.connection.on("open", () => {
       clearTimeout(connectionTimeout);
-      console.log('[P2PTransport] Connected to host successfully!');
+      console.log("[P2PTransport] Connected to host successfully!");
       this.retryCount = 0;
-      this.connection?.send({ type: 'sync', metadata: this.metadata });
+      this.connection?.send({ type: "sync", metadata: this.metadata });
       // Now we're actually connected to the host
       this.onConnect();
     });
 
-    this.connection.on('data', (data) => {
+    this.connection.on("data", (data) => {
       this.notifyClient(data as TransportData);
     });
 
-    this.connection.on('close', () => {
+    this.connection.on("close", () => {
       clearTimeout(connectionTimeout);
-      console.log('[P2PTransport] Connection to host closed');
+      console.log("[P2PTransport] Connection to host closed");
       this.connected = false;
       this.notifyConnectionStatus(false);
     });
 
-    this.connection.on('error', (err) => {
+    this.connection.on("error", (err) => {
       clearTimeout(connectionTimeout);
       const error = err as Error & { type?: string };
-      console.error(
-        '[P2PTransport] Connection error:',
-        error.type,
-        error.message,
-      );
+      console.error("[P2PTransport] Connection error:", error.type, error.message);
       this.onError?.(error);
     });
   }
@@ -445,16 +406,16 @@ export class P2PTransport {
           metadata: this.metadata,
           send: (d) => this.notifyClient(d as TransportData),
         },
-        { type: 'sync' },
+        { type: "sync" }
       );
     } else {
-      this.connection?.send({ type: 'sync', metadata: this.metadata });
+      this.connection?.send({ type: "sync", metadata: this.metadata });
     }
   }
 
   public sendAction(state: State, action: CredentialedActionShape.Any): void {
     const msg: ClientAction = {
-      type: 'update',
+      type: "update",
       args: [this.matchID, state, action],
     };
     if (this.isHost && this.host) {
@@ -463,7 +424,7 @@ export class P2PTransport {
           metadata: this.metadata,
           send: (d) => this.notifyClient(d as TransportData),
         },
-        msg,
+        msg
       );
     } else {
       this.connection?.send(msg);
@@ -472,7 +433,7 @@ export class P2PTransport {
 
   public sendChatMessage(matchID: string, chatMessage: ChatMessage): void {
     const msg: ClientAction = {
-      type: 'chat',
+      type: "chat",
       args: [matchID, chatMessage, this.credentials],
     };
     if (this.isHost && this.host) {
@@ -481,7 +442,7 @@ export class P2PTransport {
           metadata: this.metadata,
           send: (d) => this.notifyClient(d as TransportData),
         },
-        msg,
+        msg
       );
     } else {
       this.connection?.send(msg);
@@ -510,9 +471,7 @@ export class P2PTransport {
     return this.connected;
   }
 
-  public subscribeToConnectionStatus(
-    callback: (connected: boolean) => void,
-  ): () => void {
+  public subscribeToConnectionStatus(callback: (connected: boolean) => void): () => void {
     this.connectionStatusCallbacks.add(callback);
     // Immediately notify current status
     callback(this.connected);

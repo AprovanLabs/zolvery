@@ -1,30 +1,30 @@
-import type { CapacitorConfig } from '@capacitor/cli';
+import type { CapacitorConfig } from "@capacitor/cli";
 
 const config: CapacitorConfig = {
-  appId: 'com.aprovan.zolvery',
-  appName: 'Zolvery',
-  webDir: '../client/dist',
+  appId: "com.aprovan.zolvery",
+  appName: "Zolvery",
+  webDir: "../client/dist",
   server: {
-    androidScheme: 'https',
+    androidScheme: "https",
   },
   plugins: {
     CapacitorHttp: {
       enabled: false,
     },
     StatusBar: {
-      style: 'DARK',
-      backgroundColor: '#3059d4',
+      style: "DARK",
+      backgroundColor: "#3059d4",
     },
     SplashScreen: {
       launchShowDuration: 2000,
       launchAutoHide: true,
-      backgroundColor: '#3059d4',
-      androidScaleType: 'CENTER_CROP',
+      backgroundColor: "#3059d4",
+      androidScaleType: "CENTER_CROP",
       showSpinner: false,
     },
   },
   android: {
-    backgroundColor: '#3059d4',
+    backgroundColor: "#3059d4",
   },
 };
 

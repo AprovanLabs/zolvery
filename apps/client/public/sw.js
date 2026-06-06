@@ -1,31 +1,29 @@
-importScripts(
-  'https://storage.googleapis.com/workbox-cdn/releases/7.3.0/workbox-sw.js',
-);
+importScripts("https://storage.googleapis.com/workbox-cdn/releases/7.3.0/workbox-sw.js");
 
 // This is your Service Worker, you can put any of your custom Service Worker
 // code in this file, above the `precacheAndRoute` line.
 
 // When widget is installed/pinned, push initial state.
-self.addEventListener('widgetinstall', (event) => {
+self.addEventListener("widgetinstall", (event) => {
   event.waitUntil(updateWidget(event));
 });
 
 // When widget is shown, update content to ensure it is up-to-date.
-self.addEventListener('widgetresume', (event) => {
+self.addEventListener("widgetresume", (event) => {
   event.waitUntil(updateWidget(event));
 });
 
 // When the user clicks an element with an associated Action.Execute,
 // handle according to the 'verb' in event.action.
-self.addEventListener('widgetclick', (event) => {
-  if (event.action == 'updateName') {
+self.addEventListener("widgetclick", (event) => {
+  if (event.action == "updateName") {
     event.waitUntil(updateName(event));
   }
 });
 
 // When the widget is uninstalled/unpinned, clean up any unnecessary
 // periodic sync or widget-related state.
-self.addEventListener('widgetuninstall', (event) => {});
+self.addEventListener("widgetuninstall", (event) => {});
 
 const updateWidget = async (event) => {
   // The widget definition represents the fields specified in the manifest.
@@ -33,9 +31,7 @@ const updateWidget = async (event) => {
 
   // Fetch the template and data defined in the manifest to generate the payload.
   const payload = {
-    template: JSON.stringify(
-      await (await fetch(widgetDefinition.msAcTemplate)).json(),
-    ),
+    template: JSON.stringify(await (await fetch(widgetDefinition.msAcTemplate)).json()),
     data: JSON.stringify(await (await fetch(widgetDefinition.data)).json()),
   };
 
@@ -51,9 +47,7 @@ const updateName = async (event) => {
 
   // Fetch the template and data defined in the manifest to generate the payload.
   const payload = {
-    template: JSON.stringify(
-      await (await fetch(widgetDefinition.msAcTemplate)).json(),
-    ),
+    template: JSON.stringify(await (await fetch(widgetDefinition.msAcTemplate)).json()),
     data: JSON.stringify({ name }),
   };
 

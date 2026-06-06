@@ -1,18 +1,18 @@
-import { config } from 'dotenv';
+import { config } from "dotenv";
 
-type EnvShortCode = 'dev' | 'tst' | 'stg' | 'prd';
+type EnvShortCode = "dev" | "tst" | "stg" | "prd";
 
-const environment = (process.env.ENVIRONMENT as EnvShortCode) || 'dev';
+const environment = (process.env.ENVIRONMENT as EnvShortCode) || "dev";
 
 config({
-  path: environment === 'dev' ? '.env.local' : '.env',
+  path: environment === "dev" ? ".env.local" : ".env",
 });
 
 export interface AppConfig {
   port: number;
   peerPort: number;
   nodeEnv: string;
-  environment: 'dev' | 'tst' | 'stg' | 'prd';
+  environment: "dev" | "tst" | "stg" | "prd";
   logLevel: string;
   version: string;
   aws: {
@@ -34,32 +34,26 @@ export interface AppConfig {
 }
 
 const getConfig = (): AppConfig => {
-  const requiredEnvVars = ['DYNAMODB_TABLE_NAME', 'S3_DATA_BUCKET'];
+  const requiredEnvVars = ["DYNAMODB_TABLE_NAME", "S3_DATA_BUCKET"];
 
   // Check for required environment variables
-  const missingVars = requiredEnvVars.filter(
-    (varName) => !process.env[varName],
-  );
+  const missingVars = requiredEnvVars.filter((varName) => !process.env[varName]);
   if (missingVars.length > 0) {
-    throw new Error(
-      `Missing required environment variables: ${missingVars.join(', ')}`,
-    );
+    throw new Error(`Missing required environment variables: ${missingVars.join(", ")}`);
   }
 
   const sha = process.env.BUILD_SHA_PREFIX;
-  const version = `${process.env.npm_package_version || '1.0.0'}${
-    sha ? `-${sha}` : ''
-  }`;
+  const version = `${process.env.npm_package_version || "1.0.0"}${sha ? `-${sha}` : ""}`;
 
   return {
-    port: parseInt(process.env.PORT || '3000', 10),
-    peerPort: parseInt(process.env.PEER_PORT || '9500', 10),
-    nodeEnv: process.env.NODE_ENV || 'development',
-    environment: (process.env.ENVIRONMENT || 'dev') as EnvShortCode,
+    port: parseInt(process.env.PORT || "3000", 10),
+    peerPort: parseInt(process.env.PEER_PORT || "9500", 10),
+    nodeEnv: process.env.NODE_ENV || "development",
+    environment: (process.env.ENVIRONMENT || "dev") as EnvShortCode,
     version,
-    logLevel: process.env.LOG_LEVEL || 'info',
+    logLevel: process.env.LOG_LEVEL || "info",
     aws: {
-      region: process.env.AWS_REGION || 'us-east-2',
+      region: process.env.AWS_REGION || "us-east-2",
       ...(process.env.AWS_ENDPOINT && { endpoint: process.env.AWS_ENDPOINT }),
       ...(process.env.AWS_ACCESS_KEY_ID && {
         accessKeyId: process.env.AWS_ACCESS_KEY_ID,
@@ -75,12 +69,12 @@ const getConfig = (): AppConfig => {
       dataBucket: process.env.S3_DATA_BUCKET!,
     },
     cors: {
-      origin: process.env.CORS_ORIGINS?.split(',') || [
+      origin: process.env.CORS_ORIGINS?.split(",") || [
         // Allow localhost on any port for dev
         /^http:\/\/localhost:\d+$/,
         /^http:\/\/127\.0\.0\.1:\d+$/,
       ],
-      credentials: process.env.CORS_CREDENTIALS === 'true',
+      credentials: process.env.CORS_CREDENTIALS === "true",
     },
   };
 };

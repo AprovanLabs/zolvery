@@ -13,12 +13,7 @@
     {
       "id": "num-players",
       "label": "settings.num-players",
-      "options": [
-        { "value": "1" },
-        { "value": "2" },
-        { "value": "3" },
-        { "value": "4" }
-      ],
+      "options": [{ "value": "1" }, { "value": "2" }, { "value": "3" }, { "value": "4" }],
       "default": "1"
     }
   ]

@@ -1,9 +1,9 @@
-import { connect } from '@aprovan/mcp';
-import { createApp, computed, ref } from 'vue';
+import { connect } from "@aprovan/mcp";
+import { createApp, computed, ref } from "vue";
 
-const games = await connect('zolvery/games');
+const games = await connect("zolvery/games");
 
-const isDev = process.env.ENVIRONMENT === 'development';
+const isDev = process.env.ENVIRONMENT === "development";
 
 /** @see https://github.com/words/syllable */
 
@@ -76,137 +76,137 @@ const own = {}.hasOwnProperty;
 // syllables, but should be counted as one.
 const EXPRESSION_MONOSYLLABIC_ONE = new RegExp(
   [
-    'awe($|d|so)',
-    'cia(?:l|$)',
-    'tia',
-    'cius',
-    'cious',
-    '[^aeiou]giu',
-    '[aeiouy][^aeiouy]ion',
-    'iou',
-    'sia$',
-    'eous$',
-    '[oa]gue$',
-    '.[^aeiuoycgltdb]{2,}ed$',
-    '.ely$',
-    '^jua',
-    'uai',
-    'eau',
-    '^busi$',
-    '(?:[aeiouy](?:' +
+    "awe($|d|so)",
+    "cia(?:l|$)",
+    "tia",
+    "cius",
+    "cious",
+    "[^aeiou]giu",
+    "[aeiouy][^aeiouy]ion",
+    "iou",
+    "sia$",
+    "eous$",
+    "[oa]gue$",
+    ".[^aeiuoycgltdb]{2,}ed$",
+    ".ely$",
+    "^jua",
+    "uai",
+    "eau",
+    "^busi$",
+    "(?:[aeiouy](?:" +
       [
-        '[bcfgklmnprsvwxyz]',
-        'ch',
-        'dg',
-        'g[hn]',
-        'lch',
-        'l[lv]',
-        'mm',
-        'nch',
-        'n[cgn]',
-        'r[bcnsv]',
-        'squ',
-        's[chkls]',
-        'th',
-      ].join('|') +
-      ')ed$)',
-    '(?:[aeiouy](?:' +
+        "[bcfgklmnprsvwxyz]",
+        "ch",
+        "dg",
+        "g[hn]",
+        "lch",
+        "l[lv]",
+        "mm",
+        "nch",
+        "n[cgn]",
+        "r[bcnsv]",
+        "squ",
+        "s[chkls]",
+        "th",
+      ].join("|") +
+      ")ed$)",
+    "(?:[aeiouy](?:" +
       [
-        '[bdfklmnprstvy]',
-        'ch',
-        'g[hn]',
-        'lch',
-        'l[lv]',
-        'mm',
-        'nch',
-        'nn',
-        'r[nsv]',
-        'squ',
-        's[cklst]',
-        'th',
-      ].join('|') +
-      ')es$)',
-  ].join('|'),
-  'g',
+        "[bdfklmnprstvy]",
+        "ch",
+        "g[hn]",
+        "lch",
+        "l[lv]",
+        "mm",
+        "nch",
+        "nn",
+        "r[nsv]",
+        "squ",
+        "s[cklst]",
+        "th",
+      ].join("|") +
+      ")es$)",
+  ].join("|"),
+  "g"
 );
 
 const EXPRESSION_MONOSYLLABIC_TWO = new RegExp(
-  '[aeiouy](?:' +
+  "[aeiouy](?:" +
     [
-      '[bcdfgklmnprstvyz]',
-      'ch',
-      'dg',
-      'g[hn]',
-      'l[lv]',
-      'mm',
-      'n[cgns]',
-      'r[cnsv]',
-      'squ',
-      's[cklst]',
-      'th',
-    ].join('|') +
-    ')e$',
-  'g',
+      "[bcdfgklmnprstvyz]",
+      "ch",
+      "dg",
+      "g[hn]",
+      "l[lv]",
+      "mm",
+      "n[cgns]",
+      "r[cnsv]",
+      "squ",
+      "s[cklst]",
+      "th",
+    ].join("|") +
+    ")e$",
+  "g"
 );
 
 // Four expression of occurrences which normally would be counted as one
 // syllable, but should be counted as two.
 const EXPRESSION_DOUBLE_SYLLABIC_ONE = new RegExp(
-  '(?:' +
+  "(?:" +
     [
-      '([^aeiouy])\\1l',
-      '[^aeiouy]ie(?:r|s?t)',
-      '[aeiouym]bl',
-      'eo',
-      'ism',
-      'asm',
-      'thm',
-      'dnt',
-      'snt',
-      'uity',
-      'dea',
-      'gean',
-      'oa',
-      'ua',
-      'react?',
-      'orbed', // Cancel `'.[^aeiuoycgltdb]{2,}ed$',`
-      'shred', // Cancel `'.[^aeiuoycgltdb]{2,}ed$',`
-      'eings?',
-      '[aeiouy]sh?e[rs]',
-    ].join('|') +
-    ')$',
-  'g',
+      "([^aeiouy])\\1l",
+      "[^aeiouy]ie(?:r|s?t)",
+      "[aeiouym]bl",
+      "eo",
+      "ism",
+      "asm",
+      "thm",
+      "dnt",
+      "snt",
+      "uity",
+      "dea",
+      "gean",
+      "oa",
+      "ua",
+      "react?",
+      "orbed", // Cancel `'.[^aeiuoycgltdb]{2,}ed$',`
+      "shred", // Cancel `'.[^aeiuoycgltdb]{2,}ed$',`
+      "eings?",
+      "[aeiouy]sh?e[rs]",
+    ].join("|") +
+    ")$",
+  "g"
 );
 
 const EXPRESSION_DOUBLE_SYLLABIC_TWO = new RegExp(
   [
-    'creat(?!u)',
-    '[^gq]ua[^auieo]',
-    '[aeiou]{3}',
-    '^(?:ia|mc|coa[dglx].)',
-    '^re(app|es|im|us)',
-    '(th|d)eist',
-  ].join('|'),
-  'g',
+    "creat(?!u)",
+    "[^gq]ua[^auieo]",
+    "[aeiou]{3}",
+    "^(?:ia|mc|coa[dglx].)",
+    "^re(app|es|im|us)",
+    "(th|d)eist",
+  ].join("|"),
+  "g"
 );
 
 const EXPRESSION_DOUBLE_SYLLABIC_THREE = new RegExp(
   [
-    '[^aeiou]y[ae]',
-    '[^l]lien',
-    'riet',
-    'dien',
-    'iu',
-    'io',
-    'ii',
-    'uen',
-    '[aeilotu]real',
-    'real[aeilotu]',
-    'iell',
-    'eo[^aeiou]',
-    '[aeiou]y[aeiou]',
-  ].join('|'),
-  'g',
+    "[^aeiou]y[ae]",
+    "[^l]lien",
+    "riet",
+    "dien",
+    "iu",
+    "io",
+    "ii",
+    "uen",
+    "[aeilotu]real",
+    "real[aeilotu]",
+    "iell",
+    "eo[^aeiou]",
+    "[aeiou]y[aeiou]",
+  ].join("|"),
+  "g"
 );
 
 const EXPRESSION_DOUBLE_SYLLABIC_FOUR = /[^s]ia/;
@@ -214,79 +214,79 @@ const EXPRESSION_DOUBLE_SYLLABIC_FOUR = /[^s]ia/;
 // Expression to match single syllable pre- and suffixes.
 const EXPRESSION_SINGLE = new RegExp(
   [
-    '^(?:' +
+    "^(?:" +
       [
-        'un',
-        'fore',
-        'ware',
-        'none?',
-        'out',
-        'post',
-        'sub',
-        'pre',
-        'pro',
-        'dis',
-        'side',
-        'some',
-      ].join('|') +
-      ')',
-    '(?:' +
+        "un",
+        "fore",
+        "ware",
+        "none?",
+        "out",
+        "post",
+        "sub",
+        "pre",
+        "pro",
+        "dis",
+        "side",
+        "some",
+      ].join("|") +
+      ")",
+    "(?:" +
       [
-        'ly',
-        'less',
-        'some',
-        'ful',
-        'ers?',
-        'ness',
-        'cians?',
-        'ments?',
-        'ettes?',
-        'villes?',
-        'ships?',
-        'sides?',
-        'ports?',
-        'shires?',
-        '[gnst]ion(?:ed|s)?',
-      ].join('|') +
-      ')$',
-  ].join('|'),
-  'g',
+        "ly",
+        "less",
+        "some",
+        "ful",
+        "ers?",
+        "ness",
+        "cians?",
+        "ments?",
+        "ettes?",
+        "villes?",
+        "ships?",
+        "sides?",
+        "ports?",
+        "shires?",
+        "[gnst]ion(?:ed|s)?",
+      ].join("|") +
+      ")$",
+  ].join("|"),
+  "g"
 );
 
 // Expression to match double syllable pre- and suffixes.
 const EXPRESSION_DOUBLE = new RegExp(
   [
-    '^' +
-      '(?:' +
+    "^" +
+      "(?:" +
       [
-        'above',
-        'anti',
-        'ante',
-        'counter',
-        'hyper',
-        'afore',
-        'agri',
-        'infra',
-        'intra',
-        'inter',
-        'over',
-        'semi',
-        'ultra',
-        'under',
-        'extra',
-        'dia',
-        'micro',
-        'mega',
-        'kilo',
-        'pico',
-        'nano',
-        'macro',
-        'somer',
-      ].join('|') +
-      ')',
-    '(?:fully|berry|woman|women|edly|union|((?:[bcdfghjklmnpqrstvwxz])|[aeiou])ye?ing)$',
-  ].join('|'),
-  'g',
+        "above",
+        "anti",
+        "ante",
+        "counter",
+        "hyper",
+        "afore",
+        "agri",
+        "infra",
+        "intra",
+        "inter",
+        "over",
+        "semi",
+        "ultra",
+        "under",
+        "extra",
+        "dia",
+        "micro",
+        "mega",
+        "kilo",
+        "pico",
+        "nano",
+        "macro",
+        "somer",
+      ].join("|") +
+      ")",
+    "(?:fully|berry|woman|women|edly|union|((?:[bcdfghjklmnpqrstvwxz])|[aeiou])ye?ing)$",
+  ].join("|"),
+  "g"
 );
 
 // Expression to match triple syllable suffixes.
@@ -304,7 +304,7 @@ function getSyllableCount(value) {
   const values = String(value)
     .toLowerCase()
     // Remove apostrophes.
-    .replace(/['’]/g, '')
+    .replace(/['’]/g, "")
     // Split on word boundaries.
     .split(/\b/g);
   let index = -1;
@@ -312,7 +312,7 @@ function getSyllableCount(value) {
 
   while (++index < values.length) {
     // Remove non-alphabetic characters from a given value.
-    sum += one(values[index].replace(/[^a-z]/g, ''));
+    sum += one(values[index].replace(/[^a-z]/g, ""));
   }
 
   return sum;
@@ -355,7 +355,7 @@ function one(value) {
   let index = -1;
 
   while (++index < parts.length) {
-    if (parts[index] !== '') {
+    if (parts[index] !== "") {
       count++;
     }
   }
@@ -390,7 +390,7 @@ function one(value) {
      */
     function counter() {
       count += addition;
-      return '';
+      return "";
     }
   }
 
@@ -422,7 +422,7 @@ const toLine = (syllableCounts, offset, numSyllables) => {
   try {
     const counts = syllableCounts.slice(offset);
     if (!counts.length) {
-      return { line: '', wordCount: 0, syllableCount: 0 };
+      return { line: "", wordCount: 0, syllableCount: 0 };
     }
 
     do {
@@ -432,7 +432,7 @@ const toLine = (syllableCounts, offset, numSyllables) => {
       if (line === undefined) {
         line = word;
       } else {
-        line += ' ' + word;
+        line += " " + word;
       }
     } while (currSyllableCount < numSyllables);
     return { line, wordCount, syllableCount: currSyllableCount };
@@ -441,12 +441,11 @@ const toLine = (syllableCounts, offset, numSyllables) => {
   }
 };
 
-const SAMPLE_POEM =
-  'The sun is shining\nBirds are singing in the trees\nNature wakes from sleep';
+const SAMPLE_POEM = "The sun is shining\nBirds are singing in the trees\nNature wakes from sleep";
 const SAMPLE_POEMS = [
   SAMPLE_POEM,
-  'A gentle breeze blows\nWhispers through the tall green grass\nNature’s lullaby',
-  'Mountains touch the sky\nClouds drift lazily above\nNature’s majesty',
+  "A gentle breeze blows\nWhispers through the tall green grass\nNature’s lullaby",
+  "Mountains touch the sky\nClouds drift lazily above\nNature’s majesty",
 ];
 
 export const app = createApp({
@@ -454,8 +453,8 @@ export const app = createApp({
     const data = computed(() => games.get_daily_data());
     const users = computed(() => games.get_voting_pool());
 
-    const poem = ref(isDev ? SAMPLE_POEM : '');
-    const prompt = computed(() => data?.prompt || 'Write a haiku.');
+    const poem = ref(isDev ? SAMPLE_POEM : "");
+    const prompt = computed(() => data?.prompt || "Write a haiku.");
     const poems = computed(() => {
       if (isDev.value) {
         return SAMPLE_POEMS;
@@ -466,7 +465,7 @@ export const app = createApp({
       users.value
         .map((user) => user?.data?.poem)
         .forEach((userPoem) => {
-          if (userPoem && userPoem.trim() !== '') {
+          if (userPoem && userPoem.trim() !== "") {
             userProvidedPoems.push(userPoem);
           }
         });
@@ -475,14 +474,10 @@ export const app = createApp({
       const systemGeneratedPoems = data.value?.examples || [];
 
       // Fallback to sample poems
-      return [
-        ...userProvidedPoems,
-        ...systemGeneratedPoems,
-        ...SAMPLE_POEMS,
-      ].slice(0, NUM_VOTES);
+      return [...userProvidedPoems, ...systemGeneratedPoems, ...SAMPLE_POEMS].slice(0, NUM_VOTES);
     });
 
-    const phase = ref('creating'); // 'creating', 'voting'
+    const phase = ref("creating"); // 'creating', 'voting'
     const voteNum = ref(1);
     const votes = ref([]); // { userId: value }
     const currentVote = ref(5);
@@ -520,7 +515,7 @@ export const app = createApp({
     };
     const submit = () => {
       games.submit({ value: poem.value });
-      phase.value = 'voting';
+      phase.value = "voting";
       nextPoem();
     };
 
@@ -535,7 +530,7 @@ export const app = createApp({
     const haiku = computed(() => {
       const syllableCounts = poem.value
         .split(/[ \n]/)
-        .filter((word) => word.trim() !== '')
+        .filter((word) => word.trim() !== "")
         .map((word) => {
           const count = getSyllableCount(word);
           if (count === undefined) {
@@ -555,31 +550,23 @@ export const app = createApp({
         setLineCount(0, syllableCount);
         lines.push(line);
 
-        ({ line, wordCount, syllableCount } = toLine(
-          syllableCounts,
-          numWords,
-          7,
-        ));
+        ({ line, wordCount, syllableCount } = toLine(syllableCounts, numWords, 7));
         numWords += wordCount;
         setLineCount(1, syllableCount);
         lines.push(line);
 
-        ({ line, wordCount, syllableCount } = toLine(
-          syllableCounts,
-          numWords,
-          5,
-        ));
+        ({ line, wordCount, syllableCount } = toLine(syllableCounts, numWords, 5));
         setLineCount(2, syllableCount);
         lines.push(line);
 
-        const content = lines.filter((x) => !!x).join('\n');
+        const content = lines.filter((x) => !!x).join("\n");
         const isComplete = syllableCount === 5 && lines.length === 3;
         setIsComplete(isComplete);
 
         return content;
       } catch (e) {
-        console.error('Error creating haiku:', e);
-        return '';
+        console.error("Error creating haiku:", e);
+        return "";
       }
     });
 

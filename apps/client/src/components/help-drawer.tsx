@@ -1,8 +1,8 @@
-import React from 'react';
-import { Sidebar } from 'primereact/sidebar';
-import { Button } from 'primereact/button';
-import { ScrollPanel } from 'primereact/scrollpanel';
-import ReactMarkdown from 'react-markdown';
+import { Button } from "primereact/button";
+import { ScrollPanel } from "primereact/scrollpanel";
+import { Sidebar } from "primereact/sidebar";
+import React from "react";
+import ReactMarkdown from "react-markdown";
 
 export interface HelpDrawerProps {
   /** Whether the drawer is visible */
@@ -19,7 +19,7 @@ export const HelpDrawer: React.FC<HelpDrawerProps> = ({
   visible,
   onHide,
   helpContent,
-  title = 'Help',
+  title = "Help",
 }) => {
   const headerTemplate = (
     <div className="flex items-center justify-between w-full">
@@ -37,15 +37,12 @@ export const HelpDrawer: React.FC<HelpDrawerProps> = ({
       blockScroll
       header={headerTemplate}
       pt={{
-        closeButton: { className: 'p-4' },
+        closeButton: { className: "p-4" },
       }}
     >
       <div className="flex flex-col h-full">
         {/* Help Content */}
-        <ScrollPanel
-          className="flex-1"
-          style={{ width: '100%', height: 'calc(100vh - 120px)' }}
-        >
+        <ScrollPanel className="flex-1" style={{ width: "100%", height: "calc(100vh - 120px)" }}>
           <div className="pr-4 prose-sm prose max-w-none">
             <ReactMarkdown>{helpContent}</ReactMarkdown>
           </div>

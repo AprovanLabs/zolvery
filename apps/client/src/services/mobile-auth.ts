@@ -1,7 +1,7 @@
-import { Capacitor } from '@capacitor/core';
-import { Browser } from '@capacitor/browser';
-import { App, URLOpenListenerEvent } from '@capacitor/app';
-import { Preferences } from '@capacitor/preferences';
+import { App, type URLOpenListenerEvent } from "@capacitor/app";
+import { Browser } from "@capacitor/browser";
+import { Capacitor } from "@capacitor/core";
+import { Preferences } from "@capacitor/preferences";
 
 export interface AuthConfig {
   cognitoDomain: string;
@@ -24,8 +24,8 @@ export interface AuthUser {
   groups: string[];
 }
 
-const TOKEN_STORAGE_KEY = 'zolvery_auth_tokens';
-const USER_STORAGE_KEY = 'zolvery_auth_user';
+const TOKEN_STORAGE_KEY = "zolvery_auth_tokens";
+const USER_STORAGE_KEY = "zolvery_auth_user";
 
 let config: AuthConfig | null = null;
 let authListenerHandle: Promise<{ remove: () => void }> | null = null;
@@ -40,30 +40,25 @@ export function configure(authConfig: AuthConfig): void {
 }
 
 function parseJwt(token: string): Record<string, unknown> {
-  const base64Url = token.split('.')[1];
-  const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+  const base64Url = token.split(".")[1];
+  const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
   const jsonPayload = decodeURIComponent(
     atob(base64)
-      .split('')
-      .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-      .join(''),
+      .split("")
+      .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+      .join("")
   );
   return JSON.parse(jsonPayload);
 }
 
 function extractTokensFromUrl(url: string): AuthTokens | null {
-  const hashParams = new URLSearchParams(url.split('#')[1] || '');
-  const queryParams = new URLSearchParams(
-    url.split('?')[1]?.split('#')[0] || '',
-  );
+  const hashParams = new URLSearchParams(url.split("#")[1] || "");
+  const queryParams = new URLSearchParams(url.split("?")[1]?.split("#")[0] || "");
 
-  const accessToken =
-    hashParams.get('access_token') || queryParams.get('access_token');
-  const idToken = hashParams.get('id_token') || queryParams.get('id_token');
-  const refreshToken =
-    hashParams.get('refresh_token') || queryParams.get('refresh_token');
-  const expiresIn =
-    hashParams.get('expires_in') || queryParams.get('expires_in');
+  const accessToken = hashParams.get("access_token") || queryParams.get("access_token");
+  const idToken = hashParams.get("id_token") || queryParams.get("id_token");
+  const refreshToken = hashParams.get("refresh_token") || queryParams.get("refresh_token");
+  const expiresIn = hashParams.get("expires_in") || queryParams.get("expires_in");
 
   if (!accessToken || !idToken) {
     return null;
@@ -72,8 +67,8 @@ function extractTokensFromUrl(url: string): AuthTokens | null {
   return {
     accessToken,
     idToken,
-    refreshToken: refreshToken || '',
-    expiresAt: Date.now() + parseInt(expiresIn || '3600', 10) * 1000,
+    refreshToken: refreshToken || "",
+    expiresAt: Date.now() + parseInt(expiresIn || "3600", 10) * 1000,
   };
 }
 
@@ -83,8 +78,8 @@ function extractUserFromIdToken(idToken: string): AuthUser | null {
     return {
       sub: payload.sub as string,
       email: payload.email as string,
-      username: (payload['cognito:username'] || payload.email) as string,
-      groups: (payload['cognito:groups'] || []) as string[],
+      username: (payload["cognito:username"] || payload.email) as string,
+      groups: (payload["cognito:groups"] || []) as string[],
     };
   } catch {
     return null;
@@ -156,7 +151,7 @@ async function handleAppUrl(event: URLOpenListenerEvent): Promise<void> {
 export async function initializeAuthListener(): Promise<void> {
   if (!isMobile()) return;
 
-  authListenerHandle = App.addListener('appUrlOpen', handleAppUrl);
+  authListenerHandle = App.addListener("appUrlOpen", handleAppUrl);
 }
 
 export async function removeAuthListener(): Promise<void> {
@@ -169,7 +164,7 @@ export async function removeAuthListener(): Promise<void> {
 
 export async function login(): Promise<AuthTokens | null> {
   if (!config) {
-    throw new Error('Auth not configured. Call configure() first.');
+    throw new Error("Auth not configured. Call configure() first.");
   }
 
   if (!isMobile()) {
@@ -177,19 +172,19 @@ export async function login(): Promise<AuthTokens | null> {
     return null;
   }
 
-  return new Promise(async (resolve) => {
+  return new Promise((resolve) => {
     loginResolve = resolve;
 
-    await Browser.open({
+    Browser.open({
       url: buildLoginUrl(),
-      windowName: '_self',
+      windowName: "_self",
     });
   });
 }
 
 export async function logout(): Promise<void> {
   if (!config) {
-    throw new Error('Auth not configured. Call configure() first.');
+    throw new Error("Auth not configured. Call configure() first.");
   }
 
   await clearAuth();
@@ -201,19 +196,19 @@ export async function logout(): Promise<void> {
 
   await Browser.open({
     url: buildLogoutUrl(),
-    windowName: '_self',
+    windowName: "_self",
   });
 
   await Browser.close();
 }
 
 function buildLoginUrl(): string {
-  if (!config) throw new Error('Auth not configured');
+  if (!config) throw new Error("Auth not configured");
 
   const params = new URLSearchParams({
     client_id: config.clientId,
-    response_type: 'token',
-    scope: 'openid profile email',
+    response_type: "token",
+    scope: "openid profile email",
     redirect_uri: config.redirectUri,
   });
 
@@ -221,7 +216,7 @@ function buildLoginUrl(): string {
 }
 
 function buildLogoutUrl(): string {
-  if (!config) throw new Error('Auth not configured');
+  if (!config) throw new Error("Auth not configured");
 
   const params = new URLSearchParams({
     client_id: config.clientId,

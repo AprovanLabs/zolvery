@@ -1,8 +1,8 @@
-import { trace, SpanStatusCode, SpanKind } from '@opentelemetry/api';
-import { Context } from 'koa';
+import { trace, SpanStatusCode, SpanKind } from "@opentelemetry/api";
+import { type Context } from "koa";
 
 // Get the tracer for our service
-const tracer = trace.getTracer('zolvery-server', '1.0.0');
+const tracer = trace.getTracer("zolvery-server", "1.0.0");
 
 /**
  * Create a custom span for manual instrumentation
@@ -12,7 +12,7 @@ export const createSpan = (
   options?: {
     kind?: SpanKind;
     attributes?: Record<string, string | number | boolean>;
-  },
+  }
 ) => {
   const spanOptions: {
     kind: SpanKind;
@@ -37,7 +37,7 @@ export const instrumentAsync = async <T>(
   options?: {
     kind?: SpanKind;
     attributes?: Record<string, string | number | boolean>;
-  },
+  }
 ): Promise<T> => {
   const span = createSpan(spanName, options);
 
@@ -48,7 +48,7 @@ export const instrumentAsync = async <T>(
   } catch (error) {
     span.setStatus({
       code: SpanStatusCode.ERROR,
-      message: error instanceof Error ? error.message : 'Unknown error',
+      message: error instanceof Error ? error.message : "Unknown error",
     });
     span.recordException(error as Error);
     throw error;
@@ -62,15 +62,15 @@ export const instrumentAsync = async <T>(
  */
 export const addSpanAttributes = (
   ctx: Context,
-  attributes: Record<string, string | number | boolean>,
+  attributes: Record<string, string | number | boolean>
 ) => {
   const span = trace.getActiveSpan();
   if (span) {
     // Add context-specific attributes
     span.setAttributes({
-      'http.route': ctx.routerPath || ctx.path,
-      'user.id': ctx.state?.user?.userId || 'anonymous',
-      'app.request_id': (ctx as { requestId?: string }).requestId || 'unknown',
+      "http.route": ctx.routerPath || ctx.path,
+      "user.id": ctx.state?.user?.userId || "anonymous",
+      "app.request_id": (ctx as { requestId?: string }).requestId || "unknown",
       ...attributes,
     });
   }
@@ -79,17 +79,13 @@ export const addSpanAttributes = (
 /**
  * Create a child span within a Koa context
  */
-export const createChildSpan = (
-  ctx: Context,
-  spanName: string,
-  fn: () => Promise<unknown>,
-) => {
+export const createChildSpan = (ctx: Context, spanName: string, fn: () => Promise<unknown>) => {
   return instrumentAsync(spanName, fn, {
     kind: SpanKind.INTERNAL,
     attributes: {
-      'http.method': ctx.method,
-      'http.route': ctx.routerPath || ctx.path,
-      'user.id': ctx.state?.user?.userId || 'anonymous',
+      "http.method": ctx.method,
+      "http.route": ctx.routerPath || ctx.path,
+      "user.id": ctx.state?.user?.userId || "anonymous",
     },
   });
 };

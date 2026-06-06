@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { PEERJS_CDN_URL } from '../constants';
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { PEERJS_CDN_URL } from "../constants";
 
 declare global {
   interface Window {
@@ -8,10 +8,7 @@ declare global {
 }
 
 interface DataConnection {
-  on(
-    event: 'data' | 'open' | 'close' | 'error',
-    handler: (data?: unknown) => void,
-  ): void;
+  on(event: "data" | "open" | "close" | "error", handler: (data?: unknown) => void): void;
   send(data: unknown): void;
   close(): void;
   peer: string;
@@ -19,13 +16,10 @@ interface DataConnection {
 
 interface PeerInstance {
   on(
-    event: 'open' | 'connection' | 'error' | 'close' | 'disconnected',
-    handler: (data?: unknown) => void,
+    event: "open" | "connection" | "error" | "close" | "disconnected",
+    handler: (data?: unknown) => void
   ): void;
-  connect(
-    peerId: string,
-    options?: { reliable?: boolean; serialization?: string },
-  ): DataConnection;
+  connect(peerId: string, options?: { reliable?: boolean; serialization?: string }): DataConnection;
   destroy(): void;
   reconnect(): void;
   id: string;
@@ -40,9 +34,9 @@ export interface LobbyPlayer {
 }
 
 type LobbyMessage =
-  | { type: 'player-info'; player: LobbyPlayer }
-  | { type: 'player-left'; playerId: string }
-  | { type: 'start-game' };
+  | { type: "player-info"; player: LobbyPlayer }
+  | { type: "player-left"; playerId: string }
+  | { type: "start-game" };
 
 interface UseP2PLobbyOptions {
   gameId: string;
@@ -59,10 +53,10 @@ async function loadPeerJS(): Promise<void> {
   if (window.Peer) return;
 
   return new Promise((resolve, reject) => {
-    const script = document.createElement('script');
+    const script = document.createElement("script");
     script.src = PEERJS_CDN;
     script.onload = () => resolve();
-    script.onerror = () => reject(new Error('Failed to load PeerJS'));
+    script.onerror = () => reject(new Error("Failed to load PeerJS"));
     document.head.appendChild(script);
   });
 }
@@ -71,7 +65,7 @@ export function useP2PLobby({
   gameId,
   matchID,
   isHost,
-  playerName = 'Player',
+  playerName = "Player",
   enabled = true,
   onGameStart,
 }: UseP2PLobbyOptions) {
@@ -88,19 +82,17 @@ export function useP2PLobby({
   const peerRef = useRef<PeerInstance | null>(null);
   const connectionsRef = useRef<Map<string, DataConnection>>(new Map());
   const onGameStartRef = useRef(onGameStart);
-  const forceRelayOnly = import.meta.env.VITE_PEER_RELAY_ONLY === 'true';
+  const forceRelayOnly = import.meta.env.VITE_PEER_RELAY_ONLY === "true";
   const relayFallbackTriedRef = useRef(false);
-  const peerServerHost =
-    import.meta.env.VITE_PEER_HOST || window.location.hostname;
+  const peerServerHost = import.meta.env.VITE_PEER_HOST || window.location.hostname;
   const peerServerPort = Number(import.meta.env.VITE_PEER_PORT) || 9500;
-  const peerServerPath = import.meta.env.VITE_PEER_PATH || '/';
+  const peerServerPath = import.meta.env.VITE_PEER_PATH || "/";
   const turnUrl = import.meta.env.VITE_PEER_TURN_URL;
   const turnUsername = import.meta.env.VITE_PEER_TURN_USERNAME;
   const turnCredential = import.meta.env.VITE_PEER_TURN_CREDENTIAL;
   const isSecure =
-    import.meta.env.VITE_PEER_SECURE === 'true' ||
-    (import.meta.env.VITE_PEER_SECURE === undefined &&
-      window.location.protocol === 'https:');
+    import.meta.env.VITE_PEER_SECURE === "true" ||
+    (import.meta.env.VITE_PEER_SECURE === undefined && window.location.protocol === "https:");
   const MAX_RETRIES = 3;
   const RETRY_DELAY_MS = 1000;
   const HOST_ID_RETRY_DELAY_MS = 2000; // Delay for reclaiming host ID after refresh
@@ -108,7 +100,7 @@ export function useP2PLobby({
   const logEvent = useCallback((message: string) => {
     const stamped = `${new Date().toISOString()} ${message}`;
     setConnectionLog((prev) => [...prev.slice(-14), stamped]);
-    console.log('[P2PLobby]', message);
+    console.log("[P2PLobby]", message);
   }, []);
 
   const updateIsConnected = useCallback((value: boolean) => {
@@ -126,14 +118,11 @@ export function useP2PLobby({
   }, [isConnected]);
 
   // PeerJS IDs cannot contain slashes or other special characters
-  const sanitizedGameId = gameId.replace(/[^a-zA-Z0-9-]/g, '-');
+  const sanitizedGameId = gameId.replace(/[^a-zA-Z0-9-]/g, "-");
   const hostID = `lobby-${sanitizedGameId}-${matchID}`;
 
   // Memoize player ID to keep it stable across renders
-  const myPlayerId = useMemo(
-    () => (isHost ? 'host' : `player-${Date.now()}`),
-    [isHost],
-  );
+  const myPlayerId = useMemo(() => (isHost ? "host" : `player-${Date.now()}`), [isHost]);
 
   const myPlayer: LobbyPlayer = useMemo(
     () => ({
@@ -142,7 +131,7 @@ export function useP2PLobby({
       isHost,
       isReady: true,
     }),
-    [myPlayerId, playerName, isHost],
+    [myPlayerId, playerName, isHost]
   );
 
   const myPlayerRef = useRef(myPlayer);
@@ -161,7 +150,7 @@ export function useP2PLobby({
       try {
         conn.send(message);
       } catch (e) {
-        console.error('[P2PLobby] Failed to send message:', e);
+        console.error("[P2PLobby] Failed to send message:", e);
       }
     });
   }, []);
@@ -170,13 +159,11 @@ export function useP2PLobby({
   const handleMessage = useCallback(
     (message: LobbyMessage, fromConnection?: DataConnection) => {
       switch (message.type) {
-        case 'player-info': {
+        case "player-info": {
           setPlayers((prev) => {
             const exists = prev.some((p) => p.id === message.player.id);
             if (exists) {
-              return prev.map((p) =>
-                p.id === message.player.id ? message.player : p,
-              );
+              return prev.map((p) => (p.id === message.player.id ? message.player : p));
             }
             return [...prev, message.player];
           });
@@ -184,29 +171,29 @@ export function useP2PLobby({
           // If we're the host, send back our info and all current players
           if (isHost && fromConnection) {
             fromConnection.send({
-              type: 'player-info',
+              type: "player-info",
               player: myPlayerRef.current,
             });
             // Also send all other connected players
             playersRef.current.forEach((p) => {
               if (p.id !== message.player.id) {
-                fromConnection.send({ type: 'player-info', player: p });
+                fromConnection.send({ type: "player-info", player: p });
               }
             });
           }
           break;
         }
-        case 'player-left': {
+        case "player-left": {
           setPlayers((prev) => prev.filter((p) => p.id !== message.playerId));
           break;
         }
-        case 'start-game': {
+        case "start-game": {
           onGameStartRef.current?.();
           break;
         }
       }
     },
-    [isHost],
+    [isHost]
   );
 
   // Initialize peer connection
@@ -227,9 +214,9 @@ export function useP2PLobby({
     const restartWithRelay = () => {
       if (forceRelayOnly || relayFallbackTriedRef.current || !mounted) return;
       relayFallbackTriedRef.current = true;
-      setError('Retrying with relay-only connection...');
+      setError("Retrying with relay-only connection...");
       updateIsConnected(false);
-      logEvent('Retrying with relay-only connection');
+      logEvent("Retrying with relay-only connection");
 
       connectionsRef.current.forEach((c) => c.close());
       connectionsRef.current.clear();
@@ -244,16 +231,14 @@ export function useP2PLobby({
       }, 100);
     };
 
-    const handleIceStateChange = (state: unknown, role: 'host' | 'client') => {
+    const handleIceStateChange = (state: unknown, role: "host" | "client") => {
       const asString = String(state);
       setLastIceState(asString);
       logEvent(`ICE state (${role}): ${asString}`);
 
       if (
         !isConnectedRef.current &&
-        (asString === 'failed' ||
-          asString === 'disconnected' ||
-          asString === 'closed')
+        (asString === "failed" || asString === "disconnected" || asString === "closed")
       ) {
         restartWithRelay();
       }
@@ -261,8 +246,8 @@ export function useP2PLobby({
     const createPeer = (useRelayOnly: boolean): Promise<PeerInstance> => {
       // Always offer STUN; include TURN when provided
       const iceServers: RTCIceServer[] = [
-        { urls: 'stun:stun.l.google.com:19302' },
-        { urls: 'stun:stun1.l.google.com:19302' },
+        { urls: "stun:stun.l.google.com:19302" },
+        { urls: "stun:stun1.l.google.com:19302" },
       ];
       if (turnUrl) {
         iceServers.push({
@@ -275,7 +260,7 @@ export function useP2PLobby({
       const relayMode = useRelayOnly || forceRelayOnly;
       setUsingRelayOnly(relayMode);
       logEvent(
-        `Creating peer (relay-only=${relayMode}, host=${peerServerHost}, port=${peerServerPort}, path=${peerServerPath}, iceServers=${iceServers.length})`,
+        `Creating peer (relay-only=${relayMode}, host=${peerServerHost}, port=${peerServerPort}, path=${peerServerPath}, iceServers=${iceServers.length})`
       );
 
       return new Promise((resolve, reject) => {
@@ -287,27 +272,27 @@ export function useP2PLobby({
           debug: 1,
           config: {
             iceServers,
-            ...(relayMode ? { iceTransportPolicy: 'relay' } : {}),
+            ...(relayMode ? { iceTransportPolicy: "relay" } : {}),
           },
         });
 
         const timeoutId = setTimeout(() => {
           peer.destroy();
-          reject(new Error('Connection timeout'));
+          reject(new Error("Connection timeout"));
         }, 10000);
 
-        peer.on('open', () => {
+        peer.on("open", () => {
           clearTimeout(timeoutId);
           setPeerId(peer.id);
           logEvent(`Peer opened ${peer.id}`);
           resolve(peer);
         });
 
-        peer.on('error', (err: unknown) => {
+        peer.on("error", (err: unknown) => {
           clearTimeout(timeoutId);
           const error = err as Error & { type?: string };
           // Don't reject on peer-unavailable as that's a valid response when joining
-          if (error.type !== 'peer-unavailable') {
+          if (error.type !== "peer-unavailable") {
             reject(error);
           }
         });
@@ -330,23 +315,21 @@ export function useP2PLobby({
             retryCount++;
             logEvent(
               `Connection attempt ${retryCount} failed, ${
-                retryCount < MAX_RETRIES ? 'retrying' : 'giving up'
-              }`,
+                retryCount < MAX_RETRIES ? "retrying" : "giving up"
+              }`
             );
             if (retryCount < MAX_RETRIES && mounted) {
-              await new Promise((r) =>
-                setTimeout(r, RETRY_DELAY_MS * retryCount),
-              );
+              await new Promise((r) => setTimeout(r, RETRY_DELAY_MS * retryCount));
             }
           }
         }
 
         if (!peer || !mounted) {
           if (mounted) {
-            setError('Failed to connect to signaling server');
+            setError("Failed to connect to signaling server");
             setIsConnecting(false);
           }
-          logEvent('Failed to connect to signaling server');
+          logEvent("Failed to connect to signaling server");
           return;
         }
 
@@ -358,23 +341,23 @@ export function useP2PLobby({
           // Host is ready, add self to players
           setPlayers([myPlayerRef.current]);
           updateIsConnected(true);
-          logEvent('Host ready and waiting for connections');
+          logEvent("Host ready and waiting for connections");
         } else {
           // Client connects to host
           logEvent(`Connecting to host ${hostID}`);
           const conn = peer.connect(hostID, {
             reliable: true,
-            serialization: 'json',
+            serialization: "json",
           });
 
-          conn.on('iceStateChanged', (state: unknown) => {
-            handleIceStateChange(state, 'client');
+          conn.on("iceStateChanged", (state: unknown) => {
+            handleIceStateChange(state, "client");
           });
 
           // Fail if we cannot open the data channel in time
           const dataChannelTimeout = setTimeout(() => {
             if (!mounted) return;
-            logEvent('Data channel open timed out');
+            logEvent("Data channel open timed out");
 
             // Retry once with relay-only if not already forced
             if (!forceRelayOnly && !relayFallbackTriedRef.current) {
@@ -382,13 +365,13 @@ export function useP2PLobby({
               return;
             }
 
-            setError('Unable to establish a direct connection to the host');
+            setError("Unable to establish a direct connection to the host");
             updateIsConnected(false);
-            logEvent('Unable to establish a direct connection to the host');
+            logEvent("Unable to establish a direct connection to the host");
           }, 20000);
 
-          conn.on('open', () => {
-            logEvent('Connected to host');
+          conn.on("open", () => {
+            logEvent("Connected to host");
             if (!mounted) return;
 
             clearTimeout(dataChannelTimeout);
@@ -403,40 +386,40 @@ export function useP2PLobby({
             });
 
             // Send our info to host
-            conn.send({ type: 'player-info', player: myPlayerRef.current });
+            conn.send({ type: "player-info", player: myPlayerRef.current });
           });
 
-          conn.on('data', (data) => {
+          conn.on("data", (data) => {
             // Receiving any data implies the channel is up
             if (mounted) {
               updateIsConnected(true);
             }
-            logEvent('Received data from host');
+            logEvent("Received data from host");
             handleMessage(data as LobbyMessage, conn);
           });
 
-          conn.on('close', () => {
-            logEvent('Connection to host closed');
+          conn.on("close", () => {
+            logEvent("Connection to host closed");
             clearTimeout(dataChannelTimeout);
             connectionsRef.current.delete(conn.peer);
             if (mounted) {
               updateIsConnected(false);
-              setError('Disconnected from host');
+              setError("Disconnected from host");
             }
           });
 
-          conn.on('error', (err) => {
+          conn.on("error", (err) => {
             logEvent(`Connection error: ${String(err)}`);
             clearTimeout(dataChannelTimeout);
             if (mounted) {
-              setError('Failed to connect to host');
+              setError("Failed to connect to host");
             }
           });
         }
 
         // Host listens for incoming connections
         if (isHost) {
-          peer.on('connection', (conn: unknown) => {
+          peer.on("connection", (conn: unknown) => {
             const dataConn = conn as DataConnection;
             logEvent(`Incoming connection from ${dataConn.peer}`);
 
@@ -444,51 +427,47 @@ export function useP2PLobby({
               dataConn as unknown as {
                 on: (e: string, cb: (s: unknown) => void) => void;
               }
-            ).on('iceStateChanged', (state: unknown) => {
-              handleIceStateChange(state, 'host');
+            ).on("iceStateChanged", (state: unknown) => {
+              handleIceStateChange(state, "host");
             });
 
-            dataConn.on('open', () => {
-              logEvent('Data connection opened');
+            dataConn.on("open", () => {
+              logEvent("Data connection opened");
               connectionsRef.current.set(dataConn.peer, dataConn);
 
               // Proactively send host + existing players so joiner knows we are ready
               try {
                 dataConn.send({
-                  type: 'player-info',
+                  type: "player-info",
                   player: myPlayerRef.current,
                 });
                 playersRef.current.forEach((p) => {
                   if (!p.isHost) {
-                    dataConn.send({ type: 'player-info', player: p });
+                    dataConn.send({ type: "player-info", player: p });
                   }
                 });
               } catch (e) {
-                logEvent(
-                  `Failed to send initial player info to joiner: ${String(e)}`,
-                );
+                logEvent(`Failed to send initial player info to joiner: ${String(e)}`);
               }
             });
 
-            dataConn.on('data', (data) => {
+            dataConn.on("data", (data) => {
               handleMessage(data as LobbyMessage, dataConn);
             });
 
-            dataConn.on('error', (err) => {
+            dataConn.on("error", (err) => {
               logEvent(`Host data connection error: ${String(err)}`);
             });
 
-            dataConn.on('close', () => {
+            dataConn.on("close", () => {
               logEvent(`Connection closed: ${dataConn.peer}`);
               connectionsRef.current.delete(dataConn.peer);
               // Find and remove the player
               const connId = dataConn.peer;
               setPlayers((prev) => {
-                const player = prev.find(
-                  (p) => p.id.includes(connId) || !p.isHost,
-                );
+                const player = prev.find((p) => p.id.includes(connId) || !p.isHost);
                 if (player) {
-                  broadcast({ type: 'player-left', playerId: player.id });
+                  broadcast({ type: "player-left", playerId: player.id });
                 }
                 return prev.filter((p) => p.isHost); // Keep only host
               });
@@ -496,10 +475,8 @@ export function useP2PLobby({
           });
         }
 
-        peer.on('disconnected', () => {
-          logEvent(
-            'Disconnected from signaling server, attempting to reconnect...',
-          );
+        peer.on("disconnected", () => {
+          logEvent("Disconnected from signaling server, attempting to reconnect...");
           if (!mounted) return;
 
           // Attempt to reconnect to the signaling server
@@ -507,38 +484,36 @@ export function useP2PLobby({
             if (!peer.disconnected) return;
             peer.reconnect();
           } catch (e) {
-            console.error('[P2PLobby] Failed to reconnect:', e);
-            setError('Lost connection to server');
+            console.error("[P2PLobby] Failed to reconnect:", e);
+            setError("Lost connection to server");
             updateIsConnected(false);
           }
         });
 
-        peer.on('close', () => {
-          logEvent('Peer connection closed');
+        peer.on("close", () => {
+          logEvent("Peer connection closed");
           if (!mounted) return;
           updateIsConnected(false);
         });
 
-        peer.on('error', (err: unknown) => {
+        peer.on("error", (err: unknown) => {
           const error = err as Error & { type?: string };
-          logEvent(
-            `Peer error: ${error.type ?? 'unknown'} ${error.message ?? ''}`,
-          );
+          logEvent(`Peer error: ${error.type ?? "unknown"} ${error.message ?? ""}`);
 
           if (!mounted) return;
 
-          if (error.type === 'peer-unavailable') {
-            setError('Game not found. Is the host still waiting?');
-          } else if (error.type === 'unavailable-id') {
+          if (error.type === "peer-unavailable") {
+            setError("Game not found. Is the host still waiting?");
+          } else if (error.type === "unavailable-id") {
             // Host ID is still held by old connection (e.g., after refresh)
             // Retry with exponential backoff
             if (isHost && hostIdRetryCount < MAX_HOST_ID_RETRIES) {
               hostIdRetryCount++;
               const delay = HOST_ID_RETRY_DELAY_MS * hostIdRetryCount;
               logEvent(
-                `Host ID unavailable, retrying in ${delay}ms (${hostIdRetryCount}/${MAX_HOST_ID_RETRIES})`,
+                `Host ID unavailable, retrying in ${delay}ms (${hostIdRetryCount}/${MAX_HOST_ID_RETRIES})`
               );
-              setError('Reconnecting...');
+              setError("Reconnecting...");
               setIsConnecting(true);
 
               // Clean up current peer
@@ -554,24 +529,24 @@ export function useP2PLobby({
               }, delay);
               return;
             }
-            setError('A game with this code already exists');
-          } else if (error.type === 'disconnected') {
+            setError("A game with this code already exists");
+          } else if (error.type === "disconnected") {
             // Will be handled by 'disconnected' event
             return;
-          } else if (error.type === 'network') {
-            setError('Network error. Check your connection.');
-          } else if (error.type === 'server-error') {
-            setError('Server error. Please try again.');
+          } else if (error.type === "network") {
+            setError("Network error. Check your connection.");
+          } else if (error.type === "server-error") {
+            setError("Server error. Please try again.");
           } else {
-            setError(error.message || 'Connection error');
+            setError(error.message || "Connection error");
           }
           setIsConnecting(false);
         });
       } catch (err) {
-        console.error('[P2PLobby] Init error:', err);
+        console.error("[P2PLobby] Init error:", err);
         logEvent(`Init error: ${String(err)}`);
         if (mounted) {
-          setError('Failed to initialize connection');
+          setError("Failed to initialize connection");
           setIsConnecting(false);
         }
       }
@@ -593,7 +568,7 @@ export function useP2PLobby({
     if (!isHost) return;
 
     // Broadcast start message to all players
-    broadcast({ type: 'start-game' });
+    broadcast({ type: "start-game" });
 
     // Trigger local start
     onGameStartRef.current?.();

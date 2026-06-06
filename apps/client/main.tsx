@@ -1,14 +1,14 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import { createRoot } from 'react-dom/client';
-import { PencilIcon } from '@heroicons/react/24/outline';
-import { EditableWidgetPlayer } from './src/components/editable-widget-player';
-import { useWidgetSource } from './src/hooks/use-widget-source';
-import { useGamesCatalog, type GameEntry } from './src/hooks/use-games-catalog';
-import { GameCatalog } from './src/components/game-catalog';
-import { GameSetup, type GameConfig } from './src/components/game-setup';
-import { GameLobby, type GameLobbyConfig } from './src/components/game-lobby';
+import { PencilIcon } from "@heroicons/react/24/outline";
+import React, { useState, useCallback, useEffect } from "react";
+import { createRoot } from "react-dom/client";
+import { EditableWidgetPlayer } from "./src/components/editable-widget-player";
+import { GameCatalog } from "./src/components/game-catalog";
+import { GameLobby, type GameLobbyConfig } from "./src/components/game-lobby";
+import { GameSetup, type GameConfig } from "./src/components/game-setup";
+import { useGamesCatalog, type GameEntry } from "./src/hooks/use-games-catalog";
+import { useWidgetSource } from "./src/hooks/use-widget-source";
 
-import './style.css';
+import "./style.css";
 
 declare global {
   interface Window {
@@ -27,31 +27,29 @@ const isMobileApp = (): boolean => {
   // Check for Capacitor's custom schemes or if window.Capacitor exists
   const protocol = window.location.protocol;
   return (
-    protocol === 'capacitor:' ||
-    protocol === 'ionic:' ||
-    typeof (window as { Capacitor?: unknown }).Capacitor !== 'undefined'
+    protocol === "capacitor:" ||
+    protocol === "ionic:" ||
+    typeof (window as { Capacitor?: unknown }).Capacitor !== "undefined"
   );
 };
 
 // Share PeerJS settings between the lobby and boardgame transport
 // On mobile, default to the public PeerJS server if not configured
 const peerHost =
-  import.meta.env.VITE_PEER_HOST ||
-  (isMobileApp() ? '0.peerjs.com' : window.location.hostname);
-const peerPort =
-  Number(import.meta.env.VITE_PEER_PORT) || (isMobileApp() ? 443 : 9500);
-const peerPath = import.meta.env.VITE_PEER_PATH || '/';
+  import.meta.env.VITE_PEER_HOST || (isMobileApp() ? "0.peerjs.com" : window.location.hostname);
+const peerPort = Number(import.meta.env.VITE_PEER_PORT) || (isMobileApp() ? 443 : 9500);
+const peerPath = import.meta.env.VITE_PEER_PATH || "/";
 const peerSecure =
-  import.meta.env.VITE_PEER_SECURE === 'true' ||
+  import.meta.env.VITE_PEER_SECURE === "true" ||
   (import.meta.env.VITE_PEER_SECURE === undefined &&
-    (isMobileApp() || window.location.protocol === 'https:'));
+    (isMobileApp() || window.location.protocol === "https:"));
 const turnUrl = import.meta.env.VITE_PEER_TURN_URL;
 const turnUsername = import.meta.env.VITE_PEER_TURN_USERNAME;
 const turnCredential = import.meta.env.VITE_PEER_TURN_CREDENTIAL;
 
 const globalIceServers: RTCIceServer[] = [
-  { urls: 'stun:stun.l.google.com:19302' },
-  { urls: 'stun:stun1.l.google.com:19302' },
+  { urls: "stun:stun.l.google.com:19302" },
+  { urls: "stun:stun1.l.google.com:19302" },
 ];
 
 if (turnUrl) {
@@ -71,23 +69,23 @@ window.__peerConfig = {
 };
 
 type AppState =
-  | { view: 'catalog' }
-  | { view: 'setup'; game: GameEntry }
+  | { view: "catalog" }
+  | { view: "setup"; game: GameEntry }
   | {
-      view: 'lobby';
+      view: "lobby";
       config: GameConfig;
-      mode: 'host' | 'join';
+      mode: "host" | "join";
       joinCode?: string;
     }
-  | { view: 'playing'; config: GameConfig; lobbyConfig?: GameLobbyConfig };
+  | { view: "playing"; config: GameConfig; lobbyConfig?: GameLobbyConfig };
 
 type ParsedRoute =
-  | { type: 'catalog' }
-  | { type: 'game'; gameId: string }
-  | { type: 'host'; gameId: string; matchCode: string }
-  | { type: 'join'; gameId: string; matchCode: string }
+  | { type: "catalog" }
+  | { type: "game"; gameId: string }
+  | { type: "host"; gameId: string; matchCode: string }
+  | { type: "join"; gameId: string; matchCode: string }
   | {
-      type: 'play';
+      type: "play";
       gameId: string;
       matchCode: string;
       playerID: string;
@@ -98,16 +96,14 @@ function parseHashRoute(): ParsedRoute {
   const hash = window.location.hash;
 
   // Play route (active game): #/apps/{gameId}/play/{code}/{playerID}/{host|client}
-  const playMatch = hash.match(
-    /^#\/apps\/(.+)\/play\/([A-Z0-9]+)\/(\d+)\/(host|client)$/i,
-  );
+  const playMatch = hash.match(/^#\/apps\/(.+)\/play\/([A-Z0-9]+)\/(\d+)\/(host|client)$/i);
   if (playMatch) {
     return {
-      type: 'play',
+      type: "play",
       gameId: playMatch[1],
       matchCode: playMatch[2].toUpperCase(),
       playerID: playMatch[3],
-      isHost: playMatch[4].toLowerCase() === 'host',
+      isHost: playMatch[4].toLowerCase() === "host",
     };
   }
 
@@ -115,7 +111,7 @@ function parseHashRoute(): ParsedRoute {
   const hostMatch = hash.match(/^#\/apps\/(.+)\/host\/([A-Z0-9]+)$/i);
   if (hostMatch) {
     return {
-      type: 'host',
+      type: "host",
       gameId: hostMatch[1],
       matchCode: hostMatch[2].toUpperCase(),
     };
@@ -125,7 +121,7 @@ function parseHashRoute(): ParsedRoute {
   const joinMatch = hash.match(/^#\/apps\/(.+)\/join\/([A-Z0-9]+)$/i);
   if (joinMatch) {
     return {
-      type: 'join',
+      type: "join",
       gameId: joinMatch[1],
       matchCode: joinMatch[2].toUpperCase(),
     };
@@ -134,40 +130,38 @@ function parseHashRoute(): ParsedRoute {
   // Game route: #/apps/{gameId}
   const gameMatch = hash.match(/^#\/apps\/(.+?)(?:\/)?$/);
   if (gameMatch) {
-    return { type: 'game', gameId: gameMatch[1] };
+    return { type: "game", gameId: gameMatch[1] };
   }
 
   // Fallback to pathname-based route for join (works with server-side routing or 404.html redirect)
-  const pathMatch = window.location.pathname.match(
-    /^\/apps\/(.+)\/join\/([A-Z0-9]+)$/i,
-  );
+  const pathMatch = window.location.pathname.match(/^\/apps\/(.+)\/join\/([A-Z0-9]+)$/i);
   if (pathMatch) {
     return {
-      type: 'join',
+      type: "join",
       gameId: pathMatch[1],
       matchCode: pathMatch[2].toUpperCase(),
     };
   }
 
-  return { type: 'catalog' };
+  return { type: "catalog" };
 }
 
 function setHashRoute(route: ParsedRoute): void {
-  let hash = '';
-  if (route.type === 'game') {
+  let hash = "";
+  if (route.type === "game") {
     hash = `#/apps/${route.gameId}`;
-  } else if (route.type === 'host') {
+  } else if (route.type === "host") {
     hash = `#/apps/${route.gameId}/host/${route.matchCode}`;
-  } else if (route.type === 'join') {
+  } else if (route.type === "join") {
     hash = `#/apps/${route.gameId}/join/${route.matchCode}`;
-  } else if (route.type === 'play') {
+  } else if (route.type === "play") {
     hash = `#/apps/${route.gameId}/play/${route.matchCode}/${route.playerID}/${
-      route.isHost ? 'host' : 'client'
+      route.isHost ? "host" : "client"
     }`;
   }
 
   if (window.location.hash !== hash) {
-    window.history.pushState({}, '', hash || '/');
+    window.history.pushState({}, "", hash || "/");
   }
 }
 
@@ -200,11 +194,10 @@ function clearSessionCredentials(matchCode: string): void {
 }
 
 const IS_LOCALHOST =
-  window.location.hostname === 'localhost' ||
-  window.location.hostname === '127.0.0.1';
+  window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
 
 function App() {
-  const [state, setState] = useState<AppState>({ view: 'catalog' });
+  const [state, setState] = useState<AppState>({ view: "catalog" });
   const [isEditing, setIsEditing] = useState(false);
   const { categories, isLoading: catalogLoading } = useGamesCatalog();
 
@@ -217,68 +210,68 @@ function App() {
       }
       return undefined;
     },
-    [categories],
+    [categories]
   );
 
   // Apply a parsed route to app state
   const applyRoute = useCallback(
     (route: ParsedRoute) => {
-      if (route.type === 'catalog') {
-        setState({ view: 'catalog' });
-      } else if (route.type === 'game') {
+      if (route.type === "catalog") {
+        setState({ view: "catalog" });
+      } else if (route.type === "game") {
         const game = findGame(route.gameId);
         if (game) {
-          setState({ view: 'setup', game });
+          setState({ view: "setup", game });
         } else {
-          setState({ view: 'catalog' });
+          setState({ view: "catalog" });
         }
-      } else if (route.type === 'host') {
+      } else if (route.type === "host") {
         const game = findGame(route.gameId);
         if (game) {
           setState({
-            view: 'lobby',
+            view: "lobby",
             config: {
               game,
-              playMode: 'host',
+              playMode: "host",
               playerCount: 2,
               botCount: 0,
               settings: {},
             },
-            mode: 'host',
+            mode: "host",
             joinCode: route.matchCode, // Pass the code so lobby can restore it
           });
         } else {
-          setState({ view: 'catalog' });
+          setState({ view: "catalog" });
         }
-      } else if (route.type === 'join') {
+      } else if (route.type === "join") {
         const game = findGame(route.gameId);
         if (game) {
           setState({
-            view: 'lobby',
+            view: "lobby",
             config: {
               game,
-              playMode: 'join',
+              playMode: "join",
               playerCount: 2,
               botCount: 0,
               settings: {},
             },
-            mode: 'join',
+            mode: "join",
             joinCode: route.matchCode,
           });
         } else {
-          setState({ view: 'catalog' });
+          setState({ view: "catalog" });
         }
-      } else if (route.type === 'play') {
+      } else if (route.type === "play") {
         const game = findGame(route.gameId);
         if (game) {
           // Load saved credentials for reconnection
           const savedCredentials = loadSessionCredentials(route.matchCode);
           // Reconnect directly to an active game
           setState({
-            view: 'playing',
+            view: "playing",
             config: {
               game,
-              playMode: route.isHost ? 'host' : 'join',
+              playMode: route.isHost ? "host" : "join",
               playerCount: 2,
               botCount: 0,
               settings: {},
@@ -286,16 +279,16 @@ function App() {
             lobbyConfig: {
               matchID: route.matchCode,
               playerID: route.playerID,
-              credentials: savedCredentials || '', // Use saved or let transport regenerate
+              credentials: savedCredentials || "", // Use saved or let transport regenerate
               isHost: route.isHost,
             },
           });
         } else {
-          setState({ view: 'catalog' });
+          setState({ view: "catalog" });
         }
       }
     },
-    [findGame],
+    [findGame]
   );
 
   // Handle route changes (initial load + hashchange)
@@ -311,91 +304,91 @@ function App() {
     handleRouteChange();
 
     // Listen for hash changes (back/forward, manual URL edits)
-    window.addEventListener('hashchange', handleRouteChange);
-    window.addEventListener('popstate', handleRouteChange);
+    window.addEventListener("hashchange", handleRouteChange);
+    window.addEventListener("popstate", handleRouteChange);
 
     return () => {
-      window.removeEventListener('hashchange', handleRouteChange);
-      window.removeEventListener('popstate', handleRouteChange);
+      window.removeEventListener("hashchange", handleRouteChange);
+      window.removeEventListener("popstate", handleRouteChange);
     };
   }, [categories, applyRoute]);
 
   const appId =
-    state.view === 'setup'
+    state.view === "setup"
       ? state.game.appId
-      : state.view === 'lobby'
-      ? state.config.game.appId
-      : state.view === 'playing'
-      ? state.config.game.appId
-      : null;
+      : state.view === "lobby"
+        ? state.config.game.appId
+        : state.view === "playing"
+          ? state.config.game.appId
+          : null;
 
   const { manifest, source, isLoading: sourceLoading } = useWidgetSource(appId);
 
   const handleSelectGame = useCallback((game: GameEntry) => {
-    setHashRoute({ type: 'game', gameId: game.appId });
-    setState({ view: 'setup', game });
+    setHashRoute({ type: "game", gameId: game.appId });
+    setState({ view: "setup", game });
   }, []);
 
   const handleStartGame = useCallback((config: GameConfig) => {
-    if (config.playMode === 'host' || config.playMode === 'join') {
-      setState({ view: 'lobby', config, mode: config.playMode });
+    if (config.playMode === "host" || config.playMode === "join") {
+      setState({ view: "lobby", config, mode: config.playMode });
     } else {
-      setState({ view: 'playing', config });
+      setState({ view: "playing", config });
     }
   }, []);
 
   const handleLobbyStart = useCallback(
     (lobbyConfig: GameLobbyConfig) => {
-      if (state.view !== 'lobby') return;
+      if (state.view !== "lobby") return;
       // Save credentials for reconnection
       if (lobbyConfig.credentials) {
         saveSessionCredentials(lobbyConfig.matchID, lobbyConfig.credentials);
       }
       // Update URL to allow reconnection on refresh
       setHashRoute({
-        type: 'play',
+        type: "play",
         gameId: state.config.game.appId,
         matchCode: lobbyConfig.matchID,
         playerID: lobbyConfig.playerID,
         isHost: lobbyConfig.isHost,
       });
-      setState({ view: 'playing', config: state.config, lobbyConfig });
+      setState({ view: "playing", config: state.config, lobbyConfig });
     },
-    [state],
+    [state]
   );
 
   const handleBack = useCallback(() => {
-    if (state.view === 'setup') {
-      setHashRoute({ type: 'catalog' });
-      setState({ view: 'catalog' });
-    } else if (state.view === 'lobby') {
-      setHashRoute({ type: 'game', gameId: state.config.game.appId });
-      setState({ view: 'setup', game: state.config.game });
-    } else if (state.view === 'playing') {
+    if (state.view === "setup") {
+      setHashRoute({ type: "catalog" });
+      setState({ view: "catalog" });
+    } else if (state.view === "lobby") {
+      setHashRoute({ type: "game", gameId: state.config.game.appId });
+      setState({ view: "setup", game: state.config.game });
+    } else if (state.view === "playing") {
       // Clear saved credentials when intentionally leaving a game
       if (state.lobbyConfig?.matchID) {
         clearSessionCredentials(state.lobbyConfig.matchID);
       }
-      setHashRoute({ type: 'catalog' });
-      setState({ view: 'catalog' });
+      setHashRoute({ type: "catalog" });
+      setState({ view: "catalog" });
     }
   }, [state]);
 
   // Handle when host generates a match code - update URL so refresh preserves it
   const handleCodeGenerated = useCallback(
     (code: string) => {
-      if (state.view !== 'lobby') return;
+      if (state.view !== "lobby") return;
       setHashRoute({
-        type: 'host',
+        type: "host",
         gameId: state.config.game.appId,
         matchCode: code,
       });
     },
-    [state],
+    [state]
   );
 
   // Catalog view
-  if (state.view === 'catalog') {
+  if (state.view === "catalog") {
     return (
       <div className="h-screen bg-slate-50">
         <GameCatalog
@@ -408,20 +401,16 @@ function App() {
   }
 
   // Setup view
-  if (state.view === 'setup') {
+  if (state.view === "setup") {
     return (
       <div className="h-screen bg-slate-50">
-        <GameSetup
-          game={state.game}
-          onStart={handleStartGame}
-          onBack={handleBack}
-        />
+        <GameSetup game={state.game} onStart={handleStartGame} onBack={handleBack} />
       </div>
     );
   }
 
   // Lobby view
-  if (state.view === 'lobby') {
+  if (state.view === "lobby") {
     return (
       <div className="h-screen bg-slate-50">
         <GameLobby
@@ -442,10 +431,7 @@ function App() {
   return (
     <div className="h-screen flex flex-col bg-white">
       <header className="flex items-center justify-between px-4 py-3 border-b border-slate-200">
-        <button
-          onClick={handleBack}
-          className="text-sm text-slate-500 hover:text-slate-700"
-        >
+        <button onClick={handleBack} className="text-sm text-slate-500 hover:text-slate-700">
           ← Games
         </button>
         <span className="text-sm font-medium text-slate-900">
@@ -497,5 +483,5 @@ function App() {
   );
 }
 
-const root = createRoot(document.getElementById('root')!);
+const root = createRoot(document.getElementById("root")!);
 root.render(<App />);

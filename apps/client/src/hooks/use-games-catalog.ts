@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo } from 'react';
-import type { ZolveryManifest } from './use-widget-source';
+import { useState, useEffect, useMemo } from "react";
+import type { ZolveryManifest } from "./use-widget-source";
 
 export interface GameEntry extends ZolveryManifest {
   category: string;
@@ -13,14 +13,14 @@ export interface GameCategory {
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
-  'board-games': 'Board Games',
-  'card-games': 'Card Games',
-  classics: 'Classics',
-  'dice-games': 'Dice Games',
-  'word-games': 'Word Games',
-  puzzles: 'Puzzles',
-  'social-games': 'Social Games',
-  music: 'Music',
+  "board-games": "Board Games",
+  "card-games": "Card Games",
+  classics: "Classics",
+  "dice-games": "Dice Games",
+  "word-games": "Word Games",
+  puzzles: "Puzzles",
+  "social-games": "Social Games",
+  music: "Music",
 };
 
 export function useGamesCatalog() {
@@ -38,11 +38,11 @@ export function useGamesCatalog() {
         const manifests = await Promise.all(
           appList.map(async ({ appId }) => {
             try {
-              const manifest = await fetch(
-                `${base}apps/${appId}/zolvery.json`,
-              ).then((r) => r.json());
-              const category = appId.split('/')[0];
-              const logoName = manifest.iconName ?? 'icon.png';
+              const manifest = await fetch(`${base}apps/${appId}/zolvery.json`).then((r) =>
+                r.json()
+              );
+              const category = appId.split("/")[0];
+              const logoName = manifest.iconName ?? "icon.png";
               return {
                 ...manifest,
                 appId,
@@ -52,7 +52,7 @@ export function useGamesCatalog() {
             } catch {
               return null;
             }
-          }),
+          })
         );
         setGames(manifests.filter((m): m is GameEntry => m !== null));
       })
@@ -72,9 +72,7 @@ export function useGamesCatalog() {
       .map(([id, categoryGames]) => ({
         id,
         label: CATEGORY_LABELS[id] ?? id,
-        games: categoryGames.sort((a, b) =>
-          (a.name ?? a.appId).localeCompare(b.name ?? b.appId),
-        ),
+        games: categoryGames.sort((a, b) => (a.name ?? a.appId).localeCompare(b.name ?? b.appId)),
       }))
       .sort((a, b) => a.label.localeCompare(b.label));
   }, [games]);

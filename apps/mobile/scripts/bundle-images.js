@@ -8,36 +8,36 @@
  * This script copies image packages locally so they can be served from /npm/.
  */
 
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const CLIENT_PUBLIC = path.resolve(__dirname, '../../client/public');
-const NPM_DIR = path.resolve(CLIENT_PUBLIC, 'npm');
+const CLIENT_PUBLIC = path.resolve(__dirname, "../../client/public");
+const NPM_DIR = path.resolve(CLIENT_PUBLIC, "npm");
 
 // Image packages to bundle for offline support
 const IMAGE_PACKAGES = [
-  '@aprovan/patchwork-image-shadcn',
-  '@aprovan/patchwork-vanilla',
-  '@aprovan/patchwork-image-boardgameio',
+  "@aprovan/patchwork-image-shadcn",
+  "@aprovan/patchwork-vanilla",
+  "@aprovan/patchwork-image-boardgameio",
 ];
 
 function findPackageDir(packageName) {
   // Map package names to workspace directories
   // Paths relative to apps/mobile/scripts/
   const workspaceMap = {
-    '@aprovan/patchwork-image-shadcn': path.resolve(
+    "@aprovan/patchwork-image-shadcn": path.resolve(
       __dirname,
-      '../../../../patchwork/packages/images/shadcn',
+      "../../../../patchwork/packages/images/shadcn"
     ),
-    '@aprovan/patchwork-vanilla': path.resolve(
+    "@aprovan/patchwork-vanilla": path.resolve(
       __dirname,
-      '../../../../patchwork/packages/images/vanilla',
+      "../../../../patchwork/packages/images/vanilla"
     ),
-    '@aprovan/patchwork-image-boardgameio': path.resolve(
+    "@aprovan/patchwork-image-boardgameio": path.resolve(
       __dirname,
-      '../../../packages/images/boardgameio',
+      "../../../packages/images/boardgameio"
     ),
   };
 
@@ -48,9 +48,9 @@ function findPackageDir(packageName) {
 
   // Fall back to node_modules locations
   const nodeModulesPaths = [
-    path.resolve(__dirname, '../../client/node_modules', packageName),
-    path.resolve(__dirname, '../../../node_modules', packageName),
-    path.resolve(__dirname, '../node_modules', packageName),
+    path.resolve(__dirname, "../../client/node_modules", packageName),
+    path.resolve(__dirname, "../../../node_modules", packageName),
+    path.resolve(__dirname, "../node_modules", packageName),
   ];
 
   for (const searchPath of nodeModulesPaths) {
@@ -98,32 +98,28 @@ function bundlePackage(packageName) {
   fs.mkdirSync(destDir, { recursive: true });
 
   // Copy package.json
-  const packageJsonSrc = path.join(srcDir, 'package.json');
+  const packageJsonSrc = path.join(srcDir, "package.json");
   if (fs.existsSync(packageJsonSrc)) {
-    fs.copyFileSync(packageJsonSrc, path.join(destDir, 'package.json'));
+    fs.copyFileSync(packageJsonSrc, path.join(destDir, "package.json"));
   }
 
   // Copy dist directory (compiled output)
-  const distSrc = path.join(srcDir, 'dist');
+  const distSrc = path.join(srcDir, "dist");
   if (fs.existsSync(distSrc)) {
-    copyRecursive(distSrc, path.join(destDir, 'dist'), (name) => {
+    copyRecursive(distSrc, path.join(destDir, "dist"), (name) => {
       // Skip source maps in production to reduce bundle size
-      return !name.endsWith('.map');
+      return !name.endsWith(".map");
     });
   }
 
-  console.log(
-    `  [OK] ${packageName} -> ${path.relative(CLIENT_PUBLIC, destDir)}`,
-  );
+  console.log(`  [OK] ${packageName} -> ${path.relative(CLIENT_PUBLIC, destDir)}`);
   return true;
 }
 
 function main() {
-  console.log(
-    '[bundle-images] Bundling image packages for mobile offline support...',
-  );
+  console.log("[bundle-images] Bundling image packages for mobile offline support...");
   console.log(`  Output: ${NPM_DIR}`);
-  console.log('');
+  console.log("");
 
   // Clean existing npm directory
   if (fs.existsSync(NPM_DIR)) {
@@ -138,15 +134,11 @@ function main() {
     }
   }
 
-  console.log('');
-  console.log(
-    `[bundle-images] Bundled ${bundled}/${IMAGE_PACKAGES.length} packages`,
-  );
+  console.log("");
+  console.log(`[bundle-images] Bundled ${bundled}/${IMAGE_PACKAGES.length} packages`);
 
   if (bundled === 0) {
-    console.error(
-      '[bundle-images] WARNING: No packages bundled. Mobile offline may not work.',
-    );
+    console.error("[bundle-images] WARNING: No packages bundled. Mobile offline may not work.");
     process.exit(1);
   }
 }

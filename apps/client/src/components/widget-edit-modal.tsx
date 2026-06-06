@@ -1,35 +1,31 @@
-import { useMemo, useRef, useEffect, useState, useCallback } from 'react';
-import { EditModal, type CompileFn } from '@aprovan/patchwork-editor';
-import { usePatchwork } from '../hooks/use-patchwork';
-import type { ZolveryManifest } from '../hooks/use-widget-source';
-import type {
-  Manifest,
-  InputSpec,
-  VirtualProject,
-} from '@aprovan/patchwork-compiler';
-import { WIDGET_CDN_URL } from '../constants';
+import { EditModal, type CompileFn } from "@aprovan/patchwork-editor";
+import { useMemo, useRef, useEffect, useState, useCallback } from "react";
+import { WIDGET_CDN_URL } from "../constants";
+import { usePatchwork } from "../hooks/use-patchwork";
+import type { ZolveryManifest } from "../hooks/use-widget-source";
+import type { Manifest, InputSpec, VirtualProject } from "@aprovan/patchwork-compiler";
 
 const IMAGE_MAP: Record<string, string> = {
-  shadcn: '@aprovan/patchwork-image-shadcn',
-  vanilla: '@aprovan/patchwork-vanilla',
-  boardgameio: '@aprovan/patchwork-image-boardgameio@0.1.0',
+  shadcn: "@aprovan/patchwork-image-shadcn",
+  vanilla: "@aprovan/patchwork-vanilla",
+  boardgameio: "@aprovan/patchwork-image-boardgameio@0.1.0",
 };
 
-const CDN_BASE_URL = import.meta.env.DEV ? '/npm' : WIDGET_CDN_URL;
+const CDN_BASE_URL = import.meta.env.DEV ? "/npm" : WIDGET_CDN_URL;
 
-const normalizeInputType = (settingType?: string): InputSpec['type'] => {
+const normalizeInputType = (settingType?: string): InputSpec["type"] => {
   switch (settingType) {
-    case 'number':
-      return 'number';
-    case 'checkbox':
-    case 'boolean':
-      return 'boolean';
-    case 'array':
-      return 'array';
-    case 'object':
-      return 'object';
+    case "number":
+      return "number";
+    case "checkbox":
+    case "boolean":
+      return "boolean";
+    case "array":
+      return "array";
+    case "object":
+      return "object";
     default:
-      return 'string';
+      return "string";
   }
 };
 
@@ -50,13 +46,8 @@ export function WidgetEditModal({
   onClose,
   onSaveProject,
 }: WidgetEditModalProps) {
-  console.log(
-    '[WidgetEditModal] project:',
-    project.id,
-    'files:',
-    Array.from(project.files.keys()),
-  );
-  const source = project.files.get(project.entry)?.content ?? '';
+  console.log("[WidgetEditModal] project:", project.id, "files:", Array.from(project.files.keys()));
+  const source = project.files.get(project.entry)?.content ?? "";
   const imageName = IMAGE_MAP[manifest.runnerTag] ?? manifest.runnerTag;
   const {
     compiler,
@@ -72,24 +63,27 @@ export function WidgetEditModal({
     () => ({
       name: manifest.appId,
       version: manifest.version,
-      platform: 'browser' as const,
+      platform: "browser" as const,
       image: imageName,
       services: manifest.servers,
-      inputs: (manifest.settings ?? []).reduce((acc, setting) => {
-        if (setting.id) {
-          acc[setting.id] = {
-            type: normalizeInputType(setting.type),
-            default: setting.default,
-          };
-        }
-        return acc;
-      }, {} as Record<string, InputSpec>),
+      inputs: (manifest.settings ?? []).reduce(
+        (acc, setting) => {
+          if (setting.id) {
+            acc[setting.id] = {
+              type: normalizeInputType(setting.type),
+              default: setting.default,
+            };
+          }
+          return acc;
+        },
+        {} as Record<string, InputSpec>
+      ),
     }),
-    [manifest, imageName],
+    [manifest, imageName]
   );
 
   const compile: CompileFn = async (code: string) => {
-    if (!compiler) return { success: false, error: 'Compiler not ready' };
+    if (!compiler) return { success: false, error: "Compiler not ready" };
     try {
       await compiler.compile(code, compilerManifest);
       return { success: true };
@@ -112,7 +106,7 @@ export function WidgetEditModal({
         />
       );
     },
-    [manifest, compilerManifest, imageName],
+    [manifest, compilerManifest, imageName]
   );
 
   if (!isOpen) return null;
@@ -121,9 +115,7 @@ export function WidgetEditModal({
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-8">
         <div className="bg-white rounded-lg p-6 max-w-md">
-          <p className="text-red-500">
-            Compiler error: {compilerError.message}
-          </p>
+          <p className="text-red-500">Compiler error: {compilerError.message}</p>
           <button
             onClick={() => onClose(source, 0)}
             className="mt-4 px-4 py-2 bg-slate-200 rounded hover:bg-slate-300"
@@ -158,12 +150,7 @@ interface WidgetPreviewProps {
   imageName: string;
 }
 
-function WidgetPreview({
-  code,
-  manifest,
-  compilerManifest,
-  imageName,
-}: WidgetPreviewProps) {
+function WidgetPreview({ code, manifest, compilerManifest, imageName }: WidgetPreviewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -174,12 +161,15 @@ function WidgetPreview({
   });
 
   const inputs = useMemo(() => {
-    return (manifest.settings ?? []).reduce((acc, setting) => {
-      if (setting.id && setting.default !== undefined) {
-        acc[setting.id] = setting.default;
-      }
-      return acc;
-    }, {} as Record<string, unknown>);
+    return (manifest.settings ?? []).reduce(
+      (acc, setting) => {
+        if (setting.id && setting.default !== undefined) {
+          acc[setting.id] = setting.default;
+        }
+        return acc;
+      },
+      {} as Record<string, unknown>
+    );
   }, [manifest.settings]);
 
   useEffect(() => {
@@ -193,7 +183,7 @@ function WidgetPreview({
         mounted = m;
       })
       .catch((e) => {
-        console.error('Preview mount error:', e);
+        console.error("Preview mount error:", e);
         setError(e.message);
       });
 
@@ -206,11 +196,5 @@ function WidgetPreview({
     return <div className="text-red-500 p-4">Preview error: {error}</div>;
   }
 
-  return (
-    <div
-      ref={containerRef}
-      className="w-full h-full min-h-[400px]"
-      data-widget-preview
-    />
-  );
+  return <div ref={containerRef} className="w-full h-full min-h-[400px]" data-widget-preview />;
 }

@@ -1,13 +1,11 @@
-import { Context, Next } from 'koa';
-import logger from '@/logger';
-import { AuthContext, GROUPS, GroupType } from '@/auth';
+import { type Context, type Next } from "koa";
+import { type AuthContext, GROUPS, type GroupType } from "@/auth";
+import logger from "@/logger";
 
 /**
  * Extract Cognito claims from AWS Lambda request context
  */
-function getCognitoClaimsFromRequest(
-  ctx: Context,
-): Record<string, string | string[] | undefined> {
+function getCognitoClaimsFromRequest(ctx: Context): Record<string, string | string[] | undefined> {
   const event = (
     ctx as unknown as {
       event?: {
@@ -25,15 +23,12 @@ function getCognitoClaimsFromRequest(
 
   // For local development, check for custom access token header
   const headers = ctx.headers;
-  if (headers['x-cognito-access-token']) {
+  if (headers["x-cognito-access-token"]) {
     try {
-      const tokenData = JSON.parse(headers['x-cognito-access-token'] as string);
+      const tokenData = JSON.parse(headers["x-cognito-access-token"] as string);
       // The token should contain an authorizer object with claims
       if (tokenData.authorizer && tokenData.authorizer.claims) {
-        return tokenData.authorizer.claims as Record<
-          string,
-          string | string[] | undefined
-        >;
+        return tokenData.authorizer.claims as Record<string, string | string[] | undefined>;
       }
       // Fallback: if the token data directly contains claims
       return tokenData;
@@ -41,24 +36,24 @@ function getCognitoClaimsFromRequest(
       logger.warn(
         {
           requestId: (ctx as unknown as { requestId?: string }).requestId,
-          error: error instanceof Error ? error.message : 'Unknown error',
+          error: error instanceof Error ? error.message : "Unknown error",
         },
-        'Failed to parse x-cognito-access-token header',
+        "Failed to parse x-cognito-access-token header"
       );
     }
   }
 
   // Legacy support for x-cognito-claims header
-  if (headers['x-cognito-claims']) {
+  if (headers["x-cognito-claims"]) {
     try {
-      return JSON.parse(headers['x-cognito-claims'] as string);
+      return JSON.parse(headers["x-cognito-claims"] as string);
     } catch (error) {
       logger.warn(
         {
           requestId: (ctx as unknown as { requestId?: string }).requestId,
-          error: error instanceof Error ? error.message : 'Unknown error',
+          error: error instanceof Error ? error.message : "Unknown error",
         },
-        'Failed to parse x-cognito-claims header',
+        "Failed to parse x-cognito-claims header"
       );
     }
   }
@@ -80,7 +75,7 @@ function getCognitoSubFromRequest(ctx: Context): string | null {
           requestId: (ctx as unknown as { requestId?: string }).requestId,
           sub: cognitoSub,
         },
-        'Cognito user authenticated',
+        "Cognito user authenticated"
       );
       return cognitoSub;
     }
@@ -88,9 +83,9 @@ function getCognitoSubFromRequest(ctx: Context): string | null {
     logger.error(
       {
         requestId: (ctx as unknown as { requestId?: string }).requestId,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? error.message : "Unknown error",
       },
-      'Failed to parse Cognito user',
+      "Failed to parse Cognito user"
     );
   }
 
@@ -103,14 +98,14 @@ function getCognitoSubFromRequest(ctx: Context): string | null {
 function getCognitoUsernameFromRequest(ctx: Context): string | null {
   try {
     const claims = getCognitoClaimsFromRequest(ctx);
-    return (claims['cognito:username'] as string) || null;
+    return (claims["cognito:username"] as string) || null;
   } catch (error) {
     logger.error(
       {
         requestId: (ctx as unknown as { requestId?: string }).requestId,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? error.message : "Unknown error",
       },
-      'Failed to parse Cognito username',
+      "Failed to parse Cognito username"
     );
     return null;
   }
@@ -122,14 +117,14 @@ function getCognitoUsernameFromRequest(ctx: Context): string | null {
 function getCognitoGroupsFromRequest(ctx: Context): GroupType[] {
   try {
     const claims = getCognitoClaimsFromRequest(ctx);
-    const groupsString = (claims['cognito:groups'] as string | undefined) || '';
+    const groupsString = (claims["cognito:groups"] as string | undefined) || "";
 
     if (!groupsString) {
       return [];
     }
 
     const groups = groupsString
-      .split(',')
+      .split(",")
       .map((group: string) => group.trim())
       .filter(Boolean)
       .filter((group: string) => GROUPS.has(group as GroupType)) as GroupType[];
@@ -139,7 +134,7 @@ function getCognitoGroupsFromRequest(ctx: Context): GroupType[] {
         requestId: (ctx as unknown as { requestId?: string }).requestId,
         groups,
       },
-      'Cognito groups parsed',
+      "Cognito groups parsed"
     );
 
     return groups;
@@ -147,9 +142,9 @@ function getCognitoGroupsFromRequest(ctx: Context): GroupType[] {
     logger.error(
       {
         requestId: (ctx as unknown as { requestId?: string }).requestId,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? error.message : "Unknown error",
       },
-      'Failed to parse Cognito groups',
+      "Failed to parse Cognito groups"
     );
     return [];
   }
@@ -158,10 +153,7 @@ function getCognitoGroupsFromRequest(ctx: Context): GroupType[] {
 /**
  * Authentication middleware that extracts Cognito user information
  */
-export const authMiddleware = async (
-  ctx: Context,
-  next: Next,
-): Promise<void> => {
+export const authMiddleware = async (ctx: Context, next: Next): Promise<void> => {
   const requestId = ctx.requestId;
 
   try {
@@ -174,13 +166,13 @@ export const authMiddleware = async (
           path: ctx.path,
           method: ctx.method,
         },
-        'No user authentication found',
+        "No user authentication found"
       );
 
       ctx.status = 401;
       ctx.body = {
         success: false,
-        error: 'Authentication required',
+        error: "Authentication required",
         timestamp: new Date().toISOString(),
         requestId,
       };
@@ -206,7 +198,7 @@ export const authMiddleware = async (
           groupCount: (ctx as AuthContext).user!.groups.length,
         },
       },
-      'User authenticated',
+      "User authenticated"
     );
 
     await next();
@@ -214,15 +206,15 @@ export const authMiddleware = async (
     logger.error(
       {
         requestId,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? error.message : "Unknown error",
       },
-      'Authentication middleware error',
+      "Authentication middleware error"
     );
 
     ctx.status = 500;
     ctx.body = {
       success: false,
-      error: 'Authentication error',
+      error: "Authentication error",
       timestamp: new Date().toISOString(),
       requestId,
     };
@@ -241,13 +233,13 @@ export const requireGroups = (requiredGroups: string[]) => {
         {
           requestId,
         },
-        'No user found for group authorization',
+        "No user found for group authorization"
       );
 
       ctx.status = 401;
       ctx.body = {
         success: false,
-        error: 'Authentication required',
+        error: "Authentication required",
         timestamp: new Date().toISOString(),
         requestId,
       };
@@ -256,7 +248,7 @@ export const requireGroups = (requiredGroups: string[]) => {
 
     const userGroups = ctx.user.groups;
     const hasRequiredGroup = requiredGroups.some((group) =>
-      userGroups.includes(group as GroupType),
+      userGroups.includes(group as GroupType)
     );
 
     if (!hasRequiredGroup) {
@@ -266,13 +258,13 @@ export const requireGroups = (requiredGroups: string[]) => {
           userGroups,
           requiredGroups,
         },
-        'User does not have required groups',
+        "User does not have required groups"
       );
 
       ctx.status = 403;
       ctx.body = {
         success: false,
-        error: 'Insufficient permissions',
+        error: "Insufficient permissions",
         timestamp: new Date().toISOString(),
         requestId,
       };
@@ -285,7 +277,7 @@ export const requireGroups = (requiredGroups: string[]) => {
         userGroups,
         requiredGroups,
       },
-      'Group authorization successful',
+      "Group authorization successful"
     );
 
     await next();

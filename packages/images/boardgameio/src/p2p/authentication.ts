@@ -1,5 +1,5 @@
-import type { P2PDB } from './db.js';
-import type { ClientMetadata } from './types.js';
+import type { P2PDB } from "./db.js";
+import type { ClientMetadata } from "./types.js";
 
 export function generateCredentials(): string {
   const bytes = new Uint8Array(64);
@@ -26,15 +26,9 @@ export function signMessage(message: string, privateKey: string): string {
   return btoa(String.fromCharCode(...signature));
 }
 
-function verifyMessage(
-  signedMessage: string,
-  publicKey: string,
-  playerID: string,
-): boolean {
+function verifyMessage(signedMessage: string, publicKey: string, playerID: string): boolean {
   try {
-    const sigBytes = Uint8Array.from(atob(signedMessage), (c) =>
-      c.charCodeAt(0),
-    );
+    const sigBytes = Uint8Array.from(atob(signedMessage), (c) => c.charCodeAt(0));
     const keyBytes = Uint8Array.from(atob(publicKey), (c) => c.charCodeAt(0));
     if (sigBytes.length < 64 || keyBytes.length < 32) return false;
     const msgBytes = sigBytes.slice(0, -64);
@@ -45,22 +39,14 @@ function verifyMessage(
   }
 }
 
-export function authenticate(
-  matchID: string,
-  clientMetadata: ClientMetadata,
-  db: P2PDB,
-): boolean {
+export function authenticate(matchID: string, clientMetadata: ClientMetadata, db: P2PDB): boolean {
   const { playerID, credentials, message } = clientMetadata;
   const { metadata } = db.fetch(matchID);
 
   if (!metadata) return false;
 
   // Spectators don't need auth
-  if (
-    playerID === null ||
-    playerID === undefined ||
-    !(+playerID in metadata.players)
-  ) {
+  if (playerID === null || playerID === undefined || !((+playerID) in metadata.players)) {
     return true;
   }
 

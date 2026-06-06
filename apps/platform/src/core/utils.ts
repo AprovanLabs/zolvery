@@ -1,13 +1,7 @@
-import {
-  ENVIRONMENT,
-  ORG_ID,
-  PROJECT_ID,
-  REGION_SHORT_CODE,
-} from './constants';
+import { ENVIRONMENT, ORG_ID, PROJECT_ID, REGION_SHORT_CODE } from "./constants";
 
-const sanitizeName = (name: string): string =>
-  name.toLowerCase().replace(/[^a-z0-9]/g, '-');
-const toDatabaseName = (name: string): string => name.replace(/-/g, '_');
+const sanitizeName = (name: string): string => name.toLowerCase().replace(/[^a-z0-9]/g, "-");
+const toDatabaseName = (name: string): string => name.replace(/-/g, "_");
 
 export type NamerOptions = {
   universal?: boolean; // If true, the name will be prefixed with the organization ID
@@ -27,15 +21,15 @@ export type NamerOptions = {
  * - `NAME`: Custom name provided by the user. Defaults to 'main'
  */
 const getId = (parts: string[], opts: NamerOptions): string => {
-  const partsWithDefault = parts.length ? parts : ['main'];
+  const partsWithDefault = parts.length ? parts : ["main"];
   const id = sanitizeName(
     [
       ...(opts.universal ? [ORG_ID] : []),
       PROJECT_ID,
       ENVIRONMENT,
-      opts.global ? 'glb' : REGION_SHORT_CODE,
+      opts.global ? "glb" : REGION_SHORT_CODE,
       ...partsWithDefault,
-    ].join('-'),
+    ].join("-")
   );
 
   if (opts.database) {

@@ -1,8 +1,8 @@
-import pino, { Logger as PinoLogger } from 'pino';
-import { appConfig } from './index';
-import { v7 as uuid } from 'uuid';
-import { AsyncLocalStorage } from 'async_hooks';
-import { initTelemetry } from './telemetry';
+import { AsyncLocalStorage } from "async_hooks";
+import pino, { type Logger as PinoLogger } from "pino";
+import { v7 as uuid } from "uuid";
+import { initTelemetry } from "./telemetry";
+import { appConfig } from "./index";
 
 initTelemetry();
 
@@ -17,7 +17,7 @@ interface RequestContext {
 
 export const requestContextStore = new AsyncLocalStorage<RequestContext>();
 
-const isDevelopment = process.env.environment === 'dev';
+const isDevelopment = process.env.environment === "dev";
 
 // Create logger configuration with transports
 const createLogger = () => {
@@ -25,13 +25,13 @@ const createLogger = () => {
 
   // Always add pretty console transport
   targets.push({
-    target: 'pino-pretty',
-    level: 'debug',
+    target: "pino-pretty",
+    level: "debug",
     options: {
       colorize: true,
       levelFirst: true,
-      translateTime: 'yyyy-mm-dd HH:MM:ss',
-      ignore: 'pid,hostname,traceId,spanId,traceFlags',
+      translateTime: "yyyy-mm-dd HH:MM:ss",
+      ignore: "pid,hostname,traceId,spanId,traceFlags",
       singleLine: true,
     },
   });
@@ -39,26 +39,26 @@ const createLogger = () => {
   // Only add OTEL transport in production and if endpoint is configured
   const otlpEndpoint = process.env.OTEL_EXPORTER_OTLP_ENDPOINT;
   if (!isDevelopment && otlpEndpoint) {
-    console.log('Adding OpenTelemetry log transport for production');
+    console.log("Adding OpenTelemetry log transport for production");
     targets.push({
-      target: 'pino-opentelemetry-transport',
-      level: 'info',
+      target: "pino-opentelemetry-transport",
+      level: "info",
       options: {
         resourceAttributes: {
-          'service.name': 'zolvery-server',
-          'service.version': appConfig.version,
+          "service.name": "zolvery-server",
+          "service.version": appConfig.version,
           environment: appConfig.environment,
         },
       },
     });
   } else if (isDevelopment) {
-    console.log('OpenTelemetry log transport disabled in development mode');
+    console.log("OpenTelemetry log transport disabled in development mode");
   }
 
   const loggerOptions = {
     level: appConfig.logLevel,
     base: {
-      hostname: process.env.HOSTNAME || 'unknown',
+      hostname: process.env.HOSTNAME || "unknown",
       environment: appConfig.environment,
       version: appConfig.version,
     },
@@ -96,8 +96,7 @@ export const generateRequestId = (): string => uuid();
 export const setRequestContext = (context: Partial<RequestContext>): void => {
   const currentContext = requestContextStore.getStore();
   const newContext: RequestContext = {
-    requestId:
-      context.requestId || currentContext?.requestId || generateRequestId(),
+    requestId: context.requestId || currentContext?.requestId || generateRequestId(),
     ...currentContext,
     ...context,
   };

@@ -5,14 +5,14 @@
  * for static deployment (GitHub Pages).
  */
 
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const CLIENT_DIR = path.resolve(__dirname, '..');
-const EXAMPLES_SRC = path.resolve(CLIENT_DIR, '../../packages/examples/src');
-const PUBLIC_APPS = path.resolve(CLIENT_DIR, 'public/apps');
+const CLIENT_DIR = path.resolve(__dirname, "..");
+const EXAMPLES_SRC = path.resolve(CLIENT_DIR, "../../packages/examples/src");
+const PUBLIC_APPS = path.resolve(CLIENT_DIR, "public/apps");
 
 function copyRecursive(src, dest) {
   if (!fs.existsSync(src)) {
@@ -33,7 +33,7 @@ function copyRecursive(src, dest) {
 }
 
 function main() {
-  console.log('[embed-examples] Copying examples to public/apps...');
+  console.log("[embed-examples] Copying examples to public/apps...");
   console.log(`  From: ${EXAMPLES_SRC}`);
   console.log(`  To:   ${PUBLIC_APPS}`);
 

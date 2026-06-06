@@ -1,9 +1,9 @@
-import React, { useRef, useEffect, useState, useMemo } from 'react';
-import { usePatchwork } from '../hooks/use-patchwork';
-import type { Manifest, InputSpec } from '@aprovan/patchwork-compiler';
-import type { ZolveryManifest } from '../hooks/use-widget-source';
-import { isMobile } from '../services/mobile-auth';
-import { WIDGET_CDN_URL } from '../constants';
+import React, { useRef, useEffect, useState, useMemo } from "react";
+import { WIDGET_CDN_URL } from "../constants";
+import { usePatchwork } from "../hooks/use-patchwork";
+import { isMobile } from "../services/mobile-auth";
+import type { ZolveryManifest } from "../hooks/use-widget-source";
+import type { Manifest, InputSpec } from "@aprovan/patchwork-compiler";
 
 export interface WidgetPlayerProps {
   appId: string;
@@ -15,36 +15,33 @@ export interface WidgetPlayerProps {
 
 // Map runnerTag to image package
 const IMAGE_MAP: Record<string, string> = {
-  shadcn: '@aprovan/patchwork-image-shadcn',
-  vanilla: '@aprovan/patchwork-vanilla',
-  boardgameio: '@aprovan/patchwork-image-boardgameio@0.1.0',
+  shadcn: "@aprovan/patchwork-image-shadcn",
+  vanilla: "@aprovan/patchwork-vanilla",
+  boardgameio: "@aprovan/patchwork-image-boardgameio@0.1.0",
 };
 
 // Use local npm serving in dev and on mobile for offline support, public CDN otherwise
-const CDN_BASE_URL =
-  import.meta.env.DEV || isMobile() ? '/npm' : WIDGET_CDN_URL;
+const CDN_BASE_URL = import.meta.env.DEV || isMobile() ? "/npm" : WIDGET_CDN_URL;
 
 // Use bundled esbuild.wasm on mobile for offline support
-const URL_OVERRIDES = isMobile()
-  ? { 'esbuild-wasm/esbuild.wasm': '/esbuild.wasm' }
-  : undefined;
+const URL_OVERRIDES = isMobile() ? { "esbuild-wasm/esbuild.wasm": "/esbuild.wasm" } : undefined;
 
-const normalizeInputType = (settingType?: string): InputSpec['type'] => {
+const normalizeInputType = (settingType?: string): InputSpec["type"] => {
   switch (settingType) {
-    case 'number':
-      return 'number';
-    case 'checkbox':
-    case 'boolean':
-      return 'boolean';
-    case 'array':
-      return 'array';
-    case 'object':
-      return 'object';
-    case 'input':
-    case 'select':
-    case 'string':
+    case "number":
+      return "number";
+    case "checkbox":
+    case "boolean":
+      return "boolean";
+    case "array":
+      return "array";
+    case "object":
+      return "object";
+    case "input":
+    case "select":
+    case "string":
     default:
-      return 'string';
+      return "string";
   }
 };
 
@@ -72,12 +69,15 @@ export function WidgetPlayer({
   });
 
   const inputs = useMemo(() => {
-    const defaults = (manifest.settings ?? []).reduce((acc, setting) => {
-      if (setting.id && setting.default !== undefined) {
-        acc[setting.id] = setting.default;
-      }
-      return acc;
-    }, {} as Record<string, unknown>);
+    const defaults = (manifest.settings ?? []).reduce(
+      (acc, setting) => {
+        if (setting.id && setting.default !== undefined) {
+          acc[setting.id] = setting.default;
+        }
+        return acc;
+      },
+      {} as Record<string, unknown>
+    );
     return { ...defaults, ...inputsProp };
   }, [manifest.settings, inputsProp]);
 
@@ -86,20 +86,23 @@ export function WidgetPlayer({
     () => ({
       name: manifest.appId,
       version: manifest.version,
-      platform: 'browser' as const,
+      platform: "browser" as const,
       image: imageName,
       services: manifest.servers,
-      inputs: (manifest.settings ?? []).reduce((acc, setting) => {
-        if (setting.id) {
-          acc[setting.id] = {
-            type: normalizeInputType(setting.type),
-            default: setting.default,
-          };
-        }
-        return acc;
-      }, {} as Record<string, InputSpec>),
+      inputs: (manifest.settings ?? []).reduce(
+        (acc, setting) => {
+          if (setting.id) {
+            acc[setting.id] = {
+              type: normalizeInputType(setting.type),
+              default: setting.default,
+            };
+          }
+          return acc;
+        },
+        {} as Record<string, InputSpec>
+      ),
     }),
-    [manifest, imageName],
+    [manifest, imageName]
   );
 
   useEffect(() => {
@@ -112,7 +115,7 @@ export function WidgetPlayer({
         mounted = m;
       })
       .catch((e) => {
-        console.error('Widget mount error:', e);
+        console.error("Widget mount error:", e);
         setError(e.message);
       });
 
@@ -124,22 +127,12 @@ export function WidgetPlayer({
   }, [isReady, source, compilerManifest, mount, inputs]);
 
   if (compilerError) {
-    return (
-      <div className="text-red-500 p-4">
-        Compiler error: {compilerError.message}
-      </div>
-    );
+    return <div className="text-red-500 p-4">Compiler error: {compilerError.message}</div>;
   }
 
   if (error) {
     return <div className="text-red-500 p-4">Widget error: {error}</div>;
   }
 
-  return (
-    <div
-      ref={containerRef}
-      className={className ?? 'w-full h-full'}
-      data-widget-id={appId}
-    />
-  );
+  return <div ref={containerRef} className={className ?? "w-full h-full"} data-widget-id={appId} />;
 }

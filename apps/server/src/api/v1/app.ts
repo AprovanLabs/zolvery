@@ -1,20 +1,20 @@
-import Router from '@koa/router';
-import { logger } from '@/logger';
-import { authMiddleware } from '@/middleware/auth';
-import { sendErrorResponse, sendSuccessResponse } from '../responses';
-import { AuthContext } from '@/auth';
-import { Services } from '@/services';
-import { NotFoundError, UnauthorizedError } from '@/domains/common/errors';
-import { appConfig } from '@/config';
-import * as fs from 'fs/promises';
-import * as path from 'path';
+import * as fs from "fs/promises";
+import * as path from "path";
+import Router from "@koa/router";
+import { sendErrorResponse, sendSuccessResponse } from "../responses";
+import { type AuthContext } from "@/auth";
+import { appConfig } from "@/config";
+import { NotFoundError, UnauthorizedError } from "@/domains/common/errors";
+import { logger } from "@/logger";
+import { authMiddleware } from "@/middleware/auth";
+import { type Services } from "@/services";
 
-const EXAMPLES_DIR = path.resolve(process.cwd(), '../../packages/examples/src');
+const EXAMPLES_DIR = path.resolve(process.cwd(), "../../packages/examples/src");
 
 interface SaveFileRequest {
   path: string;
   content: string;
-  encoding?: 'utf8' | 'base64';
+  encoding?: "utf8" | "base64";
 }
 
 interface SaveRequest {
@@ -23,32 +23,28 @@ interface SaveRequest {
 
 function isValidPath(filePath: string): boolean {
   const normalized = path.normalize(filePath);
-  return !normalized.startsWith('..') && !path.isAbsolute(normalized);
+  return !normalized.startsWith("..") && !path.isAbsolute(normalized);
 }
 
 export const buildAppRouter = ({ services }: { services: Services }) => {
   const router = new Router();
 
-  router.post('/:appId+/save', async (ctx) => {
-    if (appConfig.environment !== 'dev') {
-      sendErrorResponse(
-        ctx,
-        403,
-        'Save endpoint only available in development',
-      );
+  router.post("/:appId+/save", async (ctx) => {
+    if (appConfig.environment !== "dev") {
+      sendErrorResponse(ctx, 403, "Save endpoint only available in development");
       return;
     }
 
     const { appId } = ctx.params;
     const body = ctx.request.body as SaveRequest;
 
-    if (!appId || appId.includes('..') || appId.startsWith('/')) {
-      sendErrorResponse(ctx, 400, 'Invalid appId');
+    if (!appId || appId.includes("..") || appId.startsWith("/")) {
+      sendErrorResponse(ctx, 400, "Invalid appId");
       return;
     }
 
     if (!body.files || !Array.isArray(body.files) || body.files.length === 0) {
-      sendErrorResponse(ctx, 400, 'No files to save');
+      sendErrorResponse(ctx, 400, "No files to save");
       return;
     }
 
@@ -57,23 +53,18 @@ export const buildAppRouter = ({ services }: { services: Services }) => {
     try {
       await fs.access(appDir);
     } catch {
-      sendErrorResponse(
-        ctx,
-        404,
-        `App directory not found: ${EXAMPLES_DIR}/${appId}`,
-      );
+      sendErrorResponse(ctx, 404, `App directory not found: ${EXAMPLES_DIR}/${appId}`);
       return;
     }
 
-    const results: Array<{ path: string; success: boolean; error?: string }> =
-      [];
+    const results: Array<{ path: string; success: boolean; error?: string }> = [];
 
     for (const file of body.files) {
       if (!isValidPath(file.path)) {
         results.push({
           path: file.path,
           success: false,
-          error: 'Invalid path',
+          error: "Invalid path",
         });
         continue;
       }
@@ -83,7 +74,7 @@ export const buildAppRouter = ({ services }: { services: Services }) => {
         results.push({
           path: file.path,
           success: false,
-          error: 'Path traversal detected',
+          error: "Path traversal detected",
         });
         continue;
       }
@@ -91,24 +82,14 @@ export const buildAppRouter = ({ services }: { services: Services }) => {
       try {
         await fs.mkdir(path.dirname(fullPath), { recursive: true });
         const content =
-          file.encoding === 'base64'
-            ? Buffer.from(file.content, 'base64')
-            : file.content;
-        await fs.writeFile(
-          fullPath,
-          content,
-          file.encoding === 'base64' ? undefined : 'utf8',
-        );
+          file.encoding === "base64" ? Buffer.from(file.content, "base64") : file.content;
+        await fs.writeFile(fullPath, content, file.encoding === "base64" ? undefined : "utf8");
         results.push({ path: file.path, success: true });
-        logger.info({ appId, filePath: file.path }, 'Saved widget file');
+        logger.info({ appId, filePath: file.path }, "Saved widget file");
       } catch (error) {
-        const message =
-          error instanceof Error ? error.message : 'Unknown error';
+        const message = error instanceof Error ? error.message : "Unknown error";
         results.push({ path: file.path, success: false, error: message });
-        logger.error(
-          { appId, filePath: file.path, error: message },
-          'Failed to save widget file',
-        );
+        logger.error({ appId, filePath: file.path, error: message }, "Failed to save widget file");
       }
     }
 
@@ -123,9 +104,9 @@ export const buildAppRouter = ({ services }: { services: Services }) => {
 
   router.use(authMiddleware);
 
-  router.get('/:appId+', async (ctx: AuthContext) => {
+  router.get("/:appId+", async (ctx: AuthContext) => {
     const { appId } = ctx.params;
-    logger.info({ appId }, 'Fetching app by ID');
+    logger.info({ appId }, "Fetching app by ID");
 
     try {
       const userId = ctx.user.userId;
@@ -133,16 +114,16 @@ export const buildAppRouter = ({ services }: { services: Services }) => {
       sendSuccessResponse(ctx, 200, { app });
     } catch (error) {
       if (error instanceof NotFoundError) {
-        logger.warn({ appId }, 'App not found');
-        sendErrorResponse(ctx, 404, 'App not found');
+        logger.warn({ appId }, "App not found");
+        sendErrorResponse(ctx, 404, "App not found");
         return;
       }
       if (error instanceof UnauthorizedError) {
-        sendErrorResponse(ctx, 403, 'Unauthorized to access this app');
+        sendErrorResponse(ctx, 403, "Unauthorized to access this app");
         return;
       }
-      logger.error(error, 'Error fetching app by ID', { appId });
-      sendErrorResponse(ctx, 500, 'Internal server error');
+      logger.error(error, "Error fetching app by ID", { appId });
+      sendErrorResponse(ctx, 500, "Internal server error");
     }
   });
 
