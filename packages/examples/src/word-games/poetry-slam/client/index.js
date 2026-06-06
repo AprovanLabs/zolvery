@@ -67,10 +67,10 @@ const problematic = {
   waterbed: 3,
   wednesday: 2,
   yosemite: 4,
-  zoe: 2
+  zoe: 2,
 };
 
-const own = {}.hasOwnProperty
+const own = {}.hasOwnProperty;
 
 // Two expressions of occurrences which normally would be counted as two
 // syllables, but should be counted as one.
@@ -107,7 +107,7 @@ const EXPRESSION_MONOSYLLABIC_ONE = new RegExp(
         'r[bcnsv]',
         'squ',
         's[chkls]',
-        'th'
+        'th',
       ].join('|') +
       ')ed$)',
     '(?:[aeiouy](?:' +
@@ -123,12 +123,12 @@ const EXPRESSION_MONOSYLLABIC_ONE = new RegExp(
         'r[nsv]',
         'squ',
         's[cklst]',
-        'th'
+        'th',
       ].join('|') +
-      ')es$)'
+      ')es$)',
   ].join('|'),
-  'g'
-)
+  'g',
+);
 
 const EXPRESSION_MONOSYLLABIC_TWO = new RegExp(
   '[aeiouy](?:' +
@@ -143,11 +143,11 @@ const EXPRESSION_MONOSYLLABIC_TWO = new RegExp(
       'r[cnsv]',
       'squ',
       's[cklst]',
-      'th'
+      'th',
     ].join('|') +
     ')e$',
-  'g'
-)
+  'g',
+);
 
 // Four expression of occurrences which normally would be counted as one
 // syllable, but should be counted as two.
@@ -172,11 +172,11 @@ const EXPRESSION_DOUBLE_SYLLABIC_ONE = new RegExp(
       'orbed', // Cancel `'.[^aeiuoycgltdb]{2,}ed$',`
       'shred', // Cancel `'.[^aeiuoycgltdb]{2,}ed$',`
       'eings?',
-      '[aeiouy]sh?e[rs]'
+      '[aeiouy]sh?e[rs]',
     ].join('|') +
     ')$',
-  'g'
-)
+  'g',
+);
 
 const EXPRESSION_DOUBLE_SYLLABIC_TWO = new RegExp(
   [
@@ -185,10 +185,10 @@ const EXPRESSION_DOUBLE_SYLLABIC_TWO = new RegExp(
     '[aeiou]{3}',
     '^(?:ia|mc|coa[dglx].)',
     '^re(app|es|im|us)',
-    '(th|d)eist'
+    '(th|d)eist',
   ].join('|'),
-  'g'
-)
+  'g',
+);
 
 const EXPRESSION_DOUBLE_SYLLABIC_THREE = new RegExp(
   [
@@ -204,12 +204,12 @@ const EXPRESSION_DOUBLE_SYLLABIC_THREE = new RegExp(
     'real[aeilotu]',
     'iell',
     'eo[^aeiou]',
-    '[aeiou]y[aeiou]'
+    '[aeiou]y[aeiou]',
   ].join('|'),
-  'g'
-)
+  'g',
+);
 
-const EXPRESSION_DOUBLE_SYLLABIC_FOUR = /[^s]ia/
+const EXPRESSION_DOUBLE_SYLLABIC_FOUR = /[^s]ia/;
 
 // Expression to match single syllable pre- and suffixes.
 const EXPRESSION_SINGLE = new RegExp(
@@ -227,7 +227,7 @@ const EXPRESSION_SINGLE = new RegExp(
         'pro',
         'dis',
         'side',
-        'some'
+        'some',
       ].join('|') +
       ')',
     '(?:' +
@@ -246,12 +246,12 @@ const EXPRESSION_SINGLE = new RegExp(
         'sides?',
         'ports?',
         'shires?',
-        '[gnst]ion(?:ed|s)?'
+        '[gnst]ion(?:ed|s)?',
       ].join('|') +
-      ')$'
+      ')$',
   ].join('|'),
-  'g'
-)
+  'g',
+);
 
 // Expression to match double syllable pre- and suffixes.
 const EXPRESSION_DOUBLE = new RegExp(
@@ -281,16 +281,16 @@ const EXPRESSION_DOUBLE = new RegExp(
         'pico',
         'nano',
         'macro',
-        'somer'
+        'somer',
       ].join('|') +
       ')',
-    '(?:fully|berry|woman|women|edly|union|((?:[bcdfghjklmnpqrstvwxz])|[aeiou])ye?ing)$'
+    '(?:fully|berry|woman|women|edly|union|((?:[bcdfghjklmnpqrstvwxz])|[aeiou])ye?ing)$',
   ].join('|'),
-  'g'
-)
+  'g',
+);
 
 // Expression to match triple syllable suffixes.
-const EXPRESSION_TRIPLE = /(creations?|ology|ologist|onomy|onomist)$/g
+const EXPRESSION_TRIPLE = /(creations?|ology|ologist|onomy|onomist)$/g;
 
 /**
  * Count syllables in `value`.
@@ -306,16 +306,16 @@ function getSyllableCount(value) {
     // Remove apostrophes.
     .replace(/['’]/g, '')
     // Split on word boundaries.
-    .split(/\b/g)
-  let index = -1
-  let sum = 0
+    .split(/\b/g);
+  let index = -1;
+  let sum = 0;
 
   while (++index < values.length) {
     // Remove non-alphabetic characters from a given value.
-    sum += one(values[index].replace(/[^a-z]/g, ''))
+    sum += one(values[index].replace(/[^a-z]/g, ''));
   }
 
-  return sum
+  return sum;
 }
 
 /**
@@ -325,38 +325,38 @@ function getSyllableCount(value) {
  * @returns {number}
  */
 function one(value) {
-  let count = 0
+  let count = 0;
 
   if (value.length === 0) {
-    return count
+    return count;
   }
 
   // Return early when possible.
   if (value.length < 3) {
-    return 1
+    return 1;
   }
 
   // If `value` is a hard to count, it might be in `problematic`.
   if (own.call(problematic, value)) {
-    return problematic[value]
+    return problematic[value];
   }
 
-  const addOne = returnFactory(1)
-  const subtractOne = returnFactory(-1)
+  const addOne = returnFactory(1);
+  const subtractOne = returnFactory(-1);
 
   // Count some prefixes and suffixes, and remove their matched ranges.
   value = value
     .replace(EXPRESSION_TRIPLE, countFactory(3))
     .replace(EXPRESSION_DOUBLE, countFactory(2))
-    .replace(EXPRESSION_SINGLE, countFactory(1))
+    .replace(EXPRESSION_SINGLE, countFactory(1));
 
   // Count multiple consonants.
-  const parts = value.split(/[^aeiouy]+/)
-  let index = -1
+  const parts = value.split(/[^aeiouy]+/);
+  let index = -1;
 
   while (++index < parts.length) {
     if (parts[index] !== '') {
-      count++
+      count++;
     }
   }
 
@@ -364,7 +364,7 @@ function one(value) {
   // counted as two).
   value
     .replace(EXPRESSION_MONOSYLLABIC_ONE, subtractOne)
-    .replace(EXPRESSION_MONOSYLLABIC_TWO, subtractOne)
+    .replace(EXPRESSION_MONOSYLLABIC_TWO, subtractOne);
 
   // Add one for occurrences which should be counted as two (but are counted as
   // one).
@@ -372,10 +372,10 @@ function one(value) {
     .replace(EXPRESSION_DOUBLE_SYLLABIC_ONE, addOne)
     .replace(EXPRESSION_DOUBLE_SYLLABIC_TWO, addOne)
     .replace(EXPRESSION_DOUBLE_SYLLABIC_THREE, addOne)
-    .replace(EXPRESSION_DOUBLE_SYLLABIC_FOUR, addOne)
+    .replace(EXPRESSION_DOUBLE_SYLLABIC_FOUR, addOne);
 
   // Make sure at least on is returned.
-  return count || 1
+  return count || 1;
 
   /**
    * Define scoped counters, to be used in `String#replace()` calls.
@@ -384,13 +384,13 @@ function one(value) {
    * @param {number} addition
    */
   function countFactory(addition) {
-    return counter
+    return counter;
     /**
      * @returns {string}
      */
     function counter() {
-      count += addition
-      return ''
+      count += addition;
+      return '';
     }
   }
 
@@ -400,14 +400,14 @@ function one(value) {
    * @param {number} addition
    */
   function returnFactory(addition) {
-    return returner
+    return returner;
     /**
      * @param {string} $0
      * @returns {string}
      */
     function returner($0) {
-      count += addition
-      return $0
+      count += addition;
+      return $0;
     }
   }
 }
@@ -418,7 +418,7 @@ const toLine = (syllableCounts, offset, numSyllables) => {
   let line = undefined;
   let wordCount = 0;
   let currSyllableCount = 0;
-  
+
   try {
     const counts = syllableCounts.slice(offset);
     if (!counts.length) {
@@ -441,7 +441,8 @@ const toLine = (syllableCounts, offset, numSyllables) => {
   }
 };
 
-const SAMPLE_POEM = 'The sun is shining\nBirds are singing in the trees\nNature wakes from sleep';
+const SAMPLE_POEM =
+  'The sun is shining\nBirds are singing in the trees\nNature wakes from sleep';
 const SAMPLE_POEMS = [
   SAMPLE_POEM,
   'A gentle breeze blows\nWhispers through the tall green grass\nNature’s lullaby',
@@ -462,18 +463,24 @@ export const app = createApp({
 
       // Use user-provided poems if available
       const userProvidedPoems = [];
-      users.value.map((user) => user?.data?.poem).forEach((userPoem) => {
-        if (userPoem && userPoem.trim() !== '') {
-          userProvidedPoems.push(userPoem);
-        }
-      });
+      users.value
+        .map((user) => user?.data?.poem)
+        .forEach((userPoem) => {
+          if (userPoem && userPoem.trim() !== '') {
+            userProvidedPoems.push(userPoem);
+          }
+        });
 
       // Add system-generated poems as backup
       const systemGeneratedPoems = data.value?.examples || [];
 
       // Fallback to sample poems
-      return [...userProvidedPoems, ...systemGeneratedPoems, ...SAMPLE_POEMS].slice(0, NUM_VOTES);
-  });
+      return [
+        ...userProvidedPoems,
+        ...systemGeneratedPoems,
+        ...SAMPLE_POEMS,
+      ].slice(0, NUM_VOTES);
+    });
 
     const phase = ref('creating'); // 'creating', 'voting'
     const voteNum = ref(1);
@@ -499,7 +506,7 @@ export const app = createApp({
       }));
       const data = { poem: poem.value };
       games.vote({ votes, data });
-    }
+    };
 
     const vote = (userId, score) => {
       votes.value.push({ userId, score });
@@ -519,7 +526,7 @@ export const app = createApp({
 
     const setIsComplete = (value) => {
       isComplete.value = value;
-    }
+    };
 
     const setLineCount = (lineNum, count) => {
       lineCounts.value[lineNum] = count;
@@ -548,12 +555,20 @@ export const app = createApp({
         setLineCount(0, syllableCount);
         lines.push(line);
 
-        ({ line, wordCount, syllableCount } = toLine(syllableCounts, numWords, 7));
+        ({ line, wordCount, syllableCount } = toLine(
+          syllableCounts,
+          numWords,
+          7,
+        ));
         numWords += wordCount;
         setLineCount(1, syllableCount);
         lines.push(line);
 
-        ({ line, wordCount, syllableCount } = toLine(syllableCounts, numWords, 5));
+        ({ line, wordCount, syllableCount } = toLine(
+          syllableCounts,
+          numWords,
+          5,
+        ));
         setLineCount(2, syllableCount);
         lines.push(line);
 

@@ -1,3 +1,8 @@
+export type {
+  ObservableRecord,
+  MaybeObservableRecord,
+  BehaviorSubjectRecord,
+} from './types';
 export type { Event } from './events';
 export { createEvent, isCoreEvent, isGameEvent } from './events';
 export type { User } from './user';

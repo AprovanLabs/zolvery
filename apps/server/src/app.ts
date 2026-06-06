@@ -44,7 +44,7 @@ app.use(
         {
           requestOrigin: origin,
           allowedOrigin,
-          requestId: (ctx as any).requestId,
+          requestId: (ctx as unknown as { requestId?: string }).requestId,
         },
         'CORS origin check',
       );
@@ -60,8 +60,13 @@ app.use(
     enableTypes: ['json', 'form'],
     formLimit: '10mb',
     jsonLimit: '10mb',
-    onerror: (err: Error, ctx: any) => {
-      logger.error(err, { requestId: ctx.requestId }, 'Body parser error');
+    onerror: (err: Error, ctx: unknown) => {
+      const logCtx = ctx as {
+        requestId?: string;
+        method?: string;
+        path?: string;
+      };
+      logger.error(err, { requestId: logCtx.requestId }, 'Body parser error');
       throw err;
     },
   }),
@@ -126,12 +131,15 @@ router.use('/api', buildApiRouter({ services }).routes());
 app.use(router.routes());
 app.use(router.allowedMethods());
 
-app.on('error', (err: Error, ctx?: any) => {
+app.on('error', (err: Error, ctx?: unknown) => {
+  const logCtx = ctx as
+    | { requestId?: string; method?: string; path?: string }
+    | undefined;
   logger.error(
     {
-      requestId: ctx?.requestId,
-      method: ctx?.method,
-      path: ctx?.path,
+      requestId: logCtx?.requestId,
+      method: logCtx?.method,
+      path: logCtx?.path,
       err: {
         message: err.message,
         name: err.name,
@@ -141,13 +149,13 @@ app.on('error', (err: Error, ctx?: any) => {
     'Application error event',
   );
 
-  if (ctx) {
-    ctx.status = 500;
-    ctx.body = {
+  if (logCtx) {
+    (logCtx as { status?: number }).status = 500;
+    (logCtx as { body?: unknown }).body = {
       success: false,
       error: 'Internal server error',
       timestamp: new Date().toISOString(),
-      requestId: ctx.requestId,
+      requestId: logCtx.requestId,
     };
   }
 });

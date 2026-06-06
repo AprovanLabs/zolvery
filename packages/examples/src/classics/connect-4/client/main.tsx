@@ -128,16 +128,27 @@ export const game = {
     enumerate: (G: GameState) =>
       G.winner !== null
         ? []
-        : getValidMoves(G.cells).map((col) => ({ move: 'dropToken', args: [col] })),
+        : getValidMoves(G.cells).map((col) => ({
+            move: 'dropToken',
+            args: [col],
+          })),
   },
 };
 
-export function app({ G, moves, botState, botCount = 0, botPlayerIDs, playerID, isMultiplayer }: BoardProps) {
+export function app({
+  G,
+  moves,
+  botState,
+  botCount = 0,
+  botPlayerIDs,
+  playerID,
+  isMultiplayer,
+}: BoardProps) {
   const safeBotPlayerIDs = Array.isArray(botPlayerIDs) ? botPlayerIDs : [];
-  
+
   const over = G.winner !== null;
   const isBotThinking = botState?.isThinking ?? false;
-  
+
   const isLocalPlayersTurn = !isMultiplayer || playerID === String(G.current);
   const isCurrentPlayerBot = safeBotPlayerIDs.includes(String(G.current));
 
@@ -179,7 +190,12 @@ export function app({ G, moves, botState, botCount = 0, botPlayerIDs, playerID, 
           {/* Column buttons */}
           <div className="mb-2 grid grid-cols-7 gap-1">
             {Array.from({ length: COLS }, (_, col) => {
-              const isClickable = !isColumnFull(col) && !over && isLocalPlayersTurn && !isCurrentPlayerBot && !isBotThinking;
+              const isClickable =
+                !isColumnFull(col) &&
+                !over &&
+                isLocalPlayersTurn &&
+                !isCurrentPlayerBot &&
+                !isBotThinking;
               return (
                 <button
                   key={`drop-${col}`}
@@ -208,7 +224,11 @@ export function app({ G, moves, botState, botCount = 0, botPlayerIDs, playerID, 
                   <div
                     key={`${rowIdx}-${colIdx}`}
                     className={`aspect-square rounded-full border-2 transition-all duration-200
-                      ${winning ? 'scale-105 border-slate-900' : 'border-slate-200'}
+                      ${
+                        winning
+                          ? 'scale-105 border-slate-900'
+                          : 'border-slate-200'
+                      }
                       ${cell === null ? 'bg-white' : ''}
                     `}
                     style={{

@@ -6,13 +6,13 @@ import { User } from '../user.js';
 export interface CreateEventRequest {
   appId: string;
   eventKey: string;
-  value: any;
+  value: unknown;
   day?: string;
 }
 
 export interface AppEvent {
   eventKey: string;
-  value: any;
+  value: unknown;
   timestamp: string;
   appId: string;
   userId: string;
@@ -25,18 +25,17 @@ export interface LeaderboardEntry {
   username: string;
   score: number;
   rank: number;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface SubmitScoreRequest {
   score: number;
-  appData?: any;
-  day?: string; // Optional, defaults to today
+  appData?: unknown;
+  day?: string;
   validationData?: {
-    submissionValue?: string; // For race validation (client-provided answer)
-    proofOfWork?: any; // Additional validation data
+    submissionValue?: string;
+    proofOfWork?: unknown;
   };
-  // Note: completionTime is calculated server-side, not client-provided
   votes?: VoteSubmission[]; // All votes submitted in one batch
 }
 
@@ -52,7 +51,11 @@ export class ClientAPI {
   private baseUrl: string;
   private authToken?: string;
 
-  public constructor(baseUrl: string, private user: User, private appId?: string) {
+  public constructor(
+    baseUrl: string,
+    private user: User,
+    private appId?: string,
+  ) {
     this.baseUrl = baseUrl.replace(/\/$/, ''); // Remove trailing slash
   }
 
@@ -73,11 +76,11 @@ export class ClientAPI {
   /**
    * Get app data for a specific day
    */
-  public async getAppData(day: string, key?: string): Promise<any> {
-    const url = key 
+  public async getAppData(day: string, key?: string): Promise<unknown> {
+    const url = key
       ? `${this.baseUrl}/app-data/${this.getAppId()}/${day}/${key}`
       : `${this.baseUrl}/app-data/${this.getAppId()}/${day}`;
-    
+
     return this.request('GET', url);
   }
 
@@ -100,7 +103,10 @@ export class ClientAPI {
   /**
    * Get a specific event
    */
-  public async getEvent(day: string, eventKey: string): Promise<AppEvent | null> {
+  public async getEvent(
+    day: string,
+    eventKey: string,
+  ): Promise<AppEvent | null> {
     const url = `${this.baseUrl}/events/${this.getAppId()}/${day}/${eventKey}`;
     return this.request('GET', url);
   }
@@ -108,7 +114,7 @@ export class ClientAPI {
   /**
    * Submit score to leaderboard
    */
-  public async submitScore(request: SubmitScoreRequest): Promise<any> {
+  public async submitScore(request: SubmitScoreRequest): Promise<unknown> {
     const url = `${this.baseUrl}/leaderboard/score`;
     return this.request('POST', url, {
       appId: this.getAppId(),
@@ -119,7 +125,9 @@ export class ClientAPI {
   /**
    * Get leaderboard
    */
-  public async getLeaderboard(type: 'global' | 'friends' = 'global'): Promise<LeaderboardEntry[]> {
+  public async getLeaderboard(
+    type: 'global' | 'friends' = 'global',
+  ): Promise<LeaderboardEntry[]> {
     const url = `${this.baseUrl}/leaderboard/${this.getAppId()}?type=${type}`;
     return this.request('GET', url);
   }
@@ -144,7 +152,11 @@ export class ClientAPI {
   /**
    * Make HTTP request with error handling
    */
-  private async request(method: string, url: string, body?: any): Promise<any> {
+  private async request(
+    method: string,
+    url: string,
+    body?: unknown,
+  ): Promise<unknown> {
     try {
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',

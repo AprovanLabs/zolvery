@@ -88,7 +88,7 @@ export const initTelemetry = (): NodeSDK | null => {
     return telemetrySDK;
   } catch (error) {
     console.error('OpenTelemetry: Failed to initialize:', error);
-    return null;
+    throw error;
   }
 };
 

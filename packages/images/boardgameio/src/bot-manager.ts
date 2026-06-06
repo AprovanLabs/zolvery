@@ -215,10 +215,7 @@ export class BotManager {
   private currentState: BotState = { isThinking: false, thinkingPlayer: null };
   private moveInProgress = false;
 
-  constructor(
-    private game: BoardgameGame,
-    config: ResolvedBotConfig,
-  ) {
+  constructor(private game: BoardgameGame, config: ResolvedBotConfig) {
     this.config = config;
     this.initializeBot();
   }
@@ -317,7 +314,10 @@ export class BotManager {
     }
 
     // Check if bot should make a "mistake"
-    if (this.config.mistakeRate > 0 && Math.random() < this.config.mistakeRate) {
+    if (
+      this.config.mistakeRate > 0 &&
+      Math.random() < this.config.mistakeRate
+    ) {
       const randomIndex = Math.floor(Math.random() * legalMoves.length);
       const randomMove = legalMoves[randomIndex];
       return {
@@ -330,42 +330,44 @@ export class BotManager {
       };
     }
 
-  // Use the bot's calculated best move
-  if (!this.bot) {
-    // Fallback to random if no bot
-    const randomIndex = Math.floor(Math.random() * legalMoves.length);
-    const randomMove = legalMoves[randomIndex];
-    return {
-      action: {
-        payload: {
-          type: randomMove.move,
-          args: randomMove.args,
+    // Use the bot's calculated best move
+    if (!this.bot) {
+      // Fallback to random if no bot
+      const randomIndex = Math.floor(Math.random() * legalMoves.length);
+      const randomMove = legalMoves[randomIndex];
+      return {
+        action: {
+          payload: {
+            type: randomMove.move,
+            args: randomMove.args,
+          },
         },
-      },
-    };
-  }
+      };
+    }
 
-  const result = await this.bot.play(state, playerID);
+    const result = await this.bot.play(state, playerID);
 
-  // If bot returns null action but we have legal moves, fall back to random
-  // This can happen when games use manual turn management (G.current instead of ctx.currentPlayer)
-  // which prevents MCTS from properly simulating future game states
-  if (!result?.action && legalMoves.length > 0) {
-    console.log('[BotManager] Bot returned null action, falling back to random selection');
-    const randomIndex = Math.floor(Math.random() * legalMoves.length);
-    const randomMove = legalMoves[randomIndex];
-    return {
-      action: {
-        payload: {
-          type: randomMove.move,
-          args: randomMove.args,
+    // If bot returns null action but we have legal moves, fall back to random
+    // This can happen when games use manual turn management (G.current instead of ctx.currentPlayer)
+    // which prevents MCTS from properly simulating future game states
+    if (!result?.action && legalMoves.length > 0) {
+      console.log(
+        '[BotManager] Bot returned null action, falling back to random selection',
+      );
+      const randomIndex = Math.floor(Math.random() * legalMoves.length);
+      const randomMove = legalMoves[randomIndex];
+      return {
+        action: {
+          payload: {
+            type: randomMove.move,
+            args: randomMove.args,
+          },
         },
-      },
-    };
-  }
+      };
+    }
 
-  return result;
-}
+    return result;
+  }
 
   /**
    * Check if it's a bot's turn and schedule a move if so.
@@ -394,7 +396,10 @@ export class BotManager {
     // Check if current player is a bot
     const isBotTurn = botPlayerIDs.includes(ctx.currentPlayer);
     if (!isBotTurn || ctx.gameover) {
-      console.log('[BotManager] Not bot turn or gameover:', { isBotTurn, gameover: ctx.gameover });
+      console.log('[BotManager] Not bot turn or gameover:', {
+        isBotTurn,
+        gameover: ctx.gameover,
+      });
       this.cancelPendingMove();
       this.notifyState({ isThinking: false, thinkingPlayer: null });
       return;

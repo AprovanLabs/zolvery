@@ -1,9 +1,9 @@
 import Router from '@koa/router';
 
 export const buildGamesRouter = () => {
-    const router = new Router();
-    
-    router.get('/:gameId', () => {});
+  const router = new Router();
 
-    return router;
-}
+  router.get('/:gameId', () => {});
+
+  return router;
+};

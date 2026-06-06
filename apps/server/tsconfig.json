@@ -11,7 +11,7 @@
     "baseUrl": "./",
     "paths": {
       "@/*": ["src/*"],
-      "@/logger": ["src/config/logger"],
+      "@/logger": ["src/config/logger"]
     },
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
@@ -35,11 +35,7 @@
     "noImplicitOverride": true,
     "exactOptionalPropertyTypes": true
   },
-  "include": [
-    "src/**/*",
-    "src/**/*.json",
-    "types/**/*.d.ts"
-  ],
+  "include": ["src/**/*", "src/**/*.json", "types/**/*.d.ts"],
   "exclude": [
     "node_modules",
     "dist",

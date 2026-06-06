@@ -8,10 +8,6 @@ export class AppService {
   async getAppById(appId: string, userId: string): Promise<App> {
     const app = await this.appStore.getApp(appId);
 
-    if (!app) {
-      throw new NotFoundError('App not found');
-    }
-
     if (app.visibility === 'public') {
       return app;
     }

@@ -19,7 +19,9 @@ export interface WebProps {
 }
 
 export class Web extends Construct {
-  public readonly bucketName: string = namer({ universal: true }).regional('web');
+  public readonly bucketName: string = namer({ universal: true }).regional(
+    'web',
+  );
   public readonly api: apigateway.RestApi;
   public readonly hostingBucket: s3.Bucket;
   public readonly url: string;
@@ -99,15 +101,21 @@ export class Web extends Construct {
     this.callbackUrl = this.url;
     this.logoutUrl = this.url;
 
-    const hostedZone = route53.HostedZone.fromHostedZoneAttributes(this, 'HostedZone', {
-      hostedZoneId: props.hostedZoneId,
-      zoneName: this.extractRootDomain(props.domainName),
-    });
+    const hostedZone = route53.HostedZone.fromHostedZoneAttributes(
+      this,
+      'HostedZone',
+      {
+        hostedZoneId: props.hostedZoneId,
+        zoneName: this.extractRootDomain(props.domainName),
+      },
+    );
 
     new route53.ARecord(this, 'Route53Record', {
       zone: hostedZone,
       recordName: props.domainName,
-      target: route53.RecordTarget.fromAlias(new targets.CloudFrontTarget(this.distribution)),
+      target: route53.RecordTarget.fromAlias(
+        new targets.CloudFrontTarget(this.distribution),
+      ),
       comment: `Point ${props.domainName} to CloudFront distribution`,
     });
   }

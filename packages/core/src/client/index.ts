@@ -34,8 +34,11 @@ export const createTransport = (windowTarget: Window): Transport => ({
 export const createChildTransport = (): Transport =>
   createTransport(window.parent ?? window.top);
 
-export const loadClient = (user: User, config: ClientConfig, transport: Transport) =>
-  new Client(user, config, transport);
+export const loadClient = (
+  user: User,
+  config: ClientConfig,
+  transport: Transport,
+) => new Client(user, config, transport);
 
 export { loadScript, getQueryParam } from './util';
 

@@ -6,7 +6,12 @@ import {
   aws_cognito as cognito,
   aws_certificatemanager as certificatemanager,
 } from 'aws-cdk-lib';
-import { DOMAIN_PACKAGE, MOBILE_PORT, PROJECT_DOMAIN } from '../core/constants';
+import {
+  DOMAIN_PACKAGE,
+  LOCALHOST_CALLBACK_URLS,
+  COGNITO_DOMAIN_TEMPLATE,
+  PROJECT_DOMAIN,
+} from '../core/constants';
 import { namer } from '../core/utils';
 
 export interface AuthProps {
@@ -109,19 +114,13 @@ You've been invited to join Zolvery! Your temporary password is {####}`,
         ],
         callbackUrls: [
           props.callbackUrl,
-          'http://localhost',
-          'https://localhost',
-          'capacitor://localhost',
+          ...LOCALHOST_CALLBACK_URLS,
           `${DOMAIN_PACKAGE}://${PROJECT_DOMAIN}`,
-          `http://localhost:${MOBILE_PORT}`,
         ],
         logoutUrls: [
           props.logoutUrl,
-          'http://localhost',
-          'https://localhost',
-          'capacitor://localhost',
+          ...LOCALHOST_CALLBACK_URLS,
           `${DOMAIN_PACKAGE}://${PROJECT_DOMAIN}`,
-          `http://localhost:${MOBILE_PORT}`,
         ],
       },
       supportedIdentityProviders: [
@@ -139,7 +138,7 @@ You've been invited to join Zolvery! Your temporary password is {####}`,
       },
     });
 
-    this.signInUrl = `https://${this.domainName}.auth.${stack.region}.amazoncognito.com`;
+    this.signInUrl = COGNITO_DOMAIN_TEMPLATE(this.domainName, stack.region);
 
     if (props.googleClientId && props.googleClientSecret) {
       new cognito.UserPoolIdentityProviderGoogle(this, 'GoogleProvider', {

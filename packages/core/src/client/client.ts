@@ -15,16 +15,16 @@ export enum CoreEventType {
   APP_START = 'app.start',
   APP_READY = 'app.ready',
   APP_INITIALIZED = 'app.initialized',
-  
+
   // User interactions
   USER_ACTION = 'user.action',
   USER_CONNECTED = 'user.connected',
   USER_DISCONNECTED = 'user.disconnected',
-  
+
   // Data management
   DATA_REQUEST = 'data.request',
   DATA_UPDATED = 'data.updated',
-  
+
   // Scoring (once per day)
   SCORE_SUBMIT = 'score.submit',
   SCORE_ACCEPTED = 'score.accepted',
@@ -49,10 +49,10 @@ export interface ClientConfig {
  */
 export interface ClientEvent {
   type: string;
-  data?: any;
+  data?: unknown;
   timestamp?: number;
   source?: 'client' | 'server';
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export class Client {
@@ -60,7 +60,8 @@ export class Client {
   private storage: ClientStorage;
   private api: ClientAPI;
   private localState: Map<string, unknown> = new Map();
-  private eventHandlers: Map<string, Set<(event: ClientEvent) => void>> = new Map();
+  private eventHandlers: Map<string, Set<(event: ClientEvent) => void>> =
+    new Map();
   private scoreSubmittedToday: boolean = false;
 
   public constructor(
@@ -100,7 +101,7 @@ export class Client {
   /**
    * Get data from backend or local cache
    */
-  public get = (key: string): any => {
+  public get = (key: string): unknown => {
     // Check local state first
     if (this.localState.has(key)) {
       return this.localState.get(key);
@@ -123,10 +124,10 @@ export class Client {
    */
   public set = (key: string, value: unknown): void => {
     this.localState.set(key, value);
-    
+
     // Also cache in storage for persistence
     this.storage.set(key, value);
-    
+
     // Emit data updated event
     this.emitInternal(CoreEventType.DATA_UPDATED, { key, value });
   };
@@ -160,7 +161,7 @@ export class Client {
   /**
    * Emit events to the system
    */
-  public emit = (eventType: string, data?: any): void => {
+  public emit = (eventType: string, data?: unknown): void => {
     const event: ClientEvent = {
       type: eventType,
       data,
@@ -180,8 +181,13 @@ export class Client {
     this.triggerLocalHandlers(event);
 
     // Also emit to transport for broader event system compatibility
-    const transportEvent = createEvent(eventType, data, 'client', this.user.userId);
-    this.transport.dispatchEvent(transportEvent as any);
+    const transportEvent = createEvent(
+      eventType,
+      data,
+      'client',
+      this.user.userId,
+    );
+    this.transport.dispatchEvent(transportEvent as Event);
   };
 
   /**
@@ -206,16 +212,16 @@ export class Client {
     try {
       // Load app data
       await this.loadAppData();
-      
+
       // Load user context
       await this.loadUserContext();
-      
+
       // Load i18n data
       await this.loadI18nData();
-      
+
       // Check if score already submitted today
       await this.checkScoreSubmissionStatus();
-      
+
       // Emit initialization complete
       this.emitInternal(CoreEventType.APP_INITIALIZED, {
         user: this.user,
@@ -233,7 +239,7 @@ export class Client {
   private setupEventHandlers(): void {
     this.transport.addEventListener('message', (message) => {
       // Handle incoming events from transport
-      this.handleTransportMessage(message as any);
+      this.handleTransportMessage(message as Record<string, unknown>);
     });
   }
 
@@ -252,7 +258,7 @@ export class Client {
    */
   private async requestData(key: string): Promise<void> {
     try {
-      let data: any = null;
+      let data: unknown = null;
 
       switch (key) {
         case 'context':
@@ -275,6 +281,7 @@ export class Client {
       }
     } catch (error) {
       console.error(`Failed to request data for key: ${key}`, error);
+      throw error;
     }
   }
 
@@ -317,9 +324,11 @@ export class Client {
    */
   private async checkScoreSubmissionStatus(): Promise<void> {
     const events = await this.api.getEvents(this.getCurrentDay());
-    this.scoreSubmittedToday = events?.some(
-      (event: any) => event.eventKey === 'score' || event.eventKey === 'final_score'
-    ) || false;
+    this.scoreSubmittedToday =
+      events?.some(
+        (event: Record<string, unknown>) =>
+          event.eventKey === 'score' || event.eventKey === 'final_score',
+      ) || false;
   }
 
   /**
@@ -338,7 +347,9 @@ export class Client {
         await this.handleScoreSubmission(event);
         break;
       case CoreEventType.DATA_REQUEST:
-        await this.requestData(event.data?.key);
+        await this.requestData(
+          (event.data as Record<string, unknown>)?.key as string | undefined,
+        );
         break;
       case CoreEventType.USER_ACTION:
         await this.api.createEvent({
@@ -366,6 +377,7 @@ export class Client {
       });
     } catch (error) {
       console.error('Failed to handle custom event:', event, error);
+      throw error;
     }
   }
 
@@ -394,11 +406,13 @@ export class Client {
       this.scoreSubmittedToday = true;
       this.emitInternal(CoreEventType.SCORE_ACCEPTED, event.data);
     } catch (error) {
-      console.error('Failed to submit score:', error);
+      const err = error instanceof Error ? error : new Error(String(error));
+      console.error('Failed to submit score:', err);
       this.emitInternal(CoreEventType.SCORE_REJECTED, {
         reason: 'Network error',
-        error: error.message,
+        error: err.message,
       });
+      throw err;
     }
   }
 
@@ -408,7 +422,7 @@ export class Client {
   private triggerLocalHandlers(event: ClientEvent): void {
     const handlers = this.eventHandlers.get(event.type);
     if (handlers) {
-      handlers.forEach(handler => {
+      handlers.forEach((handler) => {
         try {
           handler(event);
         } catch (error) {
@@ -421,21 +435,21 @@ export class Client {
   /**
    * Emit internal events
    */
-  private emitInternal(eventType: string, data?: any): void {
+  private emitInternal(eventType: string, data?: unknown): void {
     const event: ClientEvent = {
       type: eventType,
       data,
       timestamp: Date.now(),
       source: 'client',
     };
-    
+
     this.triggerLocalHandlers(event);
   }
 
   /**
    * Handle messages from transport
    */
-  private handleTransportMessage(message: any): void {
+  private handleTransportMessage(message: Record<string, unknown>): void {
     // Handle incoming events from server/transport
     if (message.type) {
       this.triggerLocalHandlers({

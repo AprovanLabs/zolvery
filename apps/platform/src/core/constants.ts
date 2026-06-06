@@ -13,6 +13,15 @@ export const DOMAIN_NAME = process.env.DOMAIN_NAME || PROJECT_DOMAIN;
 export const MOBILE_PORT = process.env.MOBILE_PORT
   ? Number(process.env.MOBILE_PORT)
   : 4300;
+export const LOCALHOST_CALLBACK_URLS = [
+  'http://localhost',
+  'https://localhost',
+  'capacitor://localhost',
+  `http://localhost:${MOBILE_PORT}`,
+];
+
+export const COGNITO_DOMAIN_TEMPLATE = (domainPrefix: string, region: string) =>
+  `https://${domainPrefix}.auth.${region}.amazoncognito.com`;
 
 type AwsRegion = 'us-east-1' | 'us-east-2' | 'us-west-1';
 export const RegionShortCodeMap: Record<AwsRegion, string> = {

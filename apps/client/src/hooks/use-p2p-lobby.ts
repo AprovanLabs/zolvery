@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { PEERJS_CDN_URL } from '../constants';
 
 declare global {
   interface Window {
@@ -52,7 +53,7 @@ interface UseP2PLobbyOptions {
   onGameStart?: () => void;
 }
 
-const PEERJS_CDN = 'https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js';
+const PEERJS_CDN = PEERJS_CDN_URL;
 
 async function loadPeerJS(): Promise<void> {
   if (window.Peer) return;
@@ -539,11 +540,11 @@ export function useP2PLobby({
               );
               setError('Reconnecting...');
               setIsConnecting(true);
-              
+
               // Clean up current peer
               peerRef.current?.destroy();
               peerRef.current = null;
-              
+
               // Retry after delay
               setTimeout(() => {
                 if (mounted) {

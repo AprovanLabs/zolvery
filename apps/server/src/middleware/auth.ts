@@ -5,9 +5,20 @@ import { AuthContext, GROUPS, GroupType } from '@/auth';
 /**
  * Extract Cognito claims from AWS Lambda request context
  */
-function getCognitoClaimsFromRequest(ctx: Context): Record<string, any> {
-  // Check if running in AWS Lambda environment
-  const event = (ctx as any).event;
+function getCognitoClaimsFromRequest(
+  ctx: Context,
+): Record<string, string | string[] | undefined> {
+  const event = (
+    ctx as unknown as {
+      event?: {
+        requestContext?: {
+          authorizer?: {
+            claims?: Record<string, string | string[] | undefined>;
+          };
+        };
+      };
+    }
+  ).event;
   if (event?.requestContext?.authorizer?.claims) {
     return event.requestContext.authorizer.claims;
   }
@@ -19,14 +30,17 @@ function getCognitoClaimsFromRequest(ctx: Context): Record<string, any> {
       const tokenData = JSON.parse(headers['x-cognito-access-token'] as string);
       // The token should contain an authorizer object with claims
       if (tokenData.authorizer && tokenData.authorizer.claims) {
-        return tokenData.authorizer.claims;
+        return tokenData.authorizer.claims as Record<
+          string,
+          string | string[] | undefined
+        >;
       }
       // Fallback: if the token data directly contains claims
       return tokenData;
     } catch (error) {
       logger.warn(
         {
-          requestId: (ctx as any).requestId,
+          requestId: (ctx as unknown as { requestId?: string }).requestId,
           error: error instanceof Error ? error.message : 'Unknown error',
         },
         'Failed to parse x-cognito-access-token header',
@@ -41,7 +55,7 @@ function getCognitoClaimsFromRequest(ctx: Context): Record<string, any> {
     } catch (error) {
       logger.warn(
         {
-          requestId: (ctx as any).requestId,
+          requestId: (ctx as unknown as { requestId?: string }).requestId,
           error: error instanceof Error ? error.message : 'Unknown error',
         },
         'Failed to parse x-cognito-claims header',
@@ -58,12 +72,12 @@ function getCognitoClaimsFromRequest(ctx: Context): Record<string, any> {
 function getCognitoSubFromRequest(ctx: Context): string | null {
   try {
     const claims = getCognitoClaimsFromRequest(ctx);
-    const cognitoSub = claims.sub;
+    const cognitoSub = claims.sub as string | undefined;
 
     if (cognitoSub) {
       logger.debug(
         {
-          requestId: (ctx as any).requestId,
+          requestId: (ctx as unknown as { requestId?: string }).requestId,
           sub: cognitoSub,
         },
         'Cognito user authenticated',
@@ -73,7 +87,7 @@ function getCognitoSubFromRequest(ctx: Context): string | null {
   } catch (error) {
     logger.error(
       {
-        requestId: (ctx as any).requestId,
+        requestId: (ctx as unknown as { requestId?: string }).requestId,
         error: error instanceof Error ? error.message : 'Unknown error',
       },
       'Failed to parse Cognito user',
@@ -93,7 +107,7 @@ function getCognitoUsernameFromRequest(ctx: Context): string | null {
   } catch (error) {
     logger.error(
       {
-        requestId: (ctx as any).requestId,
+        requestId: (ctx as unknown as { requestId?: string }).requestId,
         error: error instanceof Error ? error.message : 'Unknown error',
       },
       'Failed to parse Cognito username',
@@ -108,7 +122,7 @@ function getCognitoUsernameFromRequest(ctx: Context): string | null {
 function getCognitoGroupsFromRequest(ctx: Context): GroupType[] {
   try {
     const claims = getCognitoClaimsFromRequest(ctx);
-    const groupsString = claims['cognito:groups'] || '';
+    const groupsString = (claims['cognito:groups'] as string | undefined) || '';
 
     if (!groupsString) {
       return [];
@@ -118,11 +132,11 @@ function getCognitoGroupsFromRequest(ctx: Context): GroupType[] {
       .split(',')
       .map((group: string) => group.trim())
       .filter(Boolean)
-      .filter((group: string) => GROUPS.has(group as Group)) as GroupType[];
+      .filter((group: string) => GROUPS.has(group as GroupType)) as GroupType[];
 
     logger.debug(
       {
-        requestId: (ctx as any).requestId,
+        requestId: (ctx as unknown as { requestId?: string }).requestId,
         groups,
       },
       'Cognito groups parsed',
@@ -132,7 +146,7 @@ function getCognitoGroupsFromRequest(ctx: Context): GroupType[] {
   } catch (error) {
     logger.error(
       {
-        requestId: (ctx as any).requestId,
+        requestId: (ctx as unknown as { requestId?: string }).requestId,
         error: error instanceof Error ? error.message : 'Unknown error',
       },
       'Failed to parse Cognito groups',

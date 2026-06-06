@@ -90,12 +90,20 @@ export const game = {
   },
 };
 
-export function app({ G, moves, botState, botCount = 0, botPlayerIDs, playerID, isMultiplayer }: BoardProps) {
+export function app({
+  G,
+  moves,
+  botState,
+  botCount = 0,
+  botPlayerIDs,
+  playerID,
+  isMultiplayer,
+}: BoardProps) {
   const safeBotPlayerIDs = Array.isArray(botPlayerIDs) ? botPlayerIDs : [];
-  
+
   const over = G.winner !== null;
   const isBotThinking = botState?.isThinking ?? false;
-  
+
   const isLocalPlayersTurn = !isMultiplayer || playerID === String(G.current);
   const isCurrentPlayerBot = safeBotPlayerIDs.includes(String(G.current));
 
@@ -128,7 +136,12 @@ export function app({ G, moves, botState, botCount = 0, botPlayerIDs, playerID, 
         <div className="grid grid-cols-3 gap-3">
           {G.cells.map((cell, i) => {
             const winning = G.winLine.includes(i);
-            const isClickable = cell === null && !over && isLocalPlayersTurn && !isCurrentPlayerBot && !isBotThinking;
+            const isClickable =
+              cell === null &&
+              !over &&
+              isLocalPlayersTurn &&
+              !isCurrentPlayerBot &&
+              !isBotThinking;
             return (
               <button
                 key={i}
@@ -136,7 +149,11 @@ export function app({ G, moves, botState, botCount = 0, botPlayerIDs, playerID, 
                 onClick={() => moves.play(i)}
                 className={`aspect-square rounded-2xl border-2 transition-all duration-200
                   ${winning ? 'scale-105 border-slate-900' : 'border-slate-200'}
-                  ${isClickable ? 'hover:-translate-y-1 hover:border-slate-400' : ''}
+                  ${
+                    isClickable
+                      ? 'hover:-translate-y-1 hover:border-slate-400'
+                      : ''
+                  }
                 `}
                 style={{
                   backgroundColor: cell !== null ? COLORS[cell] : '#fff',
