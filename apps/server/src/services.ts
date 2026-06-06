@@ -1,4 +1,4 @@
-import { buildAppService, type AppService } from './domains/app';
+import { buildAppService, type AppService } from "./domains/app";
 
 export type Services = {
   appService: AppService;

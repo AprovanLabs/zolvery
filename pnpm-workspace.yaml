@@ -1,12 +1,12 @@
 packages:
-  - 'apps/**'
-  - 'packages/**'
-  - 'scripts/**'
-  - '!**/build/**'
-  - '!**/dist/**'
+  - "apps/**"
+  - "packages/**"
+  - "scripts/**"
+  - "!**/build/**"
+  - "!**/dist/**"
 
 catalog:
-  '@aprovan/patchwork-compiler': ^0.1.0
-  '@aprovan/patchwork-editor': ^0.1.0
-  '@aprovan/bobbin': ^0.1.0
-  '@aprovan/patchwork-image-shadcn': ^0.1.0
+  "@aprovan/patchwork-compiler": ^0.1.0
+  "@aprovan/patchwork-editor": ^0.1.0
+  "@aprovan/bobbin": ^0.1.0
+  "@aprovan/patchwork-image-shadcn": ^0.1.0

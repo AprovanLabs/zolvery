@@ -3,16 +3,16 @@ export {
   generateKeyPair,
   signMessage,
   authenticate,
-} from './authentication.js';
-export { P2PDB } from './db.js';
-export { P2PHost } from './host.js';
+} from "./authentication.js";
+export { P2PDB } from "./db.js";
+export { P2PHost } from "./host.js";
 export {
   P2PTransport,
   createP2PTransport,
   type P2PTransportOpts,
   type TransportConfig,
-} from './transport.js';
-export type { Client, ClientAction, ClientMetadata } from './types.js';
+} from "./transport.js";
+export type { Client, ClientAction, ClientMetadata } from "./types.js";
 export {
   hasValidSession,
   loadSession,
@@ -20,4 +20,4 @@ export {
   removeSession,
   cleanupExpiredSessions,
   type PersistedSession,
-} from './session-storage.js';
+} from "./session-storage.js";

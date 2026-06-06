@@ -3,13 +3,13 @@ export type Transport = EventTarget;
 export class ContextTransport implements Transport {
   public constructor(
     private eventTarget: EventTarget,
-    private context: unknown,
+    private context: unknown
   ) {}
 
   public addEventListener(
     type: string,
     callback: EventListenerOrEventListenerObject | null,
-    options?: AddEventListenerOptions | boolean,
+    options?: AddEventListenerOptions | boolean
   ): void {
     this.eventTarget.addEventListener(type, callback, options);
   }
@@ -22,7 +22,7 @@ export class ContextTransport implements Transport {
   public removeEventListener(
     type: string,
     callback: EventListenerOrEventListenerObject | null,
-    options?: EventListenerOptions | boolean,
+    options?: EventListenerOptions | boolean
   ): void {
     this.eventTarget.removeEventListener(type, callback, options);
   }

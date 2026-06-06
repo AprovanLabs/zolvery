@@ -1,10 +1,6 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import {
-  resolveEntry,
-  type VirtualFile,
-  type VirtualProject,
-} from '@aprovan/patchwork-compiler';
-import type { ZolveryManifest } from './use-widget-source';
+import { resolveEntry, type VirtualFile, type VirtualProject } from "@aprovan/patchwork-compiler";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import type { ZolveryManifest } from "./use-widget-source";
 
 export interface UseWidgetProjectReturn {
   project: VirtualProject | null;
@@ -20,12 +16,8 @@ export interface UseWidgetProjectReturn {
 }
 
 export function useWidgetProject(appId: string | null): UseWidgetProjectReturn {
-  const [originalFiles, setOriginalFiles] = useState<Map<string, VirtualFile>>(
-    new Map(),
-  );
-  const [currentFiles, setCurrentFiles] = useState<Map<string, VirtualFile>>(
-    new Map(),
-  );
+  const [originalFiles, setOriginalFiles] = useState<Map<string, VirtualFile>>(new Map());
+  const [currentFiles, setCurrentFiles] = useState<Map<string, VirtualFile>>(new Map());
   const [manifest, setManifest] = useState<ZolveryManifest | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
@@ -45,15 +37,15 @@ export function useWidgetProject(appId: string | null): UseWidgetProjectReturn {
 
     // Binary file extensions that should store URL instead of content
     const BINARY_EXTENSIONS = [
-      '.png',
-      '.jpg',
-      '.jpeg',
-      '.gif',
-      '.webp',
-      '.ico',
-      '.mp4',
-      '.mov',
-      '.webm',
+      ".png",
+      ".jpg",
+      ".jpeg",
+      ".gif",
+      ".webp",
+      ".ico",
+      ".mp4",
+      ".mov",
+      ".webm",
     ];
     const isBinaryFile = (path: string) =>
       BINARY_EXTENSIONS.some((ext) => path.toLowerCase().endsWith(ext));
@@ -76,7 +68,7 @@ export function useWidgetProject(appId: string | null): UseWidgetProjectReturn {
 
         // For binary files, store the URL instead of fetching content
         if (isBinaryFile(filePath)) {
-          return { path: filePath, content: url, encoding: 'base64' as const };
+          return { path: filePath, content: url, encoding: "base64" as const };
         }
 
         const res = await fetch(url);
@@ -145,7 +137,7 @@ export function useWidgetProject(appId: string | null): UseWidgetProjectReturn {
         });
       }
     },
-    [originalFiles],
+    [originalFiles]
   );
 
   const resetAll = useCallback(() => {
@@ -157,8 +149,8 @@ export function useWidgetProject(appId: string | null): UseWidgetProjectReturn {
       explicitFiles?: Array<{
         path: string;
         content: string;
-        encoding?: 'utf8' | 'base64';
-      }>,
+        encoding?: "utf8" | "base64";
+      }>
     ) => {
       if (!appId) return;
 
@@ -178,8 +170,8 @@ export function useWidgetProject(appId: string | null): UseWidgetProjectReturn {
       setIsSaving(true);
       try {
         const response = await fetch(`/api/v1/apps/${appId}/save`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ files: filesToSave }),
         });
 
@@ -210,7 +202,7 @@ export function useWidgetProject(appId: string | null): UseWidgetProjectReturn {
         setIsSaving(false);
       }
     },
-    [appId, dirtyFiles, currentFiles],
+    [appId, dirtyFiles, currentFiles]
   );
 
   const project = useMemo<VirtualProject | null>(() => {

@@ -14,7 +14,7 @@ export class Random {
   public dice(faces: number): number;
   public dice(faces: number, n: number): number[];
   public dice(faces: number, n?: number) {
-    const onlyOne = typeof n === 'undefined';
+    const onlyOne = typeof n === "undefined";
     const dice = Array(onlyOne ? 1 : n)
       .fill(undefined)
       .map(() => 1 + Math.floor(this.random() * faces));

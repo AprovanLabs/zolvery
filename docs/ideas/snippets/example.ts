@@ -1,65 +1,65 @@
-import {} from 'kaulje'; // like oil
-import {} from 'wezenum'; // intelligence x2
-import {} from 'ilmurita'; // science scribe
-import {} from 'ilmuveda'; // science x2
-import {} from 'autopia';
-import {} from 'autolib';
-import {} from 'urpc';
+import {} from "kaulje"; // like oil
+import {} from "wezenum"; // intelligence x2
+import {} from "ilmurita"; // science scribe
+import {} from "ilmuveda"; // science x2
+import {} from "autopia";
+import {} from "autolib";
+import {} from "urpc";
 
-import { mastra, zolvery } from '@urpc/clients';
-import { logger, metrics, trace } from '@urpc/telemetry';
+import { mastra, zolvery } from "@urpc/clients";
 
-logger.info('Example URPC tool execution started.');
-trace.startSpan('exampleToolExecution', async (span) => {
-  metrics.incrementCounter('example_tool_invocations');
-  span.setAttribute('tool.execution.status', 'completed');
-  logger.info('Example URPC tool execution completed.');
+logger.info("Example URPC tool execution started.");
+trace.startSpan("exampleToolExecution", async (span) => {
+  metrics.incrementCounter("example_tool_invocations");
+  span.setAttribute("tool.execution.status", "completed");
+  logger.info("Example URPC tool execution completed.");
 });
 
 export default async () => {
   const dailyPoem = await mastra.generate({
-    description: 'Generate a prompt for a poetry competition.',
+    description: "Generate a prompt for a poetry competition.",
     structuredOutput: {
-      type: 'object',
+      type: "object",
       properties: {
         prompt: {
-          type: 'string',
-          description: 'Writing prompt for the day',
+          type: "string",
+          description: "Writing prompt for the day",
         },
         examples: {
-          type: 'array',
-          description: 'Example poems',
+          type: "array",
+          description: "Example poems",
           items: {
-            type: 'array',
+            type: "array",
             minItems: 3,
             maxItems: 3,
             items: {
-              type: 'string',
+              type: "string",
             },
           },
         },
       },
-      required: ['prompt', 'examples'],
+      required: ["prompt", "examples"],
     },
   });
   await zolvery.saveDailyData(dailyPoem);
 };
 
-zolvery.subscribe('player.joined', (event) => {
+zolvery.subscribe("player.joined", (event) => {
   console.log(`Player joined: ${event.playerName}`);
 });
 
 // Git update
-import { args, git } from '@urpc/clients';
+import { args, git } from "@urpc/clients";
 
-git.commit({ message: args.get('message') }).then(git.push({ force: true }));
+git.commit({ message: args.get("message") }).then(git.push({ force: true }));
 
 // Git refresh
-import { git } from '@urpc/clients';
+import { git } from "@urpc/clients";
+import { logger, metrics, trace } from "@urpc/telemetry";
 
 Promise.all([
-  git.revParse({ abbrevRef: 'HEAD' }),
-  git.symbolicRef({ name: 'refs/remotes/origin/HEAD' }),
+  git.revParse({ abbrevRef: "HEAD" }),
+  git.symbolicRef({ name: "refs/remotes/origin/HEAD" }),
 ]).then(([root, currentBranch]) => {
   if (root === currentBranch) {
     git.pull();

@@ -5,16 +5,16 @@
  * Allocates consecutive ports for all services and starts them together.
  */
 
-import { spawn, execSync } from 'node:child_process';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { allocatePorts, PROJECT_BASES } from '@aprovan/copilot-proxy';
+import { spawn, execSync } from "node:child_process";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { allocatePorts, PROJECT_BASES } from "@aprovan/copilot-proxy";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const rootDir = path.resolve(__dirname, '..');
+const rootDir = path.resolve(__dirname, "..");
 
 async function main() {
-  console.log('\n🎮 Starting Zolvery dev services...\n');
+  console.log("\n🎮 Starting Zolvery dev services...\n");
 
   const { base, ports } = await allocatePorts({
     base: PROJECT_BASES.zolvery,
@@ -42,51 +42,42 @@ async function main() {
   };
 
   // Start docker services
-  console.log('🐳 Starting Docker services...');
+  console.log("🐳 Starting Docker services...");
   try {
-    execSync('docker compose up -d', { cwd: rootDir, stdio: 'inherit' });
+    execSync("docker compose up -d", { cwd: rootDir, stdio: "inherit" });
   } catch {
-    console.warn('⚠️  Docker compose failed, continuing without it');
+    console.warn("⚠️  Docker compose failed, continuing without it");
   }
 
   const children: ReturnType<typeof spawn>[] = [];
 
   // Start Stitchery
-  console.log('\n🧵 Starting Stitchery...');
+  console.log("\n🧵 Starting Stitchery...");
   const stitchery = spawn(
-    'pnpm',
-    [
-      'dlx',
-      '@aprovan/stitchery',
-      'serve',
-      '-p',
-      String(stitcheryPort),
-      '--strict',
-    ],
-    { stdio: 'pipe', env, cwd: rootDir },
+    "pnpm",
+    ["dlx", "@aprovan/stitchery", "serve", "-p", String(stitcheryPort), "--strict"],
+    { stdio: "pipe", env, cwd: rootDir }
   );
-  stitchery.stdout?.on('data', (d) => process.stdout.write(`[stitchery] ${d}`));
-  stitchery.stderr?.on('data', (d) => process.stderr.write(`[stitchery] ${d}`));
+  stitchery.stdout?.on("data", (d) => process.stdout.write(`[stitchery] ${d}`));
+  stitchery.stderr?.on("data", (d) => process.stderr.write(`[stitchery] ${d}`));
   children.push(stitchery);
 
   // Start TURN server
-  console.log('🔄 Starting TURN server...');
-  const turn = spawn('node', [path.join(__dirname, 'start-turn.js')], {
-    stdio: 'pipe',
+  console.log("🔄 Starting TURN server...");
+  const turn = spawn("node", [path.join(__dirname, "start-turn.js")], {
+    stdio: "pipe",
     env: { ...env, TURN_PORT: String(turnPort) },
     cwd: rootDir,
   });
-  turn.stdout?.on('data', (d) => process.stdout.write(`[turn] ${d}`));
-  turn.stderr?.on('data', (d) => process.stderr.write(`[turn] ${d}`));
+  turn.stdout?.on("data", (d) => process.stdout.write(`[turn] ${d}`));
+  turn.stderr?.on("data", (d) => process.stderr.write(`[turn] ${d}`));
   children.push(turn);
 
   // Give services a moment to start
   await new Promise((resolve) => setTimeout(resolve, 1000));
 
   // The actual turbo dev is run separately via package.json
-  console.log(
-    "\n✅ Background services started. Run 'pnpm watch' to start the client & server.\n",
-  );
+  console.log("\n✅ Background services started. Run 'pnpm watch' to start the client & server.\n");
   console.log(`   Or set these env vars and run manually:`);
   console.log(`   export CLIENT_PORT=${clientPort}`);
   console.log(`   export SERVER_PORT=${serverPort}`);
@@ -94,19 +85,19 @@ async function main() {
 
   // Handle shutdown
   const cleanup = () => {
-    console.log('\n🛑 Shutting down background services...');
+    console.log("\n🛑 Shutting down background services...");
     children.forEach((child) => child.kill());
     process.exit(0);
   };
 
-  process.on('SIGINT', cleanup);
-  process.on('SIGTERM', cleanup);
+  process.on("SIGINT", cleanup);
+  process.on("SIGTERM", cleanup);
 
   // Keep running
   await new Promise(() => {});
 }
 
 main().catch((err) => {
-  console.error('Failed to start:', err);
+  console.error("Failed to start:", err);
   process.exit(1);
 });

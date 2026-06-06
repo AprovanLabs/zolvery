@@ -1,33 +1,28 @@
 #!/usr/bin/env tsx
 
-import {
-  DynamoDBClient,
-  BatchWriteItemCommand,
-} from '@aws-sdk/client-dynamodb';
-import { marshall } from '@aws-sdk/util-dynamodb';
-import { readFileSync, readdirSync, statSync } from 'fs';
-import { join, relative } from 'path';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
+import { readFileSync, readdirSync, statSync } from "fs";
+import { join, relative, dirname } from "path";
+import { fileURLToPath } from "url";
+import { DynamoDBClient, BatchWriteItemCommand } from "@aws-sdk/client-dynamodb";
+import { marshall } from "@aws-sdk/util-dynamodb";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 // Configuration
-const AWS_REGION = process.env.AWS_REGION || 'us-east-2';
-const AWS_ENDPOINT_URL =
-  process.env.AWS_ENDPOINT_URL || 'http://localhost:4566';
-const TABLE_NAME = process.env.TABLE_NAME || 'zolvery-dev-use2-main';
-const AWS_PROFILE = process.env.AWS_PROFILE || 'localstack';
-const EXAMPLES_DIR = join(__dirname, '../../../packages/examples/src');
+const AWS_REGION = process.env.AWS_REGION || "us-east-2";
+const AWS_ENDPOINT_URL = process.env.AWS_ENDPOINT_URL || "http://localhost:4566";
+const TABLE_NAME = process.env.TABLE_NAME || "zolvery-dev-use2-main";
+const AWS_PROFILE = process.env.AWS_PROFILE || "localstack";
+const EXAMPLES_DIR = join(__dirname, "../../../packages/examples/src");
 
 // Initialize DynamoDB client
 const dynamoClient = new DynamoDBClient({
   region: AWS_REGION,
   endpoint: AWS_ENDPOINT_URL,
   credentials: {
-    accessKeyId: 'zolvery',
-    secretAccessKey: 'zolvery',
+    accessKeyId: "zolvery",
+    secretAccessKey: "zolvery",
   },
 });
 
@@ -38,7 +33,7 @@ interface AppConfig {
   version: string;
   runnerTag: string;
   authorId: string;
-  visibility: 'public' | 'private';
+  visibility: "public" | "private";
   tags: string[];
   settings: any[];
   servers: Record<string, any>;
@@ -73,7 +68,7 @@ function findZolveryFiles(dir: string): string[] {
 
       if (stat.isDirectory()) {
         scan(fullPath);
-      } else if (item === 'zolvery.json') {
+      } else if (item === "zolvery.json") {
         files.push(fullPath);
       }
     }
@@ -88,7 +83,7 @@ function findZolveryFiles(dir: string): string[] {
  */
 function loadAppConfig(filePath: string): AppConfig | null {
   try {
-    const content = readFileSync(filePath, 'utf8');
+    const content = readFileSync(filePath, "utf8");
     if (!content.trim()) {
       console.warn(`⚠️  Skipping empty file: ${filePath}`);
       return null;
@@ -104,13 +99,13 @@ function loadAppConfig(filePath: string): AppConfig | null {
 
     // Add default fields if missing
     const defaults = {
-      name: config.name || config.appId.split('/').pop(),
+      name: config.name || config.appId.split("/").pop(),
       description: config.description || `A ${config.appId} game`,
-      version: config.version || '0.0.1',
-      runnerTag: config.runnerTag || 'vue-vanilla',
-      authorId: config.authorId || 'system',
-      visibility: config.visibility || 'public',
-      tags: config.tags || ['game'],
+      version: config.version || "0.0.1",
+      runnerTag: config.runnerTag || "vue-vanilla",
+      authorId: config.authorId || "system",
+      visibility: config.visibility || "public",
+      tags: config.tags || ["game"],
       settings: config.settings || [],
       servers: config.servers || {},
     };
@@ -130,7 +125,7 @@ function createDynamoRecord(appConfig: AppConfig): DynamoRecord {
 
   return {
     PK: `APP#${appConfig.appId}`,
-    SK: 'DATA#v1',
+    SK: "DATA#v1",
     data: JSON.stringify(appConfig),
     appId: appConfig.appId,
     name: appConfig.name,
@@ -157,11 +152,7 @@ async function batchWriteItems(items: DynamoRecord[]): Promise<number> {
   let totalWritten = 0;
 
   for (const [index, batch] of batches.entries()) {
-    console.log(
-      `📦 Writing batch ${index + 1}/${batches.length} (${
-        batch.length
-      } items)...`,
-    );
+    console.log(`📦 Writing batch ${index + 1}/${batches.length} (${batch.length} items)...`);
 
     const putRequests = batch.map((item) => ({
       PutRequest: {
@@ -180,10 +171,7 @@ async function batchWriteItems(items: DynamoRecord[]): Promise<number> {
       totalWritten += batch.length;
       console.log(`✅ Batch ${index + 1} written successfully`);
     } catch (error) {
-      console.error(
-        `❌ Error writing batch ${index + 1}:`,
-        (error as Error).message,
-      );
+      console.error(`❌ Error writing batch ${index + 1}:`, (error as Error).message);
       throw error;
     }
   }
@@ -195,19 +183,19 @@ async function batchWriteItems(items: DynamoRecord[]): Promise<number> {
  * Main execution
  */
 async function main(): Promise<void> {
-  console.log('🎮 Loading Zolvery apps into DynamoDB...');
+  console.log("🎮 Loading Zolvery apps into DynamoDB...");
   console.log(`📂 Scanning directory: ${EXAMPLES_DIR}`);
   console.log(`🎯 Target table: ${TABLE_NAME}`);
   console.log(`🌐 Endpoint: ${AWS_ENDPOINT_URL}`);
   console.log(`👤 Profile: ${AWS_PROFILE}`);
-  console.log('');
+  console.log("");
 
   // Find all zolvery.json files
   const jsonFiles = findZolveryFiles(EXAMPLES_DIR);
   console.log(`📋 Found ${jsonFiles.length} zolvery.json files`);
 
   if (jsonFiles.length === 0) {
-    console.log('⚠️  No zolvery.json files found. Exiting.');
+    console.log("⚠️  No zolvery.json files found. Exiting.");
     return;
   }
 
@@ -222,13 +210,11 @@ async function main(): Promise<void> {
     }
   }
 
-  console.log('');
-  console.log(
-    `🎯 Successfully loaded ${appConfigs.length} valid app configurations`,
-  );
+  console.log("");
+  console.log(`🎯 Successfully loaded ${appConfigs.length} valid app configurations`);
 
   if (appConfigs.length === 0) {
-    console.log('⚠️  No valid app configurations found. Exiting.');
+    console.log("⚠️  No valid app configurations found. Exiting.");
     return;
   }
 
@@ -236,14 +222,14 @@ async function main(): Promise<void> {
   const dynamoRecords = appConfigs.map(createDynamoRecord);
 
   // Write to DynamoDB
-  console.log('📊 Writing to DynamoDB...');
+  console.log("📊 Writing to DynamoDB...");
   const written = await batchWriteItems(dynamoRecords);
 
-  console.log('');
-  console.log('🎉 Data loading complete!');
+  console.log("");
+  console.log("🎉 Data loading complete!");
   console.log(`📊 Total apps written: ${written}`);
-  console.log('');
-  console.log('📋 Loaded apps:');
+  console.log("");
+  console.log("📋 Loaded apps:");
   appConfigs.forEach((app) => {
     console.log(`   • ${app.appId} (${app.name})`);
   });
@@ -252,7 +238,7 @@ async function main(): Promise<void> {
 // Run the script if called directly
 if (import.meta.url === `file://${process.argv[1]}`) {
   main().catch((error) => {
-    console.error('💥 Script failed:', error);
+    console.error("💥 Script failed:", error);
     process.exit(1);
   });
 }

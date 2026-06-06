@@ -8,7 +8,7 @@
  * - Observable thinking state
  */
 
-import type { BoardgameGame } from './mount.js';
+import type { BoardgameGame } from "./mount.js";
 
 // Type for boardgame.io state
 export interface BoardgameState {
@@ -21,8 +21,8 @@ export interface BoardgameState {
   };
 }
 
-export type BotStrategy = 'random' | 'mcts' | 'custom';
-export type BotDifficulty = 'easy' | 'medium' | 'hard' | 'custom';
+export type BotStrategy = "random" | "mcts" | "custom";
+export type BotDifficulty = "easy" | "medium" | "hard" | "custom";
 
 export interface DifficultyPreset {
   strategy: BotStrategy;
@@ -34,28 +34,28 @@ export interface DifficultyPreset {
 
 export const DIFFICULTY_PRESETS: Record<BotDifficulty, DifficultyPreset> = {
   easy: {
-    strategy: 'random',
+    strategy: "random",
     mctsIterations: 0,
     delay: 400,
     minDelay: 200,
     mistakeRate: 0.3,
   },
   medium: {
-    strategy: 'mcts',
+    strategy: "mcts",
     mctsIterations: 500,
     delay: 800,
     minDelay: 400,
     mistakeRate: 0.1,
   },
   hard: {
-    strategy: 'mcts',
+    strategy: "mcts",
     mctsIterations: 2000,
     delay: 1200,
     minDelay: 600,
     mistakeRate: 0,
   },
   custom: {
-    strategy: 'mcts',
+    strategy: "mcts",
     mctsIterations: 1000,
     delay: 800,
     minDelay: 0,
@@ -108,10 +108,7 @@ export interface BotState {
 
 // Interface for bot instances (RandomBot, MCTSBot)
 interface BotInstance {
-  play(
-    state: BoardgameState,
-    playerID: string,
-  ): Promise<BotAction | null> | BotAction | null;
+  play(state: BoardgameState, playerID: string): Promise<BotAction | null> | BotAction | null;
 }
 
 interface BotAction {
@@ -157,32 +154,21 @@ declare global {
  */
 export function resolveBotConfig(
   inputs: Record<string, unknown>,
-  gameAiDifficulty?: Partial<Record<BotDifficulty, Partial<DifficultyPreset>>>,
+  gameAiDifficulty?: Partial<Record<BotDifficulty, Partial<DifficultyPreset>>>
 ): ResolvedBotConfig {
-  const difficulty = (inputs.botDifficulty as BotDifficulty) ?? 'medium';
+  const difficulty = (inputs.botDifficulty as BotDifficulty) ?? "medium";
   const globalPreset = DIFFICULTY_PRESETS[difficulty];
   const gamePreset = gameAiDifficulty?.[difficulty] ?? {};
 
   // Merge: global -> game-specific -> explicit inputs
   return {
-    strategy:
-      (inputs.botStrategy as BotStrategy) ??
-      gamePreset.strategy ??
-      globalPreset.strategy,
+    strategy: (inputs.botStrategy as BotStrategy) ?? gamePreset.strategy ?? globalPreset.strategy,
     mctsIterations:
-      (inputs.mctsIterations as number) ??
-      gamePreset.mctsIterations ??
-      globalPreset.mctsIterations,
-    delay:
-      (inputs.botDelay as number) ?? gamePreset.delay ?? globalPreset.delay,
-    minDelay:
-      (inputs.botMinDelay as number) ??
-      gamePreset.minDelay ??
-      globalPreset.minDelay,
+      (inputs.mctsIterations as number) ?? gamePreset.mctsIterations ?? globalPreset.mctsIterations,
+    delay: (inputs.botDelay as number) ?? gamePreset.delay ?? globalPreset.delay,
+    minDelay: (inputs.botMinDelay as number) ?? gamePreset.minDelay ?? globalPreset.minDelay,
     mistakeRate:
-      (inputs.botMistakeRate as number) ??
-      gamePreset.mistakeRate ??
-      globalPreset.mistakeRate,
+      (inputs.botMistakeRate as number) ?? gamePreset.mistakeRate ?? globalPreset.mistakeRate,
     customBot: inputs.customBot as (() => BotInstance) | undefined,
   };
 }
@@ -195,7 +181,7 @@ export function resolveBotConfig(
 export function computeBotPlayerIDs(
   numPlayers: number,
   botCount: number,
-  humanPlayerID: string,
+  humanPlayerID: string
 ): string[] {
   const botIDs: string[] = [];
   for (let i = 0; i < numPlayers && botIDs.length < botCount; i++) {
@@ -215,7 +201,10 @@ export class BotManager {
   private currentState: BotState = { isThinking: false, thinkingPlayer: null };
   private moveInProgress = false;
 
-  constructor(private game: BoardgameGame, config: ResolvedBotConfig) {
+  constructor(
+    private game: BoardgameGame,
+    config: ResolvedBotConfig
+  ) {
     this.config = config;
     this.initializeBot();
   }
@@ -225,99 +214,77 @@ export class BotManager {
     const enumerate = this.game.ai?.enumerate;
 
     if (!enumerate) {
-      console.warn(
-        '[BotManager] game.ai.enumerate is required for bot support',
-      );
+      console.warn("[BotManager] game.ai.enumerate is required for bot support");
       return;
     }
 
     switch (this.config.strategy) {
-      case 'mcts':
+      case "mcts":
         if (BoardgameAI?.MCTSBot) {
           this.bot = new BoardgameAI.MCTSBot({
             game: this.game,
-            enumerate: enumerate as (
-              G: unknown,
-              ctx: unknown,
-            ) => EnumeratedMove[],
+            enumerate: enumerate as (G: unknown, ctx: unknown) => EnumeratedMove[],
             iterations: this.config.mctsIterations,
           });
         } else {
           // Fall back to RandomBot if MCTS not available
-          console.warn(
-            '[BotManager] MCTSBot not available, falling back to RandomBot',
-          );
+          console.warn("[BotManager] MCTSBot not available, falling back to RandomBot");
           if (BoardgameAI?.RandomBot) {
             this.bot = new BoardgameAI.RandomBot({
               game: this.game,
-              enumerate: enumerate as (
-                G: unknown,
-                ctx: unknown,
-              ) => EnumeratedMove[],
+              enumerate: enumerate as (G: unknown, ctx: unknown) => EnumeratedMove[],
             });
           }
         }
         break;
 
-      case 'random':
+      case "random":
         if (BoardgameAI?.RandomBot) {
           this.bot = new BoardgameAI.RandomBot({
             game: this.game,
-            enumerate: enumerate as (
-              G: unknown,
-              ctx: unknown,
-            ) => EnumeratedMove[],
+            enumerate: enumerate as (G: unknown, ctx: unknown) => EnumeratedMove[],
           });
         }
         break;
 
-      case 'custom':
+      case "custom":
         if (this.config.customBot) {
           this.bot = this.config.customBot();
         } else {
-          console.error(
-            '[BotManager] Custom strategy requires customBot factory',
-          );
+          console.error("[BotManager] Custom strategy requires customBot factory");
         }
         break;
     }
 
     if (!this.bot) {
-      console.warn(
-        '[BotManager] Could not initialize bot. AI module may not be loaded.',
-      );
+      console.warn("[BotManager] Could not initialize bot. AI module may not be loaded.");
     }
   }
 
   /**
    * Select a move, potentially with mistakes for easier difficulties.
    */
-  private async selectMove(
-    state: BoardgameState,
-    playerID: string,
-  ): Promise<BotAction | null> {
+  private async selectMove(state: BoardgameState, playerID: string): Promise<BotAction | null> {
     const enumerate = this.game.ai?.enumerate;
     if (!enumerate) {
-      console.log('[BotManager] No enumerate function');
+      console.log("[BotManager] No enumerate function");
       return null;
     }
 
-    const legalMoves = (
-      enumerate as (G: unknown, ctx: unknown) => EnumeratedMove[]
-    )(state.G, state.ctx);
+    const legalMoves = (enumerate as (G: unknown, ctx: unknown) => EnumeratedMove[])(
+      state.G,
+      state.ctx
+    );
 
-    console.log('[BotManager] Legal moves:', legalMoves);
+    console.log("[BotManager] Legal moves:", legalMoves);
 
     if (legalMoves.length === 0) {
-      console.log('[BotManager] No legal moves available');
+      console.log("[BotManager] No legal moves available");
       return null;
     }
 
     // Check if bot should make a "mistake"
-    if (
-      this.config.mistakeRate > 0 &&
-      Math.random() < this.config.mistakeRate
-    ) {
+    if (this.config.mistakeRate > 0 && Math.random() < this.config.mistakeRate) {
       const randomIndex = Math.floor(Math.random() * legalMoves.length);
       const randomMove = legalMoves[randomIndex];
       return {
@@ -351,9 +318,7 @@ export class BotManager {
     // This can happen when games use manual turn management (G.current instead of ctx.currentPlayer)
     // which prevents MCTS from properly simulating future game states
     if (!result?.action && legalMoves.length > 0) {
-      console.log(
-        '[BotManager] Bot returned null action, falling back to random selection',
-      );
+      console.log("[BotManager] Bot returned null action, falling back to random selection");
       const randomIndex = Math.floor(Math.random() * legalMoves.length);
       const randomMove = legalMoves[randomIndex];
       return {
@@ -376,11 +341,11 @@ export class BotManager {
   async maybePlayBot(
     state: BoardgameState,
     botPlayerIDs: string[],
-    makeMove: (type: string, ...args: unknown[]) => void,
+    makeMove: (type: string, ...args: unknown[]) => void
   ): Promise<void> {
     const { ctx } = state;
 
-    console.log('[BotManager] maybePlayBot called:', {
+    console.log("[BotManager] maybePlayBot called:", {
       currentPlayer: ctx.currentPlayer,
       botPlayerIDs,
       moveInProgress: this.moveInProgress,
@@ -389,14 +354,14 @@ export class BotManager {
 
     // Prevent concurrent move processing
     if (this.moveInProgress) {
-      console.log('[BotManager] Skipping - move already in progress');
+      console.log("[BotManager] Skipping - move already in progress");
       return;
     }
 
     // Check if current player is a bot
     const isBotTurn = botPlayerIDs.includes(ctx.currentPlayer);
     if (!isBotTurn || ctx.gameover) {
-      console.log('[BotManager] Not bot turn or gameover:', {
+      console.log("[BotManager] Not bot turn or gameover:", {
         isBotTurn,
         gameover: ctx.gameover,
       });
@@ -414,33 +379,32 @@ export class BotManager {
     // Calculate delay (optionally variable)
     const delay =
       this.config.minDelay > 0
-        ? this.config.minDelay +
-          Math.random() * (this.config.delay - this.config.minDelay)
+        ? this.config.minDelay + Math.random() * (this.config.delay - this.config.minDelay)
         : this.config.delay;
 
     try {
       // Get bot move
-      console.log('[BotManager] Selecting move for player:', ctx.currentPlayer);
+      console.log("[BotManager] Selecting move for player:", ctx.currentPlayer);
       const action = await this.selectMove(state, ctx.currentPlayer);
-      console.log('[BotManager] Selected action:', action);
+      console.log("[BotManager] Selected action:", action);
       if (!action?.action) {
-        console.log('[BotManager] No action returned, skipping');
+        console.log("[BotManager] No action returned, skipping");
         this.notifyState({ isThinking: false, thinkingPlayer: null });
         this.moveInProgress = false;
         return;
       }
 
       // Schedule move after delay
-      console.log('[BotManager] Scheduling move after delay:', delay);
+      console.log("[BotManager] Scheduling move after delay:", delay);
       this.pendingMove = setTimeout(() => {
         const { type, args } = action.action!.payload;
-        console.log('[BotManager] Executing move:', { type, args });
+        console.log("[BotManager] Executing move:", { type, args });
         makeMove(type, ...args);
         this.notifyState({ isThinking: false, thinkingPlayer: null });
         this.moveInProgress = false;
       }, delay);
     } catch (error) {
-      console.error('[BotManager] Error computing move:', error);
+      console.error("[BotManager] Error computing move:", error);
       this.notifyState({ isThinking: false, thinkingPlayer: null });
       this.moveInProgress = false;
     }

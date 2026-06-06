@@ -1,4 +1,4 @@
-import dotenv from 'dotenv';
+import dotenv from "dotenv";
 
 // Load environment variables from .env file
 dotenv.config();
@@ -8,25 +8,25 @@ const orgId = process.env.DENO_DEPLOY_ORG_ID;
 
 if (!accessToken || !orgId) {
   throw new Error(
-    'Missing required environment variables: DENO_DEPLOY_ACCESS_TOKEN and DENO_DEPLOY_ORG_ID',
+    "Missing required environment variables: DENO_DEPLOY_ACCESS_TOKEN and DENO_DEPLOY_ORG_ID"
   );
 }
 
-const API = 'https://api.deno.com/v1';
-const PROJECT_ID = 'games';
-const ENV_SHORT_NAME = 'prd';
+const API = "https://api.deno.com/v1";
+const PROJECT_ID = "games";
+const ENV_SHORT_NAME = "prd";
 
 const projectName = `${PROJECT_ID}-${ENV_SHORT_NAME}`;
 const headers = {
   Authorization: `Bearer ${accessToken}`,
-  'Content-Type': 'application/json',
+  "Content-Type": "application/json",
 };
 
 const getOrCreateProject = async () => {
   // First, try to get existing projects
   try {
     const listResponse = await fetch(`${API}/organizations/${orgId}/projects`, {
-      method: 'GET',
+      method: "GET",
       headers,
     });
 
@@ -35,22 +35,18 @@ const getOrCreateProject = async () => {
       const existingProject = projects.find((p: any) => p.name === projectName);
 
       if (existingProject) {
-        console.log(
-          `📦 Using existing project: ${projectName} (${existingProject.id})`,
-        );
+        console.log(`📦 Using existing project: ${projectName} (${existingProject.id})`);
         return existingProject;
       }
     }
-  } catch (error) {
-    console.warn(
-      'Could not list existing projects, attempting to create new one...',
-    );
+  } catch {
+    console.warn("Could not list existing projects, attempting to create new one...");
   }
 
   // Create new project if none exists
   console.log(`🆕 Creating new project: ${projectName}`);
   const createResponse = await fetch(`${API}/organizations/${orgId}/projects`, {
-    method: 'POST',
+    method: "POST",
     headers,
     body: JSON.stringify({ name: projectName }),
   });
@@ -59,31 +55,24 @@ const getOrCreateProject = async () => {
     const errorText = await createResponse.text();
 
     // Check if project already exists (common error)
-    if (createResponse.status === 409 || errorText.includes('already exists')) {
+    if (createResponse.status === 409 || errorText.includes("already exists")) {
       console.log(`📦 Project ${projectName} already exists, fetching it...`);
       // Try to get the existing project by listing again
-      const listResponse = await fetch(
-        `${API}/organizations/${orgId}/projects`,
-        {
-          method: 'GET',
-          headers,
-        },
-      );
+      const listResponse = await fetch(`${API}/organizations/${orgId}/projects`, {
+        method: "GET",
+        headers,
+      });
 
       if (listResponse.ok) {
         const projects = await listResponse.json();
-        const existingProject = projects.find(
-          (p: any) => p.name === projectName,
-        );
+        const existingProject = projects.find((p: any) => p.name === projectName);
         if (existingProject) {
           return existingProject;
         }
       }
     }
 
-    throw new Error(
-      `Failed to create project: ${createResponse.status} - ${errorText}`,
-    );
+    throw new Error(`Failed to create project: ${createResponse.status} - ${errorText}`);
   }
 
   return await createResponse.json();
@@ -93,10 +82,10 @@ const deployScriptRunner = async () => {
   const project = await getOrCreateProject();
 
   const deploymentPayload = {
-    entryPointUrl: 'main.ts',
+    entryPointUrl: "main.ts",
     assets: {
-      'main.ts': {
-        kind: 'file',
+      "main.ts": {
+        kind: "file",
         content: `
 export default {
   async fetch(req: Request): Promise<Response> {
@@ -119,7 +108,7 @@ export default {
         script,
         { create: true },
       );
-    } catch (error) {
+    } catch {
       return new Response(JSON.stringify({
         error: 'Failed to save script',
         message: error.message,
@@ -157,7 +146,7 @@ export default {
         headers: { 'Content-Type': 'application/json' }
       });
       
-    } catch (error) {
+    } catch {
       return new Response(JSON.stringify({
         error: 'Script execution failed',
         message: error.message,
@@ -170,7 +159,7 @@ export default {
   }
 };
         `,
-        encoding: 'utf-8',
+        encoding: "utf-8",
       },
     },
     envVars: {},
@@ -178,44 +167,34 @@ export default {
 
   // Try to get existing deployments first
   try {
-    const listDeploymentsResponse = await fetch(
-      `${API}/projects/${project.id}/deployments`,
-      {
-        method: 'GET',
-        headers,
-      },
-    );
+    const listDeploymentsResponse = await fetch(`${API}/projects/${project.id}/deployments`, {
+      method: "GET",
+      headers,
+    });
 
     if (listDeploymentsResponse.ok) {
       const deployments = await listDeploymentsResponse.json();
-      const activeDeployment = deployments.find(
-        (d: any) => d.status === 'success',
-      );
+      const activeDeployment = deployments.find((d: any) => d.status === "success");
 
       if (activeDeployment) {
         console.log(`🔄 Updating existing deployment: ${activeDeployment.id}`);
       }
     }
-  } catch (error) {
-    console.warn('Could not check existing deployments, creating new one...');
+  } catch {
+    console.warn("Could not check existing deployments, creating new one...");
   }
 
   // Create new deployment (Deno Deploy creates new deployments rather than updating existing ones)
   console.log(`🚀 Creating new deployment for project: ${project.name}`);
-  const deployResponse = await fetch(
-    `${API}/projects/${project.id}/deployments`,
-    {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(deploymentPayload),
-    },
-  );
+  const deployResponse = await fetch(`${API}/projects/${project.id}/deployments`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(deploymentPayload),
+  });
 
   if (!deployResponse.ok) {
     const errorText = await deployResponse.text();
-    throw new Error(
-      `Failed to create deployment: ${deployResponse.status} - ${errorText}`,
-    );
+    throw new Error(`Failed to create deployment: ${deployResponse.status} - ${errorText}`);
   }
 
   return await deployResponse.json();
@@ -231,24 +210,20 @@ const main = async () => {
     console.log(`\n📋 Test URLs:`);
     console.log(`• Basic test: ${baseUrl}`);
     console.log(`• Example script: ${baseUrl}?script=./example-script.ts`);
-    console.log(
-      `• Example with params: ${baseUrl}?script=./example-script.ts&name=TypeScript`,
-    );
+    console.log(`• Example with params: ${baseUrl}?script=./example-script.ts&name=TypeScript`);
     console.log(`\n💡 Usage:`);
+    console.log(`Add ?script=path/to/your/script.ts to run any TypeScript file`);
     console.log(
-      `Add ?script=path/to/your/script.ts to run any TypeScript file`,
-    );
-    console.log(
-      `Your script should export a default function that accepts a Request and returns a Response or value`,
+      `Your script should export a default function that accepts a Request and returns a Response or value`
     );
 
     return baseUrl;
-  } catch (error) {
-    console.error('❌ Deployment failed:', error);
-    if (error instanceof Error && 'response' in error) {
+  } catch {
+    console.error("❌ Deployment failed:", error);
+    if (error instanceof Error && "response" in error) {
       const response = (error as any).response;
-      if (response && typeof response.text === 'function') {
-        console.error('Response:', await response.text());
+      if (response && typeof response.text === "function") {
+        console.error("Response:", await response.text());
       }
     }
     process.exit(1);

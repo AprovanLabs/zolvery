@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
@@ -11,18 +11,14 @@
       var search = window.location.search;
 
       // Only redirect if we have a path that looks like a route (not a static file)
-      if (path && path !== '/' && !path.match(/\.[a-z0-9]+$/i)) {
+      if (path && path !== "/" && !path.match(/\.[a-z0-9]+$/i)) {
         // Convert pathname to hash route
         window.location.replace(
-          window.location.origin +
-            '/#' +
-            path +
-            search +
-            (hash ? hash.substring(1) : ''),
+          window.location.origin + "/#" + path + search + (hash ? hash.substring(1) : "")
         );
       } else {
         // For other 404s, redirect to home
-        window.location.replace(window.location.origin + '/');
+        window.location.replace(window.location.origin + "/");
       }
     </script>
   </head>

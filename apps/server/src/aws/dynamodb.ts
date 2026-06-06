@@ -1,6 +1,6 @@
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
-import { appConfig } from '@/config';
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
+import { appConfig } from "@/config";
 
 let dynamoDBClient: DynamoDBClient | null = null;
 let dynamoDBDocumentClient: DynamoDBDocumentClient | null = null;
@@ -49,20 +49,14 @@ export function getDynamoDBDocumentClient(): DynamoDBDocumentClient {
   return dynamoDBDocumentClient;
 }
 
-export const generatePartitionKey = (
-  type: string,
-  ...parts: (string | number)[]
-): string => {
-  const cleanParts = parts.map((p) => String(p).replace(/[:#]/g, '_'));
-  return [type, ...cleanParts].join('#');
+export const generatePartitionKey = (type: string, ...parts: (string | number)[]): string => {
+  const cleanParts = parts.map((p) => String(p).replace(/[:#]/g, "_"));
+  return [type, ...cleanParts].join("#");
 };
 
-export const generateSortKey = (
-  type: string,
-  ...parts: (string | number)[]
-): string => {
-  const cleanParts = parts.map((p) => String(p).replace(/[:#]/g, '_'));
-  return [type, ...cleanParts].join('#');
+export const generateSortKey = (type: string, ...parts: (string | number)[]): string => {
+  const cleanParts = parts.map((p) => String(p).replace(/[:#]/g, "_"));
+  return [type, ...cleanParts].join("#");
 };
 
 export type DynamoDbRecord<T> = {

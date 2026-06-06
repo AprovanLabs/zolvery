@@ -1,8 +1,8 @@
-import { Context } from 'koa';
+import { type Context } from "koa";
 
 export enum Group {
-  ADMIN = 'admin',
-  CREATOR = 'creator',
+  ADMIN = "admin",
+  CREATOR = "creator",
 }
 
 export type GroupType = `${Group}`;

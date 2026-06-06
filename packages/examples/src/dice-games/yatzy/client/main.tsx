@@ -1,23 +1,23 @@
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo } from "react";
 
 // Adapted from https://github.com/PJohannessen/yatzy
 
 type ScoringCategory =
-  | 'ones'
-  | 'twos'
-  | 'threes'
-  | 'fours'
-  | 'fives'
-  | 'sixes'
-  | 'onePair'
-  | 'twoPairs'
-  | 'threeOfAKind'
-  | 'fourOfAKind'
-  | 'smallStraight'
-  | 'largeStraight'
-  | 'fullHouse'
-  | 'chance'
-  | 'yatzy';
+  | "ones"
+  | "twos"
+  | "threes"
+  | "fours"
+  | "fives"
+  | "sixes"
+  | "onePair"
+  | "twoPairs"
+  | "threeOfAKind"
+  | "fourOfAKind"
+  | "smallStraight"
+  | "largeStraight"
+  | "fullHouse"
+  | "chance"
+  | "yatzy";
 
 type Scores = Record<ScoringCategory, number | null>;
 
@@ -58,26 +58,27 @@ const BOT_DELAY_MS = 600;
 
 // Player colors using OKLCH for modern color appearance
 const PLAYER_COLORS = [
-  'oklch(72.3% 0.219 149.579)', // Green - Human
-  'oklch(62.3% 0.214 259.815)', // Blue - Bot 1
-  'oklch(70.5% 0.213 47.604)', // Orange - Bot 2
-  'oklch(65.6% 0.241 354.308)', // Pink - Bot 3
+  "oklch(72.3% 0.219 149.579)", // Green - Human
+  "oklch(62.3% 0.214 259.815)", // Blue - Bot 1
+  "oklch(70.5% 0.213 47.604)", // Orange - Bot 2
+  "oklch(65.6% 0.241 354.308)", // Pink - Bot 3
 ];
 
 // Utility functions
-const max = (arr: number[]) =>
-  arr.reduce((max, x) => Math.max(x, max), Number.MIN_SAFE_INTEGER);
+const max = (arr: number[]) => arr.reduce((max, x) => Math.max(x, max), Number.MIN_SAFE_INTEGER);
 const sum = (arr: number[]) => arr.reduce((sum, x) => x + sum, 0);
 const isEqual = (arr1: number[], arr2: number[]) =>
-  arr1.length === arr2.length &&
-  arr1.every((val, index) => val === arr2[index]);
+  arr1.length === arr2.length && arr1.every((val, index) => val === arr2[index]);
 
 const groupBy = (arr: number[]): Record<number, number[]> =>
-  arr.reduce((acc, item) => {
-    if (!acc[item]) acc[item] = [];
-    acc[item].push(item);
-    return acc;
-  }, {} as Record<number, number[]>);
+  arr.reduce(
+    (acc, item) => {
+      if (!acc[item]) acc[item] = [];
+      acc[item].push(item);
+      return acc;
+    },
+    {} as Record<number, number[]>
+  );
 
 const groupDice = (dice: number[]): number[][] => {
   const grouped = groupBy(dice);
@@ -89,41 +90,28 @@ const groupDice = (dice: number[]): number[][] => {
 };
 
 // Scoring categories metadata
-const UPPER_CATEGORIES: ScoringCategory[] = [
-  'ones',
-  'twos',
-  'threes',
-  'fours',
-  'fives',
-  'sixes',
-];
+const UPPER_CATEGORIES: ScoringCategory[] = ["ones", "twos", "threes", "fours", "fives", "sixes"];
 const LOWER_CATEGORIES: ScoringCategory[] = [
-  'onePair',
-  'twoPairs',
-  'threeOfAKind',
-  'fourOfAKind',
-  'smallStraight',
-  'largeStraight',
-  'fullHouse',
-  'chance',
-  'yatzy',
+  "onePair",
+  "twoPairs",
+  "threeOfAKind",
+  "fourOfAKind",
+  "smallStraight",
+  "largeStraight",
+  "fullHouse",
+  "chance",
+  "yatzy",
 ];
 
 export const ScoreCalculator = {
   calculateUpperSectionTotal: (player: Player) =>
-    UPPER_CATEGORIES.map((cat) => player.scoring[cat] ?? 0).reduce(
-      (a, b) => a + b,
-      0,
-    ),
+    UPPER_CATEGORIES.map((cat) => player.scoring[cat] ?? 0).reduce((a, b) => a + b, 0),
 
   calculateUpperSectionBonus: (player: Player) =>
     ScoreCalculator.calculateUpperSectionTotal(player) >= 63 ? 50 : 0,
 
   calculateLowerSectionTotal: (player: Player) =>
-    LOWER_CATEGORIES.map((cat) => player.scoring[cat] ?? 0).reduce(
-      (a, b) => a + b,
-      0,
-    ),
+    LOWER_CATEGORIES.map((cat) => player.scoring[cat] ?? 0).reduce((a, b) => a + b, 0),
 
   calculateTotal: (player: Player) => {
     const upper = ScoreCalculator.calculateUpperSectionTotal(player);
@@ -144,22 +132,14 @@ export const ScoreCalculator = {
       const grouped = groupDice(dice);
       let score = 0;
       if (grouped[0]?.length >= 2) score = grouped[0][0] * 2;
-      if (
-        grouped.length >= 2 &&
-        grouped[1]?.length >= 2 &&
-        grouped[1][0] > grouped[0][0]
-      )
+      if (grouped.length >= 2 && grouped[1]?.length >= 2 && grouped[1][0] > grouped[0][0])
         score = grouped[1][0] * 2;
       return score;
     },
 
     twoPairs: (dice: number[]) => {
       const grouped = groupDice(dice);
-      if (
-        grouped.length >= 2 &&
-        grouped[0]?.length >= 2 &&
-        grouped[1]?.length === 2
-      )
+      if (grouped.length >= 2 && grouped[0]?.length >= 2 && grouped[1]?.length === 2)
         return grouped[0][0] * 2 + grouped[1][0] * 2;
       return 0;
     },
@@ -177,7 +157,7 @@ export const ScoreCalculator = {
     smallStraight: (dice: number[]) =>
       isEqual(
         [...dice].sort((a, b) => a - b),
-        [1, 2, 3, 4, 5],
+        [1, 2, 3, 4, 5]
       )
         ? 15
         : 0,
@@ -185,18 +165,14 @@ export const ScoreCalculator = {
     largeStraight: (dice: number[]) =>
       isEqual(
         [...dice].sort((a, b) => a - b),
-        [2, 3, 4, 5, 6],
+        [2, 3, 4, 5, 6]
       )
         ? 20
         : 0,
 
     fullHouse: (dice: number[]) => {
       const grouped = groupDice(dice);
-      if (
-        grouped.length === 2 &&
-        grouped[0]?.length === 3 &&
-        grouped[1]?.length === 2
-      )
+      if (grouped.length === 2 && grouped[0]?.length === 3 && grouped[1]?.length === 2)
         return sum(dice);
       return 0;
     },
@@ -229,31 +205,26 @@ const createInitialScores = (): Scores => ({
 });
 
 const scoringCategories: { key: ScoringCategory; label: string }[] = [
-  { key: 'ones', label: 'Ones' },
-  { key: 'twos', label: 'Twos' },
-  { key: 'threes', label: 'Threes' },
-  { key: 'fours', label: 'Fours' },
-  { key: 'fives', label: 'Fives' },
-  { key: 'sixes', label: 'Sixes' },
-  { key: 'onePair', label: 'One Pair' },
-  { key: 'twoPairs', label: 'Two Pairs' },
-  { key: 'threeOfAKind', label: '3 of a Kind' },
-  { key: 'fourOfAKind', label: '4 of a Kind' },
-  { key: 'smallStraight', label: 'Sm. Straight' },
-  { key: 'largeStraight', label: 'Lg. Straight' },
-  { key: 'fullHouse', label: 'Full House' },
-  { key: 'chance', label: 'Chance' },
-  { key: 'yatzy', label: 'Yatzy' },
+  { key: "ones", label: "Ones" },
+  { key: "twos", label: "Twos" },
+  { key: "threes", label: "Threes" },
+  { key: "fours", label: "Fours" },
+  { key: "fives", label: "Fives" },
+  { key: "sixes", label: "Sixes" },
+  { key: "onePair", label: "One Pair" },
+  { key: "twoPairs", label: "Two Pairs" },
+  { key: "threeOfAKind", label: "3 of a Kind" },
+  { key: "fourOfAKind", label: "4 of a Kind" },
+  { key: "smallStraight", label: "Sm. Straight" },
+  { key: "largeStraight", label: "Lg. Straight" },
+  { key: "fullHouse", label: "Full House" },
+  { key: "chance", label: "Chance" },
+  { key: "yatzy", label: "Yatzy" },
 ];
 
 // Bot AI: Choose the best scoring category
-const getBotMove = (
-  dice: number[],
-  scoring: Scores,
-): ScoringCategory | null => {
-  const available = scoringCategories.filter(
-    (cat) => scoring[cat.key] === null,
-  );
+const getBotMove = (dice: number[], scoring: Scores): ScoringCategory | null => {
+  const available = scoringCategories.filter((cat) => scoring[cat.key] === null);
   if (available.length === 0) return null;
 
   // Calculate potential scores for each available category
@@ -268,7 +239,7 @@ const getBotMove = (
 };
 
 export const game = {
-  name: 'Yatzy',
+  name: "Yatzy",
   minPlayers: 1,
   maxPlayers: 4,
   setup: ({ ctx }: { ctx: { numPlayers?: number } }): GameState => {
@@ -279,7 +250,7 @@ export const game = {
     for (let i = 0; i < numPlayers; i++) {
       players.push({
         id: i.toString(),
-        name: i === 0 ? 'You' : `Player ${i + 1}`,
+        name: i === 0 ? "You" : `Player ${i + 1}`,
         isBot: i > 0, // Default: Player 0 is human, rest are bots
         scoring: createInitialScores(),
       });
@@ -297,13 +268,7 @@ export const game = {
   },
 
   moves: {
-    rollDice: ({
-      G,
-      random,
-    }: {
-      G: GameState;
-      random: { D6: () => number };
-    }) => {
+    rollDice: ({ G, random }: { G: GameState; random: { D6: () => number } }) => {
       if (G.totalRolls >= 3) return;
       for (let d = 0; d < G.dice.length; d++) {
         if (!G.diceHeld[d]) G.dice[d] = random.D6();
@@ -324,9 +289,7 @@ export const game = {
       G.totalRolls = 0;
 
       // Check for game end
-      const gameIsOver = G.players.every((p) =>
-        Object.values(p.scoring).every((s) => s !== null),
-      );
+      const gameIsOver = G.players.every((p) => Object.values(p.scoring).every((s) => s !== null));
 
       if (gameIsOver) {
         const scores = G.players.map((p) => ScoreCalculator.calculateTotal(p));
@@ -424,15 +387,8 @@ const DiceFace = ({ value }: { value: number }) => {
   );
 };
 
-export function app({
-  G,
-  moves,
-  playerID,
-  isMultiplayer,
-  botCount = 0,
-}: BoardProps) {
-  const myPlayerIndex =
-    playerID !== null && playerID !== undefined ? parseInt(playerID, 10) : 0;
+export function app({ G, moves, playerID, isMultiplayer, botCount = 0 }: BoardProps) {
+  const myPlayerIndex = playerID !== null && playerID !== undefined ? parseInt(playerID, 10) : 0;
   const currentPlayer = G.players[G.currentPlayer];
 
   // Determine which players are bots based on botCount (last N players are bots, excluding human)
@@ -440,16 +396,13 @@ export function app({
   const botPlayerIDs = useMemo(
     () =>
       new Set(
-        Array.from(
-          { length: Math.min(botCount, numPlayers - 1) },
-          (_, i) => numPlayers - 1 - i,
-        ),
+        Array.from({ length: Math.min(botCount, numPlayers - 1) }, (_, i) => numPlayers - 1 - i)
       ),
-    [botCount, numPlayers],
+    [botCount, numPlayers]
   );
   const isBot = useCallback(
     (id: number) => id !== myPlayerIndex && botPlayerIDs.has(id),
-    [myPlayerIndex, botPlayerIDs],
+    [myPlayerIndex, botPlayerIDs]
   );
 
   const isMyTurn = G.currentPlayer === myPlayerIndex && !isBot(G.currentPlayer);
@@ -461,9 +414,9 @@ export function app({
       new Set(
         scoringCategories
           .filter((cat) => currentPlayer.scoring[cat.key] === null)
-          .map((cat) => cat.key),
+          .map((cat) => cat.key)
       ),
-    [currentPlayer.scoring],
+    [currentPlayer.scoring]
   );
 
   // Bot AI logic
@@ -512,21 +465,19 @@ export function app({
         {/* Header with turn indicator */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="text-xs uppercase tracking-widest text-slate-400">
-              Turn
-            </span>
+            <span className="text-xs uppercase tracking-widest text-slate-400">Turn</span>
             <div
               className="h-4 w-8 rounded-md transition-colors duration-300"
               style={{ backgroundColor: PLAYER_COLORS[G.currentPlayer] }}
             />
             <span className="text-xs text-slate-500">
               {G.currentPlayer === myPlayerIndex
-                ? 'You'
+                ? "You"
                 : isMultiplayer
-                ? `Player ${G.currentPlayer + 1}`
-                : isBot(G.currentPlayer)
-                ? `Bot ${G.currentPlayer}`
-                : currentPlayer.name}
+                  ? `Player ${G.currentPlayer + 1}`
+                  : isBot(G.currentPlayer)
+                    ? `Bot ${G.currentPlayer}`
+                    : currentPlayer.name}
             </span>
           </div>
           <button
@@ -543,19 +494,19 @@ export function app({
             <div
               key={player.id}
               className={`flex-1 min-w-0 rounded-lg p-1 transition-opacity duration-300 ${
-                G.currentPlayer === idx ? 'opacity-100' : 'opacity-40'
+                G.currentPlayer === idx ? "opacity-100" : "opacity-40"
               }`}
               style={{ backgroundColor: PLAYER_COLORS[idx] }}
             >
               <div className="rounded-md bg-white/95 p-2">
                 <div className="mb-1 text-center text-[10px] font-medium text-slate-600 truncate">
                   {idx === myPlayerIndex
-                    ? 'You'
+                    ? "You"
                     : isMultiplayer
-                    ? `Player ${idx + 1}`
-                    : isBot(idx)
-                    ? `Bot ${idx}`
-                    : player.name}
+                      ? `Player ${idx + 1}`
+                      : isBot(idx)
+                        ? `Bot ${idx}`
+                        : player.name}
                 </div>
                 <div className="grid grid-cols-5 gap-0.5 text-[9px]">
                   {scoringCategories.map((cat) => (
@@ -563,11 +514,11 @@ export function app({
                       key={cat.key}
                       className={`text-center tabular-nums ${
                         player.scoring[cat.key] === null
-                          ? 'text-slate-300'
-                          : 'font-semibold text-slate-700'
+                          ? "text-slate-300"
+                          : "font-semibold text-slate-700"
                       }`}
                     >
-                      {player.scoring[cat.key] ?? '-'}
+                      {player.scoring[cat.key] ?? "-"}
                     </span>
                   ))}
                 </div>
@@ -592,10 +543,10 @@ export function app({
                 className={`aspect-square rounded-xl border-2 flex items-center justify-center transition-all duration-200
                   ${
                     isHeld
-                      ? 'border-emerald-500 bg-emerald-50 scale-95'
-                      : 'border-slate-200 bg-white'
+                      ? "border-emerald-500 bg-emerald-50 scale-95"
+                      : "border-slate-200 bg-white"
                   }
-                  ${canToggle ? 'hover:border-slate-400 active:scale-95' : ''}
+                  ${canToggle ? "hover:border-slate-400 active:scale-95" : ""}
                 `}
               >
                 {G.totalRolls === 0 ? (
@@ -623,7 +574,7 @@ export function app({
               <div
                 key={i}
                 className={`h-2 w-2 rounded-full transition-colors duration-200 ${
-                  i < G.totalRolls ? 'bg-slate-300' : 'bg-slate-800'
+                  i < G.totalRolls ? "bg-slate-300" : "bg-slate-800"
                 }`}
               />
             ))}
@@ -635,8 +586,7 @@ export function app({
           {scoringCategories.map((cat) => {
             const isValid = validCategories.has(cat.key);
             const potentialScore = ScoreCalculator.calculators[cat.key](G.dice);
-            const canSelect =
-              isValid && G.totalRolls > 0 && isMyTurn && !gameOver;
+            const canSelect = isValid && G.totalRolls > 0 && isMyTurn && !gameOver;
 
             return (
               <button
@@ -646,15 +596,13 @@ export function app({
                 className={`rounded-lg border-2 px-2 py-2 text-left text-xs transition-all duration-150
                   ${
                     canSelect
-                      ? 'border-slate-200 bg-white hover:border-emerald-400 hover:bg-emerald-50'
-                      : 'border-transparent bg-slate-50 opacity-40'
+                      ? "border-slate-200 bg-white hover:border-emerald-400 hover:bg-emerald-50"
+                      : "border-transparent bg-slate-50 opacity-40"
                   }
                 `}
               >
                 <div className="flex items-center justify-between">
-                  <span className="truncate font-medium text-slate-700">
-                    {cat.label}
-                  </span>
+                  <span className="truncate font-medium text-slate-700">{cat.label}</span>
                   {canSelect && potentialScore > 0 && (
                     <span className="ml-1 text-[10px] font-bold text-emerald-600">
                       +{potentialScore}
@@ -670,33 +618,26 @@ export function app({
         {gameOver && (
           <div className="rounded-xl bg-slate-100 p-4 text-center">
             {G.isDraw ? (
-              <span className="text-sm font-medium text-slate-600">
-                It's a draw!
-              </span>
+              <span className="text-sm font-medium text-slate-600">It's a draw!</span>
             ) : (
               <div className="flex items-center justify-center gap-2">
                 <span className="text-sm text-slate-600">Winner:</span>
                 <div
                   className="h-4 w-8 rounded"
                   style={{
-                    backgroundColor:
-                      PLAYER_COLORS[
-                        G.players.findIndex((p) => p.id === G.winner)
-                      ],
+                    backgroundColor: PLAYER_COLORS[G.players.findIndex((p) => p.id === G.winner)],
                   }}
                 />
                 <span className="font-bold text-slate-800">
                   {(() => {
-                    const winnerIdx = G.players.findIndex(
-                      (p) => p.id === G.winner,
-                    );
+                    const winnerIdx = G.players.findIndex((p) => p.id === G.winner);
                     return winnerIdx === myPlayerIndex
-                      ? 'You'
+                      ? "You"
                       : isMultiplayer
-                      ? `Player ${winnerIdx + 1}`
-                      : isBot(winnerIdx)
-                      ? `Bot ${winnerIdx}`
-                      : G.players[winnerIdx]?.name;
+                        ? `Player ${winnerIdx + 1}`
+                        : isBot(winnerIdx)
+                          ? `Bot ${winnerIdx}`
+                          : G.players[winnerIdx]?.name;
                   })()}
                 </span>
               </div>

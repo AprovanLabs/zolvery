@@ -1,10 +1,10 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   createCompiler,
   type Compiler,
   type MountedWidget,
   type Manifest,
-} from '@aprovan/patchwork-compiler';
+} from "@aprovan/patchwork-compiler";
+import { useState, useEffect, useRef, useCallback } from "react";
 
 export interface UsePatchworkOptions {
   image: string;
@@ -28,7 +28,7 @@ export interface UsePatchworkReturn {
     source: string,
     manifest: Manifest,
     target: HTMLElement,
-    inputs?: Record<string, unknown>,
+    inputs?: Record<string, unknown>
   ) => Promise<MountedWidget>;
 }
 
@@ -43,7 +43,7 @@ export function usePatchwork(options: UsePatchworkOptions): UsePatchworkReturn {
 
     createCompiler({
       image: options.image,
-      proxyUrl: options.proxyUrl ?? '/api/proxy',
+      proxyUrl: options.proxyUrl ?? "/api/proxy",
       cdnBaseUrl: options.cdnBaseUrl,
       widgetCdnBaseUrl: options.widgetCdnBaseUrl,
       urlOverrides: options.urlOverrides,
@@ -77,21 +77,21 @@ export function usePatchwork(options: UsePatchworkOptions): UsePatchworkReturn {
       source: string,
       manifest: Manifest,
       target: HTMLElement,
-      inputs?: Record<string, unknown>,
+      inputs?: Record<string, unknown>
     ) => {
-      if (!compiler) throw new Error('Compiler not ready');
+      if (!compiler) throw new Error("Compiler not ready");
 
       const widget = await compiler.compile(source, manifest);
       const mounted = await compiler.mount(widget, {
         target,
-        mode: 'embedded',
+        mode: "embedded",
         inputs,
       });
 
       mountedRef.current = mounted;
       return mounted;
     },
-    [compiler],
+    [compiler]
   );
 
   return { compiler, isReady, error, mount };

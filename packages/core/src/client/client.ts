@@ -1,34 +1,34 @@
-import { Random } from '../random';
-import { Transport } from '../transport';
-import { User } from '../user';
-import { createEvent, isCoreEvent } from '../events.js';
-import { Localization } from './localization.js';
-import { ClientEventBus } from './event-bus.js';
-import { ClientStorage } from './storage.js';
-import { ClientAPI, AppEvent, SubmitScoreRequest } from './api.js';
+import { createEvent, isCoreEvent } from "../events.js";
+import { Random } from "../random";
+import { type Transport } from "../transport";
+import { type User } from "../user";
+import { ClientAPI, type AppEvent, type SubmitScoreRequest } from "./api.js";
+import { ClientEventBus } from "./event-bus.js";
+import { Localization } from "./localization.js";
+import { ClientStorage } from "./storage.js";
 
 /**
  * Core client events that are managed by the system
  */
 export enum CoreEventType {
   // App lifecycle
-  APP_START = 'app.start',
-  APP_READY = 'app.ready',
-  APP_INITIALIZED = 'app.initialized',
+  APP_START = "app.start",
+  APP_READY = "app.ready",
+  APP_INITIALIZED = "app.initialized",
 
   // User interactions
-  USER_ACTION = 'user.action',
-  USER_CONNECTED = 'user.connected',
-  USER_DISCONNECTED = 'user.disconnected',
+  USER_ACTION = "user.action",
+  USER_CONNECTED = "user.connected",
+  USER_DISCONNECTED = "user.disconnected",
 
   // Data management
-  DATA_REQUEST = 'data.request',
-  DATA_UPDATED = 'data.updated',
+  DATA_REQUEST = "data.request",
+  DATA_UPDATED = "data.updated",
 
   // Scoring (once per day)
-  SCORE_SUBMIT = 'score.submit',
-  SCORE_ACCEPTED = 'score.accepted',
-  SCORE_REJECTED = 'score.rejected',
+  SCORE_SUBMIT = "score.submit",
+  SCORE_ACCEPTED = "score.accepted",
+  SCORE_REJECTED = "score.rejected",
 }
 
 /**
@@ -51,7 +51,7 @@ export interface ClientEvent {
   type: string;
   data?: unknown;
   timestamp?: number;
-  source?: 'client' | 'server';
+  source?: "client" | "server";
   metadata?: Record<string, unknown>;
 }
 
@@ -60,8 +60,7 @@ export class Client {
   private storage: ClientStorage;
   private api: ClientAPI;
   private localState: Map<string, unknown> = new Map();
-  private eventHandlers: Map<string, Set<(event: ClientEvent) => void>> =
-    new Map();
+  private eventHandlers: Map<string, Set<(event: ClientEvent) => void>> = new Map();
   private scoreSubmittedToday: boolean = false;
 
   public constructor(
@@ -69,11 +68,11 @@ export class Client {
     public config: ClientConfig,
     private transport: Transport,
     private localization: Localization = new Localization(),
-    private random: Random = new Random(),
+    private random: Random = new Random()
   ) {
     this.eventBus = new ClientEventBus();
     this.storage = new ClientStorage();
-    this.api = new ClientAPI(config.apiBaseUrl || '', user, config.appId);
+    this.api = new ClientAPI(config.apiBaseUrl || "", user, config.appId);
 
     // Initialize event handling
     this.setupEventHandlers();
@@ -85,14 +84,14 @@ export class Client {
    */
   public env = (key: string): string | null => {
     switch (key) {
-      case 'ENVIRONMENT':
-        return this.config.environment || 'dev';
-      case 'APP_ID':
+      case "ENVIRONMENT":
+        return this.config.environment || "dev";
+      case "APP_ID":
         return this.config.appId;
-      case 'USER_ID':
+      case "USER_ID":
         return this.user.userId;
-      case 'LOCALE':
-        return this.config.locale || this.user.userLocale || 'en-US';
+      case "LOCALE":
+        return this.config.locale || this.user.userLocale || "en-US";
       default:
         return null;
     }
@@ -135,10 +134,7 @@ export class Client {
   /**
    * Subscribe to events
    */
-  public on = (
-    eventType: string,
-    handler: (event: ClientEvent) => void,
-  ): void => {
+  public on = (eventType: string, handler: (event: ClientEvent) => void): void => {
     if (!this.eventHandlers.has(eventType)) {
       this.eventHandlers.set(eventType, new Set());
     }
@@ -148,10 +144,7 @@ export class Client {
   /**
    * Unsubscribe from events
    */
-  public off = (
-    eventType: string,
-    handler: (event: ClientEvent) => void,
-  ): void => {
+  public off = (eventType: string, handler: (event: ClientEvent) => void): void => {
     const handlers = this.eventHandlers.get(eventType);
     if (handlers) {
       handlers.delete(handler);
@@ -166,7 +159,7 @@ export class Client {
       type: eventType,
       data,
       timestamp: Date.now(),
-      source: 'client',
+      source: "client",
     };
 
     // Handle core events specially
@@ -181,12 +174,7 @@ export class Client {
     this.triggerLocalHandlers(event);
 
     // Also emit to transport for broader event system compatibility
-    const transportEvent = createEvent(
-      eventType,
-      data,
-      'client',
-      this.user.userId,
-    );
+    const transportEvent = createEvent(eventType, data, "client", this.user.userId);
     this.transport.dispatchEvent(transportEvent as unknown as Event);
   };
 
@@ -228,7 +216,7 @@ export class Client {
         config: this.config,
       });
     } catch (error) {
-      console.error('Failed to initialize client:', error);
+      console.error("Failed to initialize client:", error);
       throw error;
     }
   }
@@ -237,11 +225,9 @@ export class Client {
    * Setup internal event handlers
    */
   private setupEventHandlers(): void {
-    this.transport.addEventListener('message', (message) => {
+    this.transport.addEventListener("message", (message) => {
       // Handle incoming events from transport
-      this.handleTransportMessage(
-        message as unknown as Record<string, unknown>,
-      );
+      this.handleTransportMessage(message as unknown as Record<string, unknown>);
     });
   }
 
@@ -263,14 +249,14 @@ export class Client {
       let data: unknown = null;
 
       switch (key) {
-        case 'context':
-        case 'data':
+        case "context":
+        case "data":
           data = await this.api.getAppData(this.getCurrentDay());
           break;
-        case 'users':
+        case "users":
           data = await this.api.getUsers();
           break;
-        case 'events':
+        case "events":
           data = await this.api.getEvents(this.getCurrentDay());
           break;
         default:
@@ -293,7 +279,7 @@ export class Client {
   private async loadAppData(): Promise<void> {
     const data = await this.api.getAppData(this.getCurrentDay());
     if (data) {
-      this.set('data', data);
+      this.set("data", data);
     }
   }
 
@@ -305,16 +291,16 @@ export class Client {
       user: this.user,
       appId: this.config.appId,
       day: this.getCurrentDay(),
-      environment: this.env('ENVIRONMENT'),
+      environment: this.env("ENVIRONMENT"),
     };
-    this.set('context', context);
+    this.set("context", context);
   }
 
   /**
    * Load internationalization data
    */
   private async loadI18nData(): Promise<void> {
-    const locale = this.env('LOCALE') || 'en';
+    const locale = this.env("LOCALE") || "en";
     const i18nData = await this.api.getI18nData(locale);
     if (i18nData) {
       this.localization.load(i18nData);
@@ -328,8 +314,7 @@ export class Client {
     const events = await this.api.getEvents(this.getCurrentDay());
     this.scoreSubmittedToday =
       events?.some(
-        (event: AppEvent) =>
-          event.eventKey === 'score' || event.eventKey === 'final_score',
+        (event: AppEvent) => event.eventKey === "score" || event.eventKey === "final_score"
       ) || false;
   }
 
@@ -350,21 +335,19 @@ export class Client {
         break;
       case CoreEventType.DATA_REQUEST:
         await this.requestData(
-          ((event.data as Record<string, unknown>)?.key as
-            | string
-            | undefined) ?? 'data',
+          ((event.data as Record<string, unknown>)?.key as string | undefined) ?? "data"
         );
         break;
       case CoreEventType.USER_ACTION:
         await this.api.createEvent({
           appId: this.config.appId,
-          eventKey: 'user_action',
+          eventKey: "user_action",
           value: event.data,
         });
         break;
       default:
         // Log unhandled core events
-        console.warn('Unhandled core event:', event.type);
+        console.warn("Unhandled core event:", event.type);
     }
   }
 
@@ -380,7 +363,7 @@ export class Client {
         value: event.data,
       });
     } catch (error) {
-      console.error('Failed to handle custom event:', event, error);
+      console.error("Failed to handle custom event:", event, error);
       throw error;
     }
   }
@@ -391,7 +374,7 @@ export class Client {
   private async handleScoreSubmission(event: ClientEvent): Promise<void> {
     if (this.scoreSubmittedToday) {
       this.emitInternal(CoreEventType.SCORE_REJECTED, {
-        reason: 'Score already submitted today',
+        reason: "Score already submitted today",
       });
       return;
     }
@@ -400,7 +383,7 @@ export class Client {
       // Submit score event
       await this.api.createEvent({
         appId: this.config.appId,
-        eventKey: 'final_score',
+        eventKey: "final_score",
         value: event.data,
       });
 
@@ -411,9 +394,9 @@ export class Client {
       this.emitInternal(CoreEventType.SCORE_ACCEPTED, event.data);
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
-      console.error('Failed to submit score:', err);
+      console.error("Failed to submit score:", err);
       this.emitInternal(CoreEventType.SCORE_REJECTED, {
-        reason: 'Network error',
+        reason: "Network error",
         error: err.message,
       });
       throw err;
@@ -430,7 +413,7 @@ export class Client {
         try {
           handler(event);
         } catch (error) {
-          console.error('Error in event handler:', error);
+          console.error("Error in event handler:", error);
         }
       });
     }
@@ -444,7 +427,7 @@ export class Client {
       type: eventType,
       data,
       timestamp: Date.now(),
-      source: 'client',
+      source: "client",
     };
 
     this.triggerLocalHandlers(event);
@@ -459,7 +442,7 @@ export class Client {
         type: message.type as string,
         data: message.data,
         timestamp: Date.now(),
-        source: 'server',
+        source: "server",
       });
     }
   }
@@ -468,6 +451,6 @@ export class Client {
    * Get current day in YYYY-MM-DD format
    */
   private getCurrentDay(): string {
-    return new Date().toISOString().split('T')[0];
+    return new Date().toISOString().split("T")[0] ?? "";
   }
 }

@@ -1,4 +1,3 @@
-import { Construct } from 'constructs';
 import {
   RemovalPolicy,
   Duration,
@@ -6,11 +5,12 @@ import {
   aws_s3 as s3,
   aws_cloudfront as cloudfront,
   aws_apigateway as apigateway,
-  aws_certificatemanager as certificatemanager,
+  type aws_certificatemanager as certificatemanager,
   aws_route53 as route53,
   aws_route53_targets as targets,
-} from 'aws-cdk-lib';
-import { namer } from '../core/utils';
+} from "aws-cdk-lib";
+import { Construct } from "constructs";
+import { namer } from "../core/utils";
 
 export interface WebProps {
   domainName: string;
@@ -19,9 +19,7 @@ export interface WebProps {
 }
 
 export class Web extends Construct {
-  public readonly bucketName: string = namer({ universal: true }).regional(
-    'web',
-  );
+  public readonly bucketName: string = namer({ universal: true }).regional("web");
   public readonly api: apigateway.RestApi;
   public readonly hostingBucket: s3.Bucket;
   public readonly url: string;
@@ -33,10 +31,10 @@ export class Web extends Construct {
   public constructor(scope: Construct, id: string, props: WebProps) {
     super(scope, id);
 
-    this.hostingBucket = new s3.Bucket(this, 'HostingBucket', {
+    this.hostingBucket = new s3.Bucket(this, "HostingBucket", {
       bucketName: this.bucketName,
-      websiteIndexDocument: 'index.html',
-      websiteErrorDocument: 'index.html',
+      websiteIndexDocument: "index.html",
+      websiteErrorDocument: "index.html",
       removalPolicy: RemovalPolicy.DESTROY,
       accessControl: s3.BucketAccessControl.PRIVATE,
       publicReadAccess: false,
@@ -48,13 +46,13 @@ export class Web extends Construct {
 
     // this.hostingBucket.grantRead(originAccessIdentity);
 
-    this.distribution = new cloudfront.Distribution(this, 'Distribution', {
+    this.distribution = new cloudfront.Distribution(this, "Distribution", {
       defaultBehavior: {
         origin: new origins.S3StaticWebsiteOrigin(this.hostingBucket),
         compress: true,
         viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
       },
-      defaultRootObject: 'index.html',
+      defaultRootObject: "index.html",
       domainNames: [props.domainName],
       certificate: props.certificate,
       minimumProtocolVersion: cloudfront.SecurityPolicyProtocol.TLS_V1_2_2021,
@@ -62,13 +60,13 @@ export class Web extends Construct {
         {
           httpStatus: 403,
           responseHttpStatus: 200,
-          responsePagePath: '/index.html',
+          responsePagePath: "/index.html",
           ttl: Duration.seconds(300),
         },
         {
           httpStatus: 404,
           responseHttpStatus: 200,
-          responsePagePath: '/index.html',
+          responsePagePath: "/index.html",
           ttl: Duration.seconds(300),
         },
       ],
@@ -76,15 +74,15 @@ export class Web extends Construct {
       httpVersion: cloudfront.HttpVersion.HTTP2,
     });
 
-    this.api = new apigateway.RestApi(this, 'Api', {
+    this.api = new apigateway.RestApi(this, "Api", {
       restApiName: namer().regional(),
       deploy: true,
       defaultCorsPreflightOptions: {
         allowOrigins: apigateway.Cors.ALL_ORIGINS,
         allowMethods: apigateway.Cors.ALL_METHODS,
-        allowHeaders: ['*'],
+        allowHeaders: ["*"],
       },
-      binaryMediaTypes: ['multipart/form-data'],
+      binaryMediaTypes: ["multipart/form-data"],
     });
 
     // const cloudfrontS3Access = new iam.PolicyStatement({
@@ -101,27 +99,21 @@ export class Web extends Construct {
     this.callbackUrl = this.url;
     this.logoutUrl = this.url;
 
-    const hostedZone = route53.HostedZone.fromHostedZoneAttributes(
-      this,
-      'HostedZone',
-      {
-        hostedZoneId: props.hostedZoneId,
-        zoneName: this.extractRootDomain(props.domainName),
-      },
-    );
+    const hostedZone = route53.HostedZone.fromHostedZoneAttributes(this, "HostedZone", {
+      hostedZoneId: props.hostedZoneId,
+      zoneName: this.extractRootDomain(props.domainName),
+    });
 
-    new route53.ARecord(this, 'Route53Record', {
+    new route53.ARecord(this, "Route53Record", {
       zone: hostedZone,
       recordName: props.domainName,
-      target: route53.RecordTarget.fromAlias(
-        new targets.CloudFrontTarget(this.distribution),
-      ),
+      target: route53.RecordTarget.fromAlias(new targets.CloudFrontTarget(this.distribution)),
       comment: `Point ${props.domainName} to CloudFront distribution`,
     });
   }
 
   private extractRootDomain = (fullDomain: string): string => {
-    const parts = fullDomain.split('.');
-    return parts.slice(-2).join('.');
+    const parts = fullDomain.split(".");
+    return parts.slice(-2).join(".");
   };
 }

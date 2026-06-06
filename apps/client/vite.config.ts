@@ -1,22 +1,19 @@
-import path from 'path';
-import fs from 'fs';
-import react from '@vitejs/plugin-react';
-import { defineConfig } from 'vite';
+import fs from "fs";
+import path from "path";
+import react from "@vitejs/plugin-react";
+import { defineConfig } from "vite";
 
 // GitHub Pages base path
 // process.env.GITHUB_PAGES_CUSTOM_DOMAIN or GITHUB_ACTIONS
-const BASE_PATH = '/';
+const BASE_PATH = "/";
 
 // Port configuration from environment
-const SERVER_URL = process.env.SERVER_URL ?? 'http://localhost:3000';
-const STITCHERY_URL = process.env.STITCHERY_URL ?? 'http://127.0.0.1:6434';
+const SERVER_URL = process.env.SERVER_URL ?? "http://localhost:3000";
+const STITCHERY_URL = process.env.STITCHERY_URL ?? "http://127.0.0.1:6434";
 
 // Map npm package names to local directories
 const LOCAL_NPM_PACKAGES: Record<string, string> = {
-  '@aprovan/patchwork-image-boardgameio': path.join(
-    __dirname,
-    '../../packages/images/boardgameio',
-  ),
+  "@aprovan/patchwork-image-boardgameio": path.join(__dirname, "../../packages/images/boardgameio"),
 };
 
 export default defineConfig({
@@ -24,12 +21,12 @@ export default defineConfig({
   plugins: [
     react(),
     {
-      name: 'serve-local-npm',
+      name: "serve-local-npm",
       configureServer(server) {
         // Serve local npm packages at /npm/@scope/package/...
-        server.middlewares.use('/npm', (req, res, next) => {
+        server.middlewares.use("/npm", (req, res, next) => {
           // Strip query params (Vite adds ?import for dynamic imports)
-          const urlPath = (req.url || '').split('?')[0];
+          const urlPath = (req.url || "").split("?")[0];
 
           // Parse package name and file path from URL
           // URL format: /@scope/package/file.js or /@scope/package@version/file.js
@@ -58,58 +55,42 @@ export default defineConfig({
           // Set appropriate content type
           const ext = path.extname(fullPath);
           const contentTypes: Record<string, string> = {
-            '.json': 'application/json',
-            '.js': 'application/javascript',
-            '.mjs': 'application/javascript',
-            '.ts': 'text/plain',
-            '.tsx': 'text/plain',
-            '.css': 'text/css',
+            ".json": "application/json",
+            ".js": "application/javascript",
+            ".mjs": "application/javascript",
+            ".ts": "text/plain",
+            ".tsx": "text/plain",
+            ".css": "text/css",
           };
-          res.setHeader(
-            'Content-Type',
-            contentTypes[ext] || 'application/octet-stream',
-          );
-          res.setHeader('Access-Control-Allow-Origin', '*');
+          res.setHeader("Content-Type", contentTypes[ext] || "application/octet-stream");
+          res.setHeader("Access-Control-Allow-Origin", "*");
 
-          const content = fs.readFileSync(fullPath, 'utf-8');
+          const content = fs.readFileSync(fullPath, "utf-8");
           res.end(content);
         });
 
         // Serve example app sources at /apps/...
-        server.middlewares.use('/apps', (req, res, next) => {
-          const parsedUrl = new URL(req.url || '', 'http://localhost');
+        server.middlewares.use("/apps", (req, res, next) => {
+          const parsedUrl = new URL(req.url || "", "http://localhost");
           const urlPath = parsedUrl.pathname;
-          const examplesDir = path.resolve(
-            __dirname,
-            '../../packages/examples/src',
-          );
+          const examplesDir = path.resolve(__dirname, "../../packages/examples/src");
           const fullPath = path.join(examplesDir, urlPath);
 
           // Handle ?files query to list all files in the directory
-          if (parsedUrl.searchParams.has('files')) {
-            if (
-              !fs.existsSync(fullPath) ||
-              !fs.statSync(fullPath).isDirectory()
-            ) {
+          if (parsedUrl.searchParams.has("files")) {
+            if (!fs.existsSync(fullPath) || !fs.statSync(fullPath).isDirectory()) {
               res.statusCode = 404;
-              res.end(JSON.stringify({ error: 'Directory not found' }));
+              res.end(JSON.stringify({ error: "Directory not found" }));
               return;
             }
 
-            const listFilesRecursive = (dir: string, base = ''): string[] => {
+            const listFilesRecursive = (dir: string, base = ""): string[] => {
               const entries = fs.readdirSync(dir, { withFileTypes: true });
               const files: string[] = [];
               for (const entry of entries) {
-                const relativePath = base
-                  ? `${base}/${entry.name}`
-                  : entry.name;
+                const relativePath = base ? `${base}/${entry.name}` : entry.name;
                 if (entry.isDirectory()) {
-                  files.push(
-                    ...listFilesRecursive(
-                      path.join(dir, entry.name),
-                      relativePath,
-                    ),
-                  );
+                  files.push(...listFilesRecursive(path.join(dir, entry.name), relativePath));
                 } else {
                   files.push(relativePath);
                 }
@@ -117,7 +98,7 @@ export default defineConfig({
               return files;
             };
 
-            res.setHeader('Content-Type', 'application/json');
+            res.setHeader("Content-Type", "application/json");
             res.end(JSON.stringify(listFilesRecursive(fullPath)));
             return;
           }
@@ -125,14 +106,14 @@ export default defineConfig({
           // Serve source files and assets
           const ext = path.extname(urlPath);
           const contentTypes: Record<string, string> = {
-            '.json': 'application/json',
-            '.ts': 'text/plain; charset=utf-8',
-            '.tsx': 'text/plain; charset=utf-8',
-            '.svg': 'image/svg+xml',
-            '.png': 'image/png',
-            '.jpg': 'image/jpeg',
-            '.jpeg': 'image/jpeg',
-            '.webp': 'image/webp',
+            ".json": "application/json",
+            ".ts": "text/plain; charset=utf-8",
+            ".tsx": "text/plain; charset=utf-8",
+            ".svg": "image/svg+xml",
+            ".png": "image/png",
+            ".jpg": "image/jpeg",
+            ".jpeg": "image/jpeg",
+            ".webp": "image/webp",
           };
 
           if (contentTypes[ext]) {
@@ -141,7 +122,7 @@ export default defineConfig({
               return;
             }
 
-            res.setHeader('Content-Type', contentTypes[ext]);
+            res.setHeader("Content-Type", contentTypes[ext]);
             const content = fs.readFileSync(fullPath);
             res.end(content);
             return;
@@ -155,25 +136,25 @@ export default defineConfig({
   server: {
     proxy: {
       // Proxy non-source app requests to the server
-      '^/apps/.*/zolvery\\.json': {
+      "^/apps/.*/zolvery\\.json": {
         target: SERVER_URL,
-        rewrite: (path) => path.replace(/^\/apps/, ''),
+        rewrite: (path) => path.replace(/^\/apps/, ""),
       },
-      '^/apps/apps\\.json': {
+      "^/apps/apps\\.json": {
         target: SERVER_URL,
-        rewrite: (path) => path.replace(/^\/apps/, ''),
+        rewrite: (path) => path.replace(/^\/apps/, ""),
       },
       // Proxy API v1 to backend server
-      '/api/v1': {
+      "/api/v1": {
         target: SERVER_URL,
         changeOrigin: true,
       },
       // Proxy edit API to Stitchery service
-      '/api/edit': {
+      "/api/edit": {
         target: STITCHERY_URL,
         changeOrigin: true,
       },
-      '/api/chat': {
+      "/api/chat": {
         target: STITCHERY_URL,
         changeOrigin: true,
       },
@@ -181,7 +162,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
+      "@": path.resolve(__dirname, "./src"),
     },
   },
 });

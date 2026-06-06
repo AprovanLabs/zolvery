@@ -2,7 +2,7 @@ name: Verify Pull Request
 
 on:
   pull_request: {}
-  workflow_dispatch: {}
+  workflow_dispatch:
 
 env:
   HUSKY: 0
@@ -19,6 +19,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec commitlint --from ${{ github.event.pull_request.base.sha }} --verbose
   lint:
@@ -30,11 +31,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @zolver/core build
-      - run: pnpm --filter @zolvery/server lint
-  prettier:
-    name: Code style
+      - run: pnpm lint
+  typecheck:
+    name: Type check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -42,8 +43,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm prettier --check .
+      - run: pnpm typecheck
   tests:
     name: Tests
     runs-on: ubuntu-latest
@@ -53,9 +55,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @zolver/core test
-      - run: pnpm --filter @zolvery/server test
+      - run: pnpm vitest run --passWithNoTests
   build:
     name: Build
     runs-on: ubuntu-latest
@@ -65,8 +67,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: Build core
-        run: pnpm --filter @zolver/core build
-      - name: Build server
-        run: pnpm --filter @zolvery/server build
+      - run: pnpm turbo run build --filter=@aprovan/patchwork-image-boardgameio

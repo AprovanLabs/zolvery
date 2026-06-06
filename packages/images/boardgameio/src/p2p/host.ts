@@ -1,19 +1,13 @@
-import type {
-  ChatMessage,
-  CredentialedActionShape,
-  Game,
-  Server,
-  State,
-} from 'boardgame.io';
-import { P2PDB } from './db.js';
-import { authenticate } from './authentication.js';
-import type { Client, ClientAction } from './types.js';
+import { authenticate } from "./authentication.js";
+import { P2PDB } from "./db.js";
 import {
   loadSession,
   saveSession,
   updateSessionState,
   type PersistedSession,
-} from './session-storage.js';
+} from "./session-storage.js";
+import type { Client, ClientAction } from "./types.js";
+import type { ChatMessage, CredentialedActionShape, Game, Server, State } from "boardgame.io";
 
 type UpdateArgs = [string, State, CredentialedActionShape.Any];
 type ChatArgs = [string, ChatMessage, string | undefined];
@@ -42,15 +36,15 @@ export class P2PHost {
     this.db = new P2PDB();
 
     // Try to restore from a previous session
-    const gameName = game.name ?? 'unknown';
-    console.log('[P2PHost] Checking for existing session:', {
+    const gameName = game.name ?? "unknown";
+    console.log("[P2PHost] Checking for existing session:", {
       matchID,
       gameName,
     });
 
     const existingSession = loadSession(matchID);
     if (existingSession) {
-      console.log('[P2PHost] Found existing session:', {
+      console.log("[P2PHost] Found existing session:", {
         matchID,
         sessionGameName: existingSession.gameName,
         expectedGameName: gameName,
@@ -58,7 +52,7 @@ export class P2PHost {
       });
 
       if (existingSession.gameName === gameName) {
-        console.log('[P2PHost] Restoring session from storage');
+        console.log("[P2PHost] Restoring session from storage");
 
         this.state = existingSession.state;
         this.db.createMatch(matchID, {
@@ -71,10 +65,10 @@ export class P2PHost {
         saveSession(existingSession);
         return;
       } else {
-        console.log('[P2PHost] Game name mismatch, creating new session');
+        console.log("[P2PHost] Game name mismatch, creating new session");
       }
     } else {
-      console.log('[P2PHost] No existing session found, creating new');
+      console.log("[P2PHost] No existing session found, creating new");
     }
 
     // Create fresh state for new session
@@ -83,7 +77,7 @@ export class P2PHost {
       initialState = this.createInitialState();
       this.state = initialState;
     } catch (error) {
-      console.error('[P2PHost] Failed to create initial state:', error);
+      console.error("[P2PHost] Failed to create initial state:", error);
       throw error;
     }
 
@@ -93,7 +87,7 @@ export class P2PHost {
     }
 
     const metadata: Server.MatchData = {
-      gameName: game.name ?? 'unknown',
+      gameName: game.name ?? "unknown",
       players,
       createdAt: Date.now(),
       updatedAt: Date.now(),
@@ -108,22 +102,18 @@ export class P2PHost {
     this.persistSession(initialState, [], metadata);
   }
 
-  private persistSession(
-    state: State,
-    log: unknown[],
-    metadata?: Server.MatchData,
-  ): void {
+  private persistSession(state: State, log: unknown[], metadata?: Server.MatchData): void {
     const existingSession = loadSession(this.matchID);
     const session: PersistedSession = {
       matchID: this.matchID,
-      gameName: this.game.name ?? 'unknown',
+      gameName: this.game.name ?? "unknown",
       numPlayers: this.numPlayers,
       state,
       initialState: existingSession?.initialState ?? state,
-      log: log as PersistedSession['log'],
+      log: log as PersistedSession["log"],
       metadata: metadata ??
         existingSession?.metadata ?? {
-          gameName: this.game.name ?? 'unknown',
+          gameName: this.game.name ?? "unknown",
           players: {},
           createdAt: Date.now(),
           updatedAt: Date.now(),
@@ -138,20 +128,19 @@ export class P2PHost {
     // Mark all players as active in Stage.NULL ('') so they can all make moves
     const activePlayers: Record<string, string> = {};
     for (let i = 0; i < this.numPlayers; i++) {
-      activePlayers[String(i)] = '';
+      activePlayers[String(i)] = "";
     }
 
     const ctx = {
       numPlayers: this.numPlayers,
       turn: 1,
-      currentPlayer: '0',
+      currentPlayer: "0",
       playOrder: Array.from({ length: this.numPlayers }, (_, i) => String(i)),
       playOrderPos: 0,
-      phase: '',
+      phase: "",
       activePlayers,
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const G = this.game.setup?.({ ctx, ...ctx } as any) ?? {};
 
     return {
@@ -166,27 +155,18 @@ export class P2PHost {
 
   public registerClient(client: Client): void {
     if (!authenticate(this.matchID, client.metadata, this.db)) {
-      console.log(
-        '[P2PHost] Client auth failed for playerID:',
-        client.metadata.playerID,
-      );
+      console.log("[P2PHost] Client auth failed for playerID:", client.metadata.playerID);
       return;
     }
 
-    console.log(
-      '[P2PHost] Registered client for playerID:',
-      client.metadata.playerID,
-    );
+    console.log("[P2PHost] Registered client for playerID:", client.metadata.playerID);
     this.clients.set(client, client);
     this.syncClient(client);
   }
 
   public registerHostClient(client: Client): void {
     // Host client is always trusted, skip auth
-    console.log(
-      '[P2PHost] Registered host client for playerID:',
-      client.metadata.playerID,
-    );
+    console.log("[P2PHost] Registered host client for playerID:", client.metadata.playerID);
     this.hostClient = client;
     this.syncClient(client);
   }
@@ -197,13 +177,13 @@ export class P2PHost {
 
   public processAction(client: Client, data: ClientAction): void {
     switch (data.type) {
-      case 'sync':
+      case "sync":
         this.syncClient(client);
         break;
-      case 'update':
+      case "update":
         this.handleUpdate(data.args as UpdateArgs);
         break;
-      case 'chat':
+      case "chat":
         this.broadcastChat(data.args as ChatArgs);
         break;
     }
@@ -214,14 +194,14 @@ export class P2PHost {
     const playerID = client.metadata.playerID;
     const filteredState = this.filterStateForPlayer(state, playerID);
     client.send({
-      type: 'sync',
+      type: "sync",
       args: [this.matchID, { state: filteredState, log }],
     });
   }
 
   private filterStateForPlayer(
     state: State | undefined,
-    _playerID: string | null,
+    _playerID: string | null
   ): State | undefined {
     return state;
   }
@@ -239,10 +219,9 @@ export class P2PHost {
     // Determine current player from either ctx.currentPlayer or G.current
     const ctxCurrentPlayer = currentState.ctx.currentPlayer;
     const gCurrent = (currentState.G as { current?: number })?.current;
-    const currentPlayer =
-      gCurrent !== undefined ? String(gCurrent) : ctxCurrentPlayer;
+    const currentPlayer = gCurrent !== undefined ? String(gCurrent) : ctxCurrentPlayer;
 
-    console.log('[P2PHost] handleUpdate:', {
+    console.log("[P2PHost] handleUpdate:", {
       moveName,
       moveArgs,
       playerID,
@@ -251,7 +230,7 @@ export class P2PHost {
 
     // Validate that the player making the move is the current player
     if (playerID !== currentPlayer) {
-      console.log('[P2PHost] Rejected move: wrong player', {
+      console.log("[P2PHost] Rejected move: wrong player", {
         playerID,
         currentPlayer,
       });
@@ -265,24 +244,23 @@ export class P2PHost {
       const G = JSON.parse(JSON.stringify(currentState.G));
 
       console.log(
-        '[P2PHost] Before move, G.players:',
+        "[P2PHost] Before move, G.players:",
         G.players?.map((p: { id: number; bet: number }) => ({
           id: p.id,
           bet: p.bet,
-        })),
+        }))
       );
 
-      if (typeof move === 'function') {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if (typeof move === "function") {
         move({ G, ctx } as any, ...moveArgs);
       }
 
       console.log(
-        '[P2PHost] After move, G.players:',
+        "[P2PHost] After move, G.players:",
         G.players?.map((p: { id: number; bet: number }) => ({
           id: p.id,
           bet: p.bet,
-        })),
+        }))
       );
 
       const newState: State = {
@@ -298,18 +276,14 @@ export class P2PHost {
       const { log } = this.db.fetch(this.matchID);
       updateSessionState(this.matchID, newState, log);
 
-      console.log(
-        '[P2PHost] State updated, broadcasting to',
-        this.clients.size,
-        'clients',
-      );
+      console.log("[P2PHost] State updated, broadcasting to", this.clients.size, "clients");
       this.broadcastState();
     } else {
       console.log(
-        '[P2PHost] Move not found:',
+        "[P2PHost] Move not found:",
         moveName,
-        'Available:',
-        Object.keys(this.game.moves || {}),
+        "Available:",
+        Object.keys(this.game.moves || {})
       );
     }
   }
@@ -322,7 +296,7 @@ export class P2PHost {
       const playerID = this.hostClient.metadata.playerID;
       const filteredState = this.filterStateForPlayer(state, playerID);
       this.hostClient.send({
-        type: 'sync',
+        type: "sync",
         args: [this.matchID, { state: filteredState, log }],
       });
     }
@@ -332,7 +306,7 @@ export class P2PHost {
       const playerID = client.metadata.playerID;
       const filteredState = this.filterStateForPlayer(state, playerID);
       client.send({
-        type: 'sync',
+        type: "sync",
         args: [this.matchID, { state: filteredState, log }],
       });
     }
@@ -340,10 +314,10 @@ export class P2PHost {
 
   private broadcastChat(args: ChatArgs): void {
     if (this.hostClient) {
-      this.hostClient.send({ type: 'chat', args });
+      this.hostClient.send({ type: "chat", args });
     }
     for (const client of this.clients.values()) {
-      client.send({ type: 'chat', args });
+      client.send({ type: "chat", args });
     }
   }
 }

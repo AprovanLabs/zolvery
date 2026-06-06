@@ -1,4 +1,4 @@
-import { BehaviorSubject, Observable } from 'rxjs';
+import { type BehaviorSubject, type Observable } from "rxjs";
 
 export type ObservableRecord<T> = { readonly [K in keyof T]: Observable<T[K]> };
 

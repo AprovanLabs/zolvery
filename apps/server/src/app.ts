@@ -1,15 +1,14 @@
-import Koa from 'koa';
-import Router from '@koa/router';
-import bodyParser from 'koa-bodyparser';
-import cors from '@koa/cors';
-import { appConfig } from '@/config';
-import logger from '@/logger';
-import { requestLogger, errorLogger } from '@/middleware/logger';
-import { telemetryMiddleware } from '@/middleware/telemetry';
-import { buildApiRouter } from './api';
-
-import type { LogContext } from '@/middleware/logger';
-import { buildServices } from './services';
+import cors from "@koa/cors";
+import Router from "@koa/router";
+import Koa from "koa";
+import bodyParser from "koa-bodyparser";
+import { buildApiRouter } from "./api";
+import { buildServices } from "./services";
+import type { LogContext } from "@/middleware/logger";
+import { appConfig } from "@/config";
+import logger from "@/logger";
+import { requestLogger, errorLogger } from "@/middleware/logger";
+import { telemetryMiddleware } from "@/middleware/telemetry";
 
 const app = new Koa<Record<string, unknown>, LogContext>();
 const router = new Router<Record<string, unknown>, LogContext>();
@@ -25,7 +24,7 @@ logger.info(
       corsOrigins: appConfig.cors.origin,
     },
   },
-  'Starting Zolvery API',
+  "Starting Zolvery API"
 );
 
 app.use(errorLogger);
@@ -36,8 +35,8 @@ app.use(
   cors({
     origin: (ctx) => {
       const origin = ctx.headers.origin;
-      const allowedOrigin = appConfig.cors.origin.includes(origin || '')
-        ? origin || ''
+      const allowedOrigin = appConfig.cors.origin.includes(origin || "")
+        ? origin || ""
         : (appConfig.cors.origin[0] as string);
 
       logger.debug(
@@ -46,35 +45,35 @@ app.use(
           allowedOrigin,
           requestId: (ctx as unknown as { requestId?: string }).requestId,
         },
-        'CORS origin check',
+        "CORS origin check"
       );
 
       return allowedOrigin;
     },
     credentials: appConfig.cors.credentials,
-  }),
+  })
 );
 
 app.use(
   bodyParser({
-    enableTypes: ['json', 'form'],
-    formLimit: '10mb',
-    jsonLimit: '10mb',
+    enableTypes: ["json", "form"],
+    formLimit: "10mb",
+    jsonLimit: "10mb",
     onerror: (err: Error, ctx: unknown) => {
       const logCtx = ctx as {
         requestId?: string;
         method?: string;
         path?: string;
       };
-      logger.error({ err, requestId: logCtx.requestId }, 'Body parser error');
+      logger.error({ err, requestId: logCtx.requestId }, "Body parser error");
       throw err;
     },
-  }),
+  })
 );
 
-router.get('/about', (ctx) => {
+router.get("/about", (ctx) => {
   const healthData = {
-    status: 'ok',
+    status: "ok",
     timestamp: new Date().toISOString(),
     environment: appConfig.environment,
     version: appConfig.version,
@@ -90,20 +89,20 @@ router.get('/about', (ctx) => {
       requestId: (ctx as any).requestId,
       health: healthData,
     },
-    'Health check requested',
+    "Health check requested"
   );
 
   ctx.body = healthData;
 });
 
-router.get('/status', (ctx) => {
+router.get("/status", (ctx) => {
   const healthData = {
-    status: 'ok',
+    status: "ok",
     timestamp: new Date().toISOString(),
     environment: appConfig.environment,
     version: appConfig.version,
     requestId: ctx.requestId,
-    ...(appConfig.environment === 'dev' && {
+    ...(appConfig.environment === "dev" && {
       config: {
         aws: appConfig.aws,
         logLevel: appConfig.logLevel,
@@ -117,24 +116,22 @@ router.get('/status', (ctx) => {
       requestId: (ctx as any).requestId,
       health: healthData,
     },
-    'Health check requested',
+    "Health check requested"
   );
 
   ctx.body = healthData;
 });
 
-logger.info('Setting up API routes');
+logger.info("Setting up API routes");
 
 const services = buildServices();
-router.use('/api', buildApiRouter({ services }).routes());
+router.use("/api", buildApiRouter({ services }).routes());
 
 app.use(router.routes());
 app.use(router.allowedMethods());
 
-app.on('error', (err: Error, ctx?: unknown) => {
-  const logCtx = ctx as
-    | { requestId?: string; method?: string; path?: string }
-    | undefined;
+app.on("error", (err: Error, ctx?: unknown) => {
+  const logCtx = ctx as { requestId?: string; method?: string; path?: string } | undefined;
   logger.error(
     {
       requestId: logCtx?.requestId,
@@ -146,20 +143,20 @@ app.on('error', (err: Error, ctx?: unknown) => {
         stack: err.stack,
       },
     },
-    'Application error event',
+    "Application error event"
   );
 
   if (logCtx) {
     (logCtx as { status?: number }).status = 500;
     (logCtx as { body?: unknown }).body = {
       success: false,
-      error: 'Internal server error',
+      error: "Internal server error",
       timestamp: new Date().toISOString(),
       requestId: logCtx.requestId,
     };
   }
 });
 
-logger.info('Zolvery server initialized successfully');
+logger.info("Zolvery server initialized successfully");
 
 export { app };

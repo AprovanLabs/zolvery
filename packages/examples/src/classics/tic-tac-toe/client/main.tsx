@@ -1,5 +1,5 @@
-import React from 'react';
-import type { BotState } from '@aprovan/patchwork-image-boardgameio';
+import React from "react";
+import type { BotState } from "@aprovan/patchwork-image-boardgameio";
 
 type Player = 0 | 1;
 type Cell = Player | null;
@@ -7,7 +7,7 @@ type Cell = Player | null;
 interface GameState {
   cells: Cell[];
   current: Player;
-  winner: Player | 'draw' | null;
+  winner: Player | "draw" | null;
   winLine: number[];
 }
 
@@ -34,13 +34,11 @@ const LINES = [
 ];
 
 const COLORS: Record<Player, string> = {
-  0: 'oklch(72.3% 0.219 149.579)',
-  1: 'oklch(62.3% 0.214 259.815)',
+  0: "oklch(72.3% 0.219 149.579)",
+  1: "oklch(62.3% 0.214 259.815)",
 };
 
-const checkWinner = (
-  cells: Cell[],
-): { winner: Player; line: number[] } | null => {
+const checkWinner = (cells: Cell[]): { winner: Player; line: number[] } | null => {
   for (const [a, b, c] of LINES) {
     if (cells[a] !== null && cells[a] === cells[b] && cells[a] === cells[c]) {
       return { winner: cells[a], line: [a, b, c] };
@@ -50,7 +48,7 @@ const checkWinner = (
 };
 
 export const game = {
-  name: 'tic-tac-toe',
+  name: "tic-tac-toe",
   minPlayers: 1,
   maxPlayers: 2,
   setup: (): GameState => ({
@@ -68,7 +66,7 @@ export const game = {
         G.winner = result.winner;
         G.winLine = result.line;
       } else if (G.cells.every((c) => c !== null)) {
-        G.winner = 'draw';
+        G.winner = "draw";
       } else {
         G.current = G.current === 0 ? 1 : 0;
       }
@@ -84,9 +82,7 @@ export const game = {
     enumerate: (G: GameState) =>
       G.winner !== null
         ? []
-        : G.cells.flatMap((c, i) =>
-            c === null ? [{ move: 'play', args: [i] }] : [],
-          ),
+        : G.cells.flatMap((c, i) => (c === null ? [{ move: "play", args: [i] }] : [])),
   },
 };
 
@@ -94,7 +90,7 @@ export function app({
   G,
   moves,
   botState,
-  botCount = 0,
+  botCount: _botCount = 0,
   botPlayerIDs,
   playerID,
   isMultiplayer,
@@ -112,17 +108,13 @@ export function app({
       <div className="w-full max-w-xs space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="text-xs uppercase tracking-widest text-slate-400">
-              Turn
-            </span>
+            <span className="text-xs uppercase tracking-widest text-slate-400">Turn</span>
             <div
               className="h-4 w-8 rounded-md transition-colors duration-300"
               style={{ backgroundColor: COLORS[G.current] }}
             />
             {isBotThinking && (
-              <span className="animate-pulse text-xs text-slate-400">
-                Thinking...
-              </span>
+              <span className="animate-pulse text-xs text-slate-400">Thinking...</span>
             )}
           </div>
           <button
@@ -137,26 +129,18 @@ export function app({
           {G.cells.map((cell, i) => {
             const winning = G.winLine.includes(i);
             const isClickable =
-              cell === null &&
-              !over &&
-              isLocalPlayersTurn &&
-              !isCurrentPlayerBot &&
-              !isBotThinking;
+              cell === null && !over && isLocalPlayersTurn && !isCurrentPlayerBot && !isBotThinking;
             return (
               <button
                 key={i}
                 disabled={!isClickable}
                 onClick={() => moves.play(i)}
                 className={`aspect-square rounded-2xl border-2 transition-all duration-200
-                  ${winning ? 'scale-105 border-slate-900' : 'border-slate-200'}
-                  ${
-                    isClickable
-                      ? 'hover:-translate-y-1 hover:border-slate-400'
-                      : ''
-                  }
+                  ${winning ? "scale-105 border-slate-900" : "border-slate-200"}
+                  ${isClickable ? "hover:-translate-y-1 hover:border-slate-400" : ""}
                 `}
                 style={{
-                  backgroundColor: cell !== null ? COLORS[cell] : '#fff',
+                  backgroundColor: cell !== null ? COLORS[cell] : "#fff",
                 }}
               />
             );
@@ -165,15 +149,11 @@ export function app({
 
         {over && (
           <div className="flex items-center justify-center gap-2 text-sm text-slate-500">
-            {G.winner === 'draw' ? (
-              <span className="text-xs uppercase tracking-widest text-slate-400">
-                Draw
-              </span>
+            {G.winner === "draw" ? (
+              <span className="text-xs uppercase tracking-widest text-slate-400">Draw</span>
             ) : (
               <>
-                <span className="text-xs uppercase tracking-widest text-slate-400">
-                  Winner
-                </span>
+                <span className="text-xs uppercase tracking-widest text-slate-400">Winner</span>
 
                 <div
                   className="h-3 w-6 rounded"

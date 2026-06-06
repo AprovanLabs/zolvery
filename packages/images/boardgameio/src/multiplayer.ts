@@ -1,4 +1,4 @@
-import type { Game } from 'boardgame.io';
+import type { Game } from "boardgame.io";
 
 export interface MultiplayerConfig {
   isMultiplayer: boolean;
@@ -12,10 +12,7 @@ export function getMultiplayer(config: MultiplayerConfig, game?: Game) {
   const BoardgameMultiplayer = (
     window as {
       BoardgameMultiplayer?: {
-        Local?: (opts?: {
-          bots?: Record<string, unknown>;
-          storageKey?: string;
-        }) => unknown;
+        Local?: (opts?: { bots?: Record<string, unknown>; storageKey?: string }) => unknown;
       };
     }
   ).BoardgameMultiplayer;
@@ -53,9 +50,6 @@ export function getMultiplayer(config: MultiplayerConfig, game?: Game) {
 }
 
 export function generateMatchID(): string {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  return Array.from(
-    { length: 6 },
-    () => chars[Math.floor(Math.random() * chars.length)],
-  ).join('');
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  return Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
 }

@@ -1,9 +1,9 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { User, Circle, Trophy, Target } from 'lucide-react';
+import { User, Circle, Trophy, Target } from "lucide-react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 
-type Suit = 'hearts' | 'diamonds' | 'clubs' | 'spades';
-type Rank = '9' | '10' | 'J' | 'Q' | 'K' | 'A';
-type BotDifficulty = 'easy' | 'medium' | 'hard';
+type Suit = "hearts" | "diamonds" | "clubs" | "spades";
+type Rank = "9" | "10" | "J" | "Q" | "K" | "A";
+type BotDifficulty = "easy" | "medium" | "hard";
 
 interface Card {
   suit: Suit;
@@ -23,7 +23,7 @@ interface BuckEuchreState {
   widow: Card[];
   players: Player[];
   trickCards: Card[];
-  trumpSuit: Suit | '';
+  trumpSuit: Suit | "";
   trickWinner: number;
   leadPlayer: number;
   cardsWon: Card[];
@@ -34,8 +34,8 @@ interface BuckEuchreState {
 }
 
 interface GameSettings {
-  'bot-count': number;
-  'bot-difficulty': BotDifficulty;
+  "bot-count": number;
+  "bot-difficulty": BotDifficulty;
 }
 
 // Boardgame.io props injected into board component
@@ -60,11 +60,11 @@ interface BoardProps {
   botCount?: number;
 }
 
-const SUITS: Suit[] = ['hearts', 'diamonds', 'clubs', 'spades'];
-const RANKS: Rank[] = ['9', '10', 'J', 'Q', 'K', 'A'];
+const SUITS: Suit[] = ["hearts", "diamonds", "clubs", "spades"];
+const RANKS: Rank[] = ["9", "10", "J", "Q", "K", "A"];
 const INITIAL_SCORE = 10;
 const CARDS_PER_HAND = 5;
-const PLAYER_COLORS = ['#16A34A', '#2563EB', '#F97316', '#DB2777'];
+const PLAYER_COLORS = ["#16A34A", "#2563EB", "#F97316", "#DB2777"];
 const TURN_DELAY_MS = 1000;
 const BOT_PLAY_DELAY_MS = 1200;
 
@@ -78,25 +78,19 @@ const createDeck = (): Card[] => {
   return deck;
 };
 
-const getCardValue = (card: Card, trumpSuit: Suit | ''): number => {
+const getCardValue = (card: Card, trumpSuit: Suit | ""): number => {
   const rankValues: Record<string, number> = {
-    '9': 9,
-    '10': 10,
+    "9": 9,
+    "10": 10,
     J: trumpSuit === card.suit ? 16 : 11,
     Q: 12,
     K: 13,
     A: 14,
   };
-  return card.suit === trumpSuit
-    ? rankValues[card.rank] + 100
-    : rankValues[card.rank];
+  return card.suit === trumpSuit ? rankValues[card.rank] + 100 : rankValues[card.rank];
 };
 
-const getWinningCardIndex = (
-  cards: Card[],
-  leadSuit: Suit,
-  trumpSuit: Suit | '',
-): number => {
+const getWinningCardIndex = (cards: Card[], leadSuit: Suit, trumpSuit: Suit | ""): number => {
   if (cards.length === 0) return -1;
 
   let winningIdx = 0;
@@ -133,7 +127,7 @@ const countSuitCards = (hand: Card[], suit: Suit): number =>
   hand.filter((c) => c.suit === suit).length;
 
 const getBestTrumpSuit = (hand: Card[]): Suit => {
-  let bestSuit: Suit = 'hearts';
+  let bestSuit: Suit = "hearts";
   let maxCount = 0;
   for (const suit of SUITS) {
     const count = countSuitCards(hand, suit);
@@ -145,14 +139,10 @@ const getBestTrumpSuit = (hand: Card[]): Suit => {
   return bestSuit;
 };
 
-const shouldBid = (
-  hand: Card[],
-  currentBid: number,
-  difficulty: BotDifficulty,
-): number => {
+const shouldBid = (hand: Card[], currentBid: number, difficulty: BotDifficulty): number => {
   const trumpSuit = getBestTrumpSuit(hand);
   const trumpCount = countSuitCards(hand, trumpSuit);
-  const highCards = hand.filter((c) => c.rank === 'A' || c.rank === 'K').length;
+  const highCards = hand.filter((c) => c.rank === "A" || c.rank === "K").length;
 
   const thresholds = {
     easy: { minTrump: 3, minHigh: 1 },
@@ -171,11 +161,11 @@ const shouldBid = (
 const selectBestCard = (
   hand: Card[],
   trickCards: Card[],
-  trumpSuit: Suit | '',
-  difficulty: BotDifficulty,
+  trumpSuit: Suit | "",
+  difficulty: BotDifficulty
 ): number => {
   if (trickCards.length === 0) {
-    if (difficulty === 'hard') {
+    if (difficulty === "hard") {
       const trumpCards = hand
         .map((c, i) => ({ card: c, index: i }))
         .filter(({ card }) => card.suit === trumpSuit);
@@ -190,12 +180,12 @@ const selectBestCard = (
     .filter(({ card }) => card.suit === leadSuit);
 
   if (followingSuit.length > 0) {
-    return difficulty === 'easy'
+    return difficulty === "easy"
       ? followingSuit[0].index
       : followingSuit[followingSuit.length - 1].index;
   }
 
-  if (difficulty !== 'easy' && trumpSuit) {
+  if (difficulty !== "easy" && trumpSuit) {
     const trumpCards = hand
       .map((c, i) => ({ card: c, index: i }))
       .filter(({ card }) => card.suit === trumpSuit);
@@ -208,39 +198,33 @@ export const makeBotMove = (
   G: BuckEuchreState,
   playerID: number,
   stage: string | undefined,
-  difficulty: BotDifficulty,
+  difficulty: BotDifficulty
 ): { move: string; args?: unknown[] } | null => {
   const player = G.players[playerID];
 
-  if (stage === 'bidding') {
+  if (stage === "bidding") {
     const bid = shouldBid(player.hand, G.highestBid, difficulty);
-    return bid > 0 ? { move: 'placeBid', args: [bid] } : { move: 'passBid' };
+    return bid > 0 ? { move: "placeBid", args: [bid] } : { move: "passBid" };
   }
 
-  if (stage === 'selectingTrump') {
+  if (stage === "selectingTrump") {
     const bestSuit = getBestTrumpSuit(player.hand);
-    if (difficulty === 'hard') {
+    if (difficulty === "hard") {
       const widowTrumpCount = G.widow.filter((c) => c.suit === bestSuit).length;
-      if (widowTrumpCount > countSuitCards(player.hand, bestSuit))
-        return { move: 'exchangeWidow' };
+      if (widowTrumpCount > countSuitCards(player.hand, bestSuit)) return { move: "exchangeWidow" };
     }
-    return { move: 'selectTrump', args: [bestSuit] };
+    return { move: "selectTrump", args: [bestSuit] };
   }
 
-  if (stage === 'playingCard') {
-    const cardIndex = selectBestCard(
-      player.hand,
-      G.trickCards,
-      G.trumpSuit,
-      difficulty,
-    );
-    return { move: 'playCard', args: [cardIndex] };
+  if (stage === "playingCard") {
+    const cardIndex = selectBestCard(player.hand, G.trickCards, G.trumpSuit, difficulty);
+    return { move: "playCard", args: [cardIndex] };
   }
   return null;
 };
 
 export const game = {
-  name: 'buck-euchre',
+  name: "buck-euchre",
   minPlayers: 4,
   maxPlayers: 4,
 
@@ -274,7 +258,7 @@ export const game = {
       widow: shuffledDeck.slice(0, CARDS_PER_HAND),
       players,
       trickCards: [] as Card[],
-      trumpSuit: '' as Suit | '',
+      trumpSuit: "" as Suit | "",
       trickWinner: -1,
       leadPlayer: 0,
       cardsWon: [] as Card[],
@@ -296,13 +280,13 @@ export const game = {
       if (G.bidding) {
         // Sequential bidding: start with first player who hasn't bid yet
         const firstBidder = G.biddingOrder[0] ?? G.leadPlayer;
-        events.setActivePlayers({ value: { [firstBidder]: 'bidding' } });
-      } else if (G.trumpSuit === '' && G.highestBidder !== -1) {
+        events.setActivePlayers({ value: { [firstBidder]: "bidding" } });
+      } else if (G.trumpSuit === "" && G.highestBidder !== -1) {
         events.setActivePlayers({
-          value: { [G.highestBidder]: 'selectingTrump' },
+          value: { [G.highestBidder]: "selectingTrump" },
         });
       } else if (G.trickCards.length === 0) {
-        events.setActivePlayers({ value: { [G.leadPlayer]: 'playingCard' } });
+        events.setActivePlayers({ value: { [G.leadPlayer]: "playingCard" } });
       }
     },
 
@@ -323,7 +307,7 @@ export const game = {
                 setActivePlayers: (opts: unknown) => void;
               };
             },
-            bidAmount: number,
+            bidAmount: number
           ) => {
             if (bidAmount <= G.highestBid || bidAmount > CARDS_PER_HAND) return;
             const pid = parseInt(playerID);
@@ -339,7 +323,7 @@ export const game = {
             } else {
               // Activate next player in bidding order
               events.setActivePlayers({
-                value: { [G.biddingOrder[0]]: 'bidding' },
+                value: { [G.biddingOrder[0]]: "bidding" },
               });
             }
           },
@@ -376,7 +360,7 @@ export const game = {
             } else {
               // Activate next player in bidding order
               events.setActivePlayers({
-                value: { [G.biddingOrder[0]]: 'bidding' },
+                value: { [G.biddingOrder[0]]: "bidding" },
               });
             }
           },
@@ -392,7 +376,7 @@ export const game = {
               G: BuckEuchreState;
               events: { endStage: () => void; endTurn: () => void };
             },
-            suit: Suit,
+            suit: Suit
           ) => {
             if (!SUITS.includes(suit)) return;
             G.trumpSuit = suit;
@@ -400,13 +384,7 @@ export const game = {
             events.endStage();
             events.endTurn();
           },
-          exchangeWidow: ({
-            G,
-            playerID,
-          }: {
-            G: BuckEuchreState;
-            playerID: string;
-          }) => {
+          exchangeWidow: ({ G, playerID }: { G: BuckEuchreState; playerID: string }) => {
             const pid = parseInt(playerID);
             const tempHand = [...G.players[pid].hand];
             G.players[pid].hand = [...G.widow];
@@ -432,37 +410,29 @@ export const game = {
               };
               ctx: { numPlayers: number };
             },
-            cardIndex: number,
+            cardIndex: number
           ) => {
             const pid = parseInt(playerID);
             const player = G.players[pid];
 
             if (G.trickCards.length > 0) {
               const leadCard = G.trickCards[0];
-              const hasLeadSuit = player.hand.some(
-                (card: Card) => card.suit === leadCard.suit,
-              );
-              if (hasLeadSuit && player.hand[cardIndex].suit !== leadCard.suit)
-                return;
+              const hasLeadSuit = player.hand.some((card: Card) => card.suit === leadCard.suit);
+              if (hasLeadSuit && player.hand[cardIndex].suit !== leadCard.suit) return;
             }
 
             const playedCard = player.hand.splice(cardIndex, 1)[0];
             G.trickCards.push(playedCard);
 
             if (G.trickCards.length < ctx.numPlayers) {
-              const nextPlayer =
-                (G.leadPlayer + G.trickCards.length) % ctx.numPlayers;
+              const nextPlayer = (G.leadPlayer + G.trickCards.length) % ctx.numPlayers;
               events.endStage();
               events.setActivePlayers({
-                value: { [nextPlayer]: 'playingCard' },
+                value: { [nextPlayer]: "playingCard" },
               });
             } else {
               const leadSuit = G.trickCards[0].suit;
-              const winnerIdx = getWinningCardIndex(
-                G.trickCards,
-                leadSuit,
-                G.trumpSuit,
-              );
+              const winnerIdx = getWinningCardIndex(G.trickCards, leadSuit, G.trumpSuit);
               const winnerID = (G.leadPlayer + winnerIdx) % ctx.numPlayers;
 
               G.trickWinner = winnerID;
@@ -473,10 +443,10 @@ export const game = {
               events.endStage();
 
               if (G.players.every((p: Player) => p.hand.length === 0)) {
-                events.setPhase('scoring');
+                events.setPhase("scoring");
               } else {
                 events.setActivePlayers({
-                  value: { [winnerID]: 'playingCard' },
+                  value: { [winnerID]: "playingCard" },
                 });
               }
             }
@@ -487,7 +457,7 @@ export const game = {
   },
 
   phases: {
-    play: { start: true, next: 'scoring' },
+    play: { start: true, next: "scoring" },
     scoring: {
       moves: {
         startNewRound: ({
@@ -503,8 +473,7 @@ export const game = {
         }) => {
           G.players.forEach((player: Player, idx: number) => {
             if (idx === G.highestBidder) {
-              player.score +=
-                player.tricks >= player.bid ? -player.bid : player.bid;
+              player.score += player.tricks >= player.bid ? -player.bid : player.bid;
             } else {
               player.score += player.tricks > 0 ? -player.tricks : 1;
             }
@@ -525,7 +494,7 @@ export const game = {
           G.widow = shuffledDeck.slice(0, CARDS_PER_HAND);
           G.deck = shuffledDeck.slice(CARDS_PER_HAND);
           G.trickCards = [];
-          G.trumpSuit = '';
+          G.trumpSuit = "";
           G.trickWinner = -1;
           G.leadPlayer = (G.leadPlayer + 1) % ctx.numPlayers;
           G.cardsWon = [];
@@ -533,7 +502,7 @@ export const game = {
           G.highestBid = 0;
           G.highestBidder = -1;
           G.biddingOrder = Array.from({ length: ctx.numPlayers }, (_, i) => i); // Reset bidding order
-          events.setPhase('play');
+          events.setPhase("play");
           events.endTurn();
         },
       },
@@ -553,38 +522,34 @@ export const game = {
         activePlayers?: Record<string, string>;
         phase: string;
       },
-      playerID?: string,
+      playerID?: string
     ) => {
       const moves: Array<{ move: string; args?: unknown[] }> = [];
       const activePlayerID = playerID ?? ctx.currentPlayer;
       const stage = ctx.activePlayers?.[activePlayerID];
 
-      if (stage === 'bidding') {
-        moves.push({ move: 'passBid' });
+      if (stage === "bidding") {
+        moves.push({ move: "passBid" });
         for (let i = G.highestBid + 1; i <= CARDS_PER_HAND; i++) {
-          moves.push({ move: 'placeBid', args: [i] });
+          moves.push({ move: "placeBid", args: [i] });
         }
-      } else if (stage === 'selectingTrump') {
-        SUITS.forEach((suit) =>
-          moves.push({ move: 'selectTrump', args: [suit] }),
-        );
-        moves.push({ move: 'exchangeWidow' });
-      } else if (stage === 'playingCard') {
+      } else if (stage === "selectingTrump") {
+        SUITS.forEach((suit) => moves.push({ move: "selectTrump", args: [suit] }));
+        moves.push({ move: "exchangeWidow" });
+      } else if (stage === "playingCard") {
         const player = G.players[parseInt(activePlayerID)];
         let validCards = player.hand.map((_: Card, i: number) => i);
         if (G.trickCards.length > 0) {
           const leadSuit = G.trickCards[0].suit;
           if (player.hand.some((card: Card) => card.suit === leadSuit)) {
-            validCards = validCards.filter(
-              (i: number) => player.hand[i].suit === leadSuit,
-            );
+            validCards = validCards.filter((i: number) => player.hand[i].suit === leadSuit);
           }
         }
         validCards.forEach((cardIndex: number) =>
-          moves.push({ move: 'playCard', args: [cardIndex] }),
+          moves.push({ move: "playCard", args: [cardIndex] })
         );
-      } else if (ctx.phase === 'scoring') {
-        moves.push({ move: 'startNewRound' });
+      } else if (ctx.phase === "scoring") {
+        moves.push({ move: "startNewRound" });
       }
       return moves;
     },
@@ -593,25 +558,23 @@ export const game = {
 
 const getSuitIcon = (suit: Suit): string => {
   const icons: Record<Suit, string> = {
-    hearts: '♥',
-    diamonds: '♦',
-    clubs: '♣',
-    spades: '♠',
+    hearts: "♥",
+    diamonds: "♦",
+    clubs: "♣",
+    spades: "♠",
   };
   return icons[suit];
 };
 
 const getSuitColor = (suit: Suit): string => {
-  return suit === 'hearts' || suit === 'diamonds'
-    ? 'text-red-500'
-    : 'text-gray-800';
+  return suit === "hearts" || suit === "diamonds" ? "text-red-500" : "text-gray-800";
 };
 
 interface CardDisplayProps {
   card: Card;
   onClick?: () => void;
   disabled?: boolean;
-  size?: 'sm' | 'md';
+  size?: "sm" | "md";
   draggable?: boolean;
   onDragStart?: () => void;
   onDragMove?: (point: { x: number; y: number }) => void;
@@ -622,15 +585,15 @@ const CardDisplay: React.FC<CardDisplayProps> = ({
   card,
   onClick,
   disabled,
-  size = 'md',
+  size = "md",
   draggable = false,
   onDragStart,
   onDragMove,
   onDragEnd,
 }) => {
-  const sizeClasses = size === 'sm' ? 'w-16 h-24' : 'w-24 h-32';
-  const textSize = size === 'sm' ? 'text-sm' : 'text-xl';
-  const iconSize = size === 'sm' ? 'text-2xl' : 'text-4xl';
+  const sizeClasses = size === "sm" ? "w-16 h-24" : "w-24 h-32";
+  const textSize = size === "sm" ? "text-sm" : "text-xl";
+  const iconSize = size === "sm" ? "text-2xl" : "text-4xl";
   const cardRef = useRef<HTMLDivElement>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const dragOffsetRef = useRef({ x: 0, y: 0 });
@@ -652,10 +615,7 @@ const CardDisplay: React.FC<CardDisplayProps> = ({
     if (!dragging) return;
 
     const handlePointerMove = (event: PointerEvent) => {
-      if (
-        activePointerId.current !== null &&
-        event.pointerId !== activePointerId.current
-      ) {
+      if (activePointerId.current !== null && event.pointerId !== activePointerId.current) {
         return;
       }
       event.preventDefault();
@@ -667,10 +627,7 @@ const CardDisplay: React.FC<CardDisplayProps> = ({
     };
 
     const handlePointerUp = (event: PointerEvent) => {
-      if (
-        activePointerId.current !== null &&
-        event.pointerId !== activePointerId.current
-      ) {
+      if (activePointerId.current !== null && event.pointerId !== activePointerId.current) {
         return;
       }
       event.preventDefault();
@@ -690,14 +647,14 @@ const CardDisplay: React.FC<CardDisplayProps> = ({
       }
     };
 
-    window.addEventListener('pointermove', handlePointerMove, {
+    window.addEventListener("pointermove", handlePointerMove, {
       passive: false,
     });
-    window.addEventListener('pointerup', handlePointerUp, { passive: false });
+    window.addEventListener("pointerup", handlePointerUp, { passive: false });
 
     return () => {
-      window.removeEventListener('pointermove', handlePointerMove);
-      window.removeEventListener('pointerup', handlePointerUp);
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", handlePointerUp);
     };
   }, [dragging, onClick, disabled, onDragMove, onDragEnd]);
 
@@ -705,43 +662,35 @@ const CardDisplay: React.FC<CardDisplayProps> = ({
     <div
       ref={cardRef}
       className={`relative flex items-center justify-center border rounded-xl text-slate-900 shadow-sm select-none touch-none ${sizeClasses} ${
-        disabled
-          ? 'cursor-not-allowed bg-slate-100 border-slate-200'
-          : 'cursor-grab bg-white'
+        disabled ? "cursor-not-allowed bg-slate-100 border-slate-200" : "cursor-grab bg-white"
       } ${
         dragging
-          ? 'cursor-grabbing shadow-lg z-50'
-          : 'hover:-translate-y-1 hover:shadow-md hover:z-10'
+          ? "cursor-grabbing shadow-lg z-50"
+          : "hover:-translate-y-1 hover:shadow-md hover:z-10"
       } transition-transform duration-200`}
       style={{
         transform: `translate(${dragOffset.x}px, ${dragOffset.y}px)${
-          dragging ? ' rotate(-2deg)' : ''
+          dragging ? " rotate(-2deg)" : ""
         }`,
-        transition: dragging ? 'none' : 'transform 200ms ease',
-        userSelect: 'none',
+        transition: dragging ? "none" : "transform 200ms ease",
+        userSelect: "none",
       }}
       onClick={disabled ? undefined : onClick}
       onPointerDown={handlePointerDown}
     >
       <div
         className={`${getSuitColor(
-          card.suit,
-        )} ${textSize} absolute top-1 left-2 ${disabled ? 'opacity-40' : ''}`}
+          card.suit
+        )} ${textSize} absolute top-1 left-2 ${disabled ? "opacity-40" : ""}`}
       >
         {card.rank}
       </div>
-      <div
-        className={`${getSuitColor(card.suit)} ${iconSize} ${
-          disabled ? 'opacity-40' : ''
-        }`}
-      >
+      <div className={`${getSuitColor(card.suit)} ${iconSize} ${disabled ? "opacity-40" : ""}`}>
         {getSuitIcon(card.suit)}
       </div>
       <div
-        className={`${getSuitColor(
-          card.suit,
-        )} ${textSize} absolute bottom-1 right-2 ${
-          disabled ? 'opacity-40' : ''
+        className={`${getSuitColor(card.suit)} ${textSize} absolute bottom-1 right-2 ${
+          disabled ? "opacity-40" : ""
         }`}
       >
         {card.rank}
@@ -750,22 +699,13 @@ const CardDisplay: React.FC<CardDisplayProps> = ({
   );
 };
 
-export function app({
-  G,
-  ctx,
-  moves,
-  playerID,
-  isMultiplayer,
-  botCount = 0,
-}: BoardProps) {
+export function app({ G, ctx, moves, playerID, isMultiplayer, botCount = 0 }: BoardProps) {
   // Get settings from context (provided by boardgameio image)
   const settings = useSettings<GameSettings>();
   const [currentBid, setCurrentBid] = useState(1);
-  const [isTurnTransitioning, setIsTurnTransitioning] = useState(false);
-  const [turnLabel, setTurnLabel] = useState<string | null>(null);
-  const [displayTrickCards, setDisplayTrickCards] = useState<Card[]>(
-    G.trickCards,
-  );
+  const [_isTurnTransitioning, setIsTurnTransitioning] = useState(false);
+  const [_turnLabel, _setTurnLabel] = useState<string | null>(null);
+  const [displayTrickCards, setDisplayTrickCards] = useState<Card[]>(G.trickCards);
   const [isDraggingCard, setIsDraggingCard] = useState(false);
   const [isOverDropZone, setIsOverDropZone] = useState(false);
   const dropZoneRef = useRef<HTMLDivElement>(null);
@@ -776,30 +716,25 @@ export function app({
   const trickHoldTimerRef = useRef<number | null>(null);
   const leadPlayerRef = useRef<number>(G.leadPlayer);
   const botMoveTimerRef = useRef<number | null>(null);
-  const pid = parseInt(playerID ?? '0');
+  const pid = parseInt(playerID ?? "0");
 
   // Determine which players are bots based on botCount (last N players are bots, excluding human)
   const numPlayers = ctx.numPlayers;
   const botPlayerIDs = new Set(
-    Array.from(
-      { length: Math.min(botCount, numPlayers - 1) },
-      (_, i) => numPlayers - 1 - i,
-    ),
+    Array.from({ length: Math.min(botCount, numPlayers - 1) }, (_, i) => numPlayers - 1 - i)
   );
   const isBot = (id: number) => id !== pid && botPlayerIDs.has(id);
 
   // Bot automation settings
   const shouldRunBots = !isMultiplayer && botCount > 0;
-  const botDifficulty = settings?.['bot-difficulty'] ?? 'medium';
+  const botDifficulty = settings?.["bot-difficulty"] ?? "medium";
 
   // Determine the active player - prefer activePlayers over currentPlayer
   const activePlayerFromStages = ctx.activePlayers
-    ? Object.keys(ctx.activePlayers).find(
-        (id) => ctx.activePlayers![id] !== 'all',
-      )
+    ? Object.keys(ctx.activePlayers).find((id) => ctx.activePlayers![id] !== "all")
     : null;
   const currentPlayerId = activePlayerFromStages ?? ctx.currentPlayer;
-  const isUserTurn = currentPlayerId === String(pid);
+  const _isUserTurn = currentPlayerId === String(pid);
 
   const stage =
     ctx.activePlayers?.[String(pid)] ??
@@ -807,11 +742,10 @@ export function app({
   const player = G.players[pid];
 
   // Active stages govern turn ownership; currentPlayer does not advance during active stages.
-  const canBid = stage === 'bidding';
-  const canSelectTrump = stage === 'selectingTrump' && pid === G.highestBidder;
-  const canPlayCard = stage === 'playingCard';
-  const canStartNewRound =
-    ctx.phase === 'scoring' && currentPlayerId === String(pid);
+  const canBid = stage === "bidding";
+  const canSelectTrump = stage === "selectingTrump" && pid === G.highestBidder;
+  const canPlayCard = stage === "playingCard";
+  const canStartNewRound = ctx.phase === "scoring" && currentPlayerId === String(pid);
   const minBid = Math.min(G.highestBid + 1, CARDS_PER_HAND);
   const hasValidBid = G.highestBid < CARDS_PER_HAND;
 
@@ -820,7 +754,7 @@ export function app({
     if (!shouldRunBots) return;
 
     // Handle scoring phase - any player can start new round
-    if (ctx.phase === 'scoring') {
+    if (ctx.phase === "scoring") {
       // If human player should start new round, don't auto-proceed
       // Otherwise, let a bot do it
       const humanIsCurrentPlayer = currentPlayerId === String(pid);
@@ -839,9 +773,7 @@ export function app({
     }
 
     // Find bot players that need to act (in activePlayers stages)
-    const activePlayers = ctx.activePlayers
-      ? Object.keys(ctx.activePlayers)
-      : [];
+    const activePlayers = ctx.activePlayers ? Object.keys(ctx.activePlayers) : [];
     const botPlayers = activePlayers.filter((id) => {
       const playerId = parseInt(id);
       return playerId < ctx.numPlayers && isBot(playerId);
@@ -857,15 +789,15 @@ export function app({
         const action = makeBotMove(G, botIdx, botStage, botDifficulty);
 
         if (action) {
-          if (action.move === 'placeBid' && action.args) {
+          if (action.move === "placeBid" && action.args) {
             moves.placeBid(action.args[0] as number);
-          } else if (action.move === 'passBid') {
+          } else if (action.move === "passBid") {
             moves.passBid();
-          } else if (action.move === 'selectTrump' && action.args) {
+          } else if (action.move === "selectTrump" && action.args) {
             moves.selectTrump(action.args[0] as Suit);
-          } else if (action.move === 'exchangeWidow') {
+          } else if (action.move === "exchangeWidow") {
             moves.exchangeWidow();
-          } else if (action.move === 'playCard' && action.args) {
+          } else if (action.move === "playCard" && action.args) {
             moves.playCard(action.args[0] as number);
           }
           break; // Only make one move per cycle, let state update
@@ -966,8 +898,7 @@ export function app({
     // Detect if this is a new trick (lead player changed and cards reset)
     const isNewTrick =
       next.length === 0 ||
-      (next.length < lastSeenTrickLengthRef.current &&
-        currentLeadPlayer !== prevLeadPlayer);
+      (next.length < lastSeenTrickLengthRef.current && currentLeadPlayer !== prevLeadPlayer);
 
     if (isNewTrick && next.length === 0) {
       // Trick ended - show completed trick briefly, then clear
@@ -1080,7 +1011,7 @@ export function app({
         const hasLeadSuit = player.hand.some((c) => c.suit === leadSuit);
         return !hasLeadSuit || player.hand[cardIndex].suit === leadSuit;
       },
-    [canPlayCard, G.trickCards, player.hand],
+    [canPlayCard, G.trickCards, player.hand]
   );
 
   const handleBid = () => {
@@ -1093,9 +1024,7 @@ export function app({
   const isPointInDropZone = (x: number, y: number): boolean => {
     const rect = dropZoneRef.current?.getBoundingClientRect();
     if (!rect) return false;
-    return (
-      x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom
-    );
+    return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
   };
 
   return (
@@ -1116,7 +1045,7 @@ export function app({
               <div
                 key={idx}
                 className={`flex items-center gap-2 rounded-full pl-3 pr-[7.75rem] py-1.5 text-xs w-32 justify-between ${
-                  isCurrentPlayer ? 'ring-2 ring-offset-1 ring-slate-800' : ''
+                  isCurrentPlayer ? "ring-2 ring-offset-1 ring-slate-800" : ""
                 }`}
                 style={{
                   backgroundColor: `${PLAYER_COLORS[idx]}15`,
@@ -1131,28 +1060,14 @@ export function app({
                 </span>
                 <span className="flex items-center gap-2">
                   <span className="flex items-center gap-0.5">
-                    <Circle
-                      size={8}
-                      className="opacity-60"
-                      fill="currentColor"
-                    />
-                    <span className="font-medium w-4 text-right">
-                      {p.score}
-                    </span>
+                    <Circle size={8} className="opacity-60" fill="currentColor" />
+                    <span className="font-medium w-4 text-right">{p.score}</span>
                   </span>
-                  <span
-                    className={`flex items-center gap-0.5 ${
-                      p.tricks > 0 ? '' : 'opacity-30'
-                    }`}
-                  >
+                  <span className={`flex items-center gap-0.5 ${p.tricks > 0 ? "" : "opacity-30"}`}>
                     <Trophy size={10} />
                     <span className="w-3 text-right">{p.tricks}</span>
                   </span>
-                  <span
-                    className={`flex items-center gap-0.5 ${
-                      p.bid > 0 ? '' : 'opacity-30'
-                    }`}
-                  >
+                  <span className={`flex items-center gap-0.5 ${p.bid > 0 ? "" : "opacity-30"}`}>
                     <Target size={10} />
                     <span className="w-3 text-right">{p.bid}</span>
                   </span>
@@ -1165,9 +1080,7 @@ export function app({
           {/* My Info */}
           <div
             className={`flex items-center gap-3 rounded-full px-4 py-1.5 text-xs ${
-              currentPlayerId === String(pid)
-                ? 'ring-2 ring-offset-1 ring-slate-800'
-                : ''
+              currentPlayerId === String(pid) ? "ring-2 ring-offset-1 ring-slate-800" : ""
             }`}
             style={{
               backgroundColor: `${PLAYER_COLORS[pid]}15`,
@@ -1182,28 +1095,16 @@ export function app({
               )}
             </span>
             <span className="flex items-center gap-0.5">
-              <Circle
-                size={8}
-                className="opacity-60"
-                fill="currentColor"
-              />
+              <Circle size={8} className="opacity-60" fill="currentColor" />
               <span className="font-medium">{player.score}</span>
               <span className="text-[10px] opacity-60 ml-0.5">PTS</span>
             </span>
-            <span
-              className={`flex items-center gap-0.5 ${
-                player.tricks > 0 ? '' : 'opacity-30'
-              }`}
-            >
+            <span className={`flex items-center gap-0.5 ${player.tricks > 0 ? "" : "opacity-30"}`}>
               <Trophy size={10} />
               <span>{player.tricks}</span>
               <span className="text-[10px] opacity-60 ml-0.5">TRICKS</span>
             </span>
-            <span
-              className={`flex items-center gap-0.5 ${
-                player.bid > 0 ? '' : 'opacity-30'
-              }`}
-            >
+            <span className={`flex items-center gap-0.5 ${player.bid > 0 ? "" : "opacity-30"}`}>
               <Target size={10} />
               <span>{player.bid}</span>
               <span className="text-[10px] opacity-60 ml-0.5">BID</span>
@@ -1230,16 +1131,12 @@ export function app({
           <div
             ref={dropZoneRef}
             className={`pointer-events-none absolute inset-0 flex items-center justify-center rounded-2xl border-2 border-dashed transition-all duration-200 ${
-              isDraggingCard ? 'opacity-100' : 'opacity-0'
-            } ${
-              isOverDropZone
-                ? 'border-slate-900 bg-slate-100'
-                : 'border-slate-300'
-            }`}
+              isDraggingCard ? "opacity-100" : "opacity-0"
+            } ${isOverDropZone ? "border-slate-900 bg-slate-100" : "border-slate-300"}`}
           >
             <span
               className={`text-xs font-semibold uppercase tracking-[0.2em] ${
-                isOverDropZone ? 'text-slate-900' : 'text-slate-400'
+                isOverDropZone ? "text-slate-900" : "text-slate-400"
               }`}
             >
               Drop to play
@@ -1253,16 +1150,13 @@ export function app({
             {displayTrickCards.map((card, idx) => {
               const playerId = (G.leadPlayer + idx) % G.players.length;
               return (
-                <div
-                  key={idx}
-                  className="flex flex-col items-center gap-1"
-                >
+                <div key={idx} className="flex flex-col items-center gap-1">
                   <CardDisplay card={card} />
                   <div
                     className="mt-1 px-2 rounded-full text-[10px] text-white"
                     style={{ backgroundColor: PLAYER_COLORS[playerId] }}
                   >
-                    {playerId === pid ? 'You' : `P${playerId}`}
+                    {playerId === pid ? "You" : `P${playerId}`}
                   </div>
                 </div>
               );
@@ -1271,17 +1165,12 @@ export function app({
         ) : (
           <div className="flex flex-col items-center justify-center text-slate-400">
             {G.bidding ? (
-              <span className="text-xs uppercase tracking-[0.2em]">
-                Bidding in progress...
-              </span>
+              <span className="text-xs uppercase tracking-[0.2em]">Bidding in progress...</span>
             ) : !G.trumpSuit ? (
-              <span className="text-xs uppercase tracking-[0.2em]">
-                Selecting trump...
-              </span>
+              <span className="text-xs uppercase tracking-[0.2em]">Selecting trump...</span>
             ) : (
               <span className="text-xs uppercase tracking-[0.2em]">
-                Waiting for {pid === G.leadPlayer ? 'you' : `P${G.leadPlayer}`}{' '}
-                to lead...
+                Waiting for {pid === G.leadPlayer ? "you" : `P${G.leadPlayer}`} to lead...
               </span>
             )}
           </div>
@@ -1296,11 +1185,7 @@ export function app({
           </h3>
           <div className="flex gap-2 mb-3">
             {G.widow.map((card, idx) => (
-              <CardDisplay
-                key={idx}
-                card={card}
-                size="sm"
-              />
+              <CardDisplay key={idx} card={card} size="sm" />
             ))}
           </div>
           <button
@@ -1361,9 +1246,7 @@ export function app({
                   disabled={!hasValidBid}
                   className="w-full disabled:opacity-40"
                 />
-                <span className="text-lg font-bold text-slate-800">
-                  {currentBid}
-                </span>
+                <span className="text-lg font-bold text-slate-800">{currentBid}</span>
               </div>
               <div className="flex gap-4">
                 <button
@@ -1400,7 +1283,7 @@ export function app({
                     key={suit}
                     onClick={() => moves.selectTrump(suit)}
                     className={`px-4 py-2 text-2xl bg-white border border-slate-200 rounded-md shadow-sm hover:shadow-md ${getSuitColor(
-                      suit,
+                      suit
                     )}`}
                   >
                     {getSuitIcon(suit)}

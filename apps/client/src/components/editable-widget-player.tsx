@@ -1,8 +1,8 @@
-import { useState, useCallback, useEffect } from 'react';
-import type { VirtualProject } from '@aprovan/patchwork-compiler';
-import { WidgetPlayer, type WidgetPlayerProps } from './widget-player';
-import { WidgetEditModal } from './widget-edit-modal';
-import { useWidgetProject } from '../hooks/use-widget-project';
+import { useState, useCallback, useEffect } from "react";
+import { useWidgetProject } from "../hooks/use-widget-project";
+import { WidgetEditModal } from "./widget-edit-modal";
+import { WidgetPlayer, type WidgetPlayerProps } from "./widget-player";
+import type { VirtualProject } from "@aprovan/patchwork-compiler";
 
 export interface EditableWidgetPlayerProps extends WidgetPlayerProps {
   editable?: boolean;
@@ -29,7 +29,7 @@ export function EditableWidgetPlayer({
   const isEditing = externalIsEditing ?? internalIsEditing;
   const setIsEditing = onEditingChange ?? setInternalIsEditing;
 
-  const entryFile = project.project?.entry ?? 'client/main.tsx';
+  const entryFile = project.project?.entry ?? "client/main.tsx";
   const source = project.project?.files.get(entryFile)?.content ?? localSource;
 
   useEffect(() => {
@@ -47,7 +47,7 @@ export function EditableWidgetPlayer({
         onSourceChange?.(finalCode);
       }
     },
-    [source, onSourceChange, setIsEditing, project, entryFile],
+    [source, onSourceChange, setIsEditing, project, entryFile]
   );
 
   const handleSaveProject = useCallback(
@@ -59,7 +59,7 @@ export function EditableWidgetPlayer({
       }));
       await project.save(filesToSave);
     },
-    [project],
+    [project]
   );
 
   return (

@@ -1,18 +1,18 @@
-import { Construct } from 'constructs';
 import {
   Stack,
   Duration,
   RemovalPolicy,
   aws_cognito as cognito,
-  aws_certificatemanager as certificatemanager,
-} from 'aws-cdk-lib';
+  type aws_certificatemanager as certificatemanager,
+} from "aws-cdk-lib";
+import { Construct } from "constructs";
 import {
   DOMAIN_PACKAGE,
   LOCALHOST_CALLBACK_URLS,
   COGNITO_DOMAIN_TEMPLATE,
   PROJECT_DOMAIN,
-} from '../core/constants';
-import { namer } from '../core/utils';
+} from "../core/constants";
+import { namer } from "../core/utils";
 
 export interface AuthProps {
   callbackUrl: string;
@@ -34,7 +34,7 @@ export class Auth extends Construct {
 
     const stack = Stack.of(this);
 
-    this.cognitoUserPool = new cognito.UserPool(this, 'Pool', {
+    this.cognitoUserPool = new cognito.UserPool(this, "Pool", {
       removalPolicy: RemovalPolicy.DESTROY,
       userPoolName: namer().regional(),
       customAttributes: {
@@ -60,12 +60,12 @@ export class Auth extends Construct {
       },
       selfSignUpEnabled: true,
       userVerification: {
-        emailSubject: 'Verify Your Email for Zolvery',
+        emailSubject: "Verify Your Email for Zolvery",
         emailBody: `Thanks for signing up for Zolvery! Verify account by clicking on {##Verify Email##}`,
         emailStyle: cognito.VerificationEmailStyle.LINK,
       },
       userInvitation: {
-        emailSubject: 'Invite to Join Zolvery',
+        emailSubject: "Invite to Join Zolvery",
         emailBody: `Hello {username},
 
 You've been invited to join Zolvery! Your temporary password is {####}`,
@@ -132,7 +132,7 @@ You've been invited to join Zolvery! Your temporary password is {####}`,
     });
 
     this.domainName = namer().regional();
-    this.cognitoUserPool.addDomain('Domain', {
+    this.cognitoUserPool.addDomain("Domain", {
       cognitoDomain: {
         domainPrefix: this.domainName,
       },
@@ -141,14 +141,14 @@ You've been invited to join Zolvery! Your temporary password is {####}`,
     this.signInUrl = COGNITO_DOMAIN_TEMPLATE(this.domainName, stack.region);
 
     if (props.googleClientId && props.googleClientSecret) {
-      new cognito.UserPoolIdentityProviderGoogle(this, 'GoogleProvider', {
+      new cognito.UserPoolIdentityProviderGoogle(this, "GoogleProvider", {
         userPool: this.cognitoUserPool,
         clientId: props.googleClientId,
         clientSecret: props.googleClientSecret,
         attributeMapping: {
           email: cognito.ProviderAttribute.GOOGLE_EMAIL,
         },
-        scopes: ['email'],
+        scopes: ["email"],
       });
     }
   }

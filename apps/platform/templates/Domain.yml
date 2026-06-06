@@ -22,12 +22,11 @@ Resources:
   Route53Record:
     Type: AWS::Route53::RecordSetGroup
     Properties:
-      Comment:
-        !Sub 'Point ${SubdomainName}.${DomainName} to ${DistributionDomainName}'
+      Comment: !Sub "Point ${SubdomainName}.${DomainName} to ${DistributionDomainName}"
       HostedZoneId: !Ref HostedZoneId
       RecordSets:
-        - Name: !Sub '${SubdomainName}.${DomainName}.'
+        - Name: !Sub "${SubdomainName}.${DomainName}."
           Type: A
           AliasTarget:
             HostedZoneId: Z2FDTNDATAQYW2
-            DNSName: !Sub '${DistributionDomainName}.'
+            DNSName: !Sub "${DistributionDomainName}."

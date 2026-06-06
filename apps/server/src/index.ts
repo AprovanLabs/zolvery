@@ -1,11 +1,10 @@
 #!/usr/bin/env node
 
-import { shutdownTelemetry, telemetrySDK } from './config/telemetry';
-
-import { app } from './app';
-import { appConfig } from '@/config';
-import { logger } from '@/config/logger';
-import { PeerServer } from 'peer';
+import { PeerServer } from "peer";
+import { app } from "./app";
+import { shutdownTelemetry, telemetrySDK } from "./config/telemetry";
+import { appConfig } from "@/config";
+import { logger } from "@/config/logger";
 
 const port = appConfig.port;
 
@@ -15,56 +14,52 @@ const server = app.listen(port, () => {
       port,
       nodeEnv: appConfig.nodeEnv,
       environment: appConfig.environment,
-      version: process.env.npm_package_version || '1.0.0',
+      version: process.env.npm_package_version || "1.0.0",
       telemetryEnabled: !!telemetrySDK,
     },
-    `🚀 Zolvery server started successfully on port ${port}`,
+    `🚀 Zolvery server started successfully on port ${port}`
   );
 });
 
 // Setup PeerJS signaling server on separate port
 const peerPort = appConfig.peerPort;
-let peerHttpServer: import('http').Server | import('https').Server | null =
-  null;
+let peerHttpServer: import("http").Server | import("https").Server | null = null;
 
 const peerServer = PeerServer(
   {
     port: peerPort,
-    path: '/',
+    path: "/",
     allow_discovery: true,
     corsOptions: {
-      origin: '*',
+      origin: "*",
     },
   },
   (httpServer) => {
     peerHttpServer = httpServer;
-    logger.info({ port: peerPort }, '🔗 PeerJS signaling server started');
-  },
+    logger.info({ port: peerPort }, "🔗 PeerJS signaling server started");
+  }
 );
 
 // Log peer connections
-peerServer.on('connection', (client) => {
-  logger.info(
-    { clientId: client.getId() },
-    `PeerJS client connected on port ${peerPort}`,
-  );
+peerServer.on("connection", (client) => {
+  logger.info({ clientId: client.getId() }, `PeerJS client connected on port ${peerPort}`);
 });
 
-peerServer.on('disconnect', (client) => {
-  logger.info({ clientId: client.getId() }, 'PeerJS client disconnected');
+peerServer.on("disconnect", (client) => {
+  logger.info({ clientId: client.getId() }, "PeerJS client disconnected");
 });
 
 // Graceful shutdown
 const shutdown = async (signal: string) => {
-  logger.info({ signal }, 'Received shutdown signal, closing server...');
+  logger.info({ signal }, "Received shutdown signal, closing server...");
 
   peerHttpServer?.close();
 
   server.close(async (err) => {
     if (err) {
-      logger.error({ err }, 'Error during server shutdown');
+      logger.error({ err }, "Error during server shutdown");
     } else {
-      logger.info('Server closed successfully');
+      logger.info("Server closed successfully");
     }
 
     await shutdownTelemetry(telemetrySDK);
@@ -73,11 +68,11 @@ const shutdown = async (signal: string) => {
   });
 };
 
-process.on('SIGINT', () => shutdown('SIGINT'));
-process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on("SIGINT", () => shutdown("SIGINT"));
+process.on("SIGTERM", () => shutdown("SIGTERM"));
 
 // Handle uncaught exceptions
-process.on('uncaughtException', async (error) => {
+process.on("uncaughtException", async (error) => {
   logger.fatal(
     {
       err: {
@@ -86,7 +81,7 @@ process.on('uncaughtException', async (error) => {
         stack: error.stack,
       },
     },
-    'Uncaught exception, shutting down...',
+    "Uncaught exception, shutting down..."
   );
 
   await shutdownTelemetry(telemetrySDK);
@@ -94,13 +89,13 @@ process.on('uncaughtException', async (error) => {
 });
 
 // Handle unhandled promise rejections
-process.on('unhandledRejection', async (reason, promise) => {
+process.on("unhandledRejection", async (reason, promise) => {
   logger.fatal(
     {
       reason,
       promise,
     },
-    'Unhandled promise rejection, shutting down...',
+    "Unhandled promise rejection, shutting down..."
   );
 
   await shutdownTelemetry(telemetrySDK);

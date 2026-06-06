@@ -1,19 +1,18 @@
-import { DynamoDBDocumentClient, GetCommand } from '@aws-sdk/lib-dynamodb';
-import type { App } from '@zolver/core';
-import { appConfig } from '@/config';
-import logger from '@/logger';
+import { type DynamoDBDocumentClient, GetCommand } from "@aws-sdk/lib-dynamodb";
+import { NotFoundError } from "../common/errors";
+import type { App } from "@zolver/core";
 import {
-  DynamoDbRecord,
+  type DynamoDbRecord,
   generatePartitionKey,
   generateSortKey,
   getDynamoDBDocumentClient,
-} from '@/aws/dynamodb';
-
-import { NotFoundError } from '../common/errors';
+} from "@/aws/dynamodb";
+import { appConfig } from "@/config";
+import logger from "@/logger";
 
 const appKeys = {
-  partitionKey: (appId: string) => generatePartitionKey('APP', appId),
-  sortKey: () => generateSortKey('DATA', 'v1'),
+  partitionKey: (appId: string) => generatePartitionKey("APP", appId),
+  sortKey: () => generateSortKey("DATA", "v1"),
 };
 
 export interface AppStore {
@@ -23,7 +22,7 @@ export interface AppStore {
 export class DynamoDbAppStore implements AppStore {
   constructor(
     private readonly docClient: DynamoDBDocumentClient = getDynamoDBDocumentClient(),
-    private readonly tableName: string = appConfig.dynamodb.tableName,
+    private readonly tableName: string = appConfig.dynamodb.tableName
   ) {}
 
   async getApp(appId: string): Promise<DynamoDbRecord<App>> {
@@ -45,10 +44,10 @@ export class DynamoDbAppStore implements AppStore {
       logger.error(
         {
           err: error instanceof Error ? error : new Error(String(error)),
-          operation: 'get',
+          operation: "get",
           tableName: this.tableName,
         },
-        'DynamoDB getApp failed',
+        "DynamoDB getApp failed"
       );
       throw error;
     }

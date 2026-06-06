@@ -3,7 +3,7 @@
  */
 export class ClientStorage {
   private cache = new Map<string, unknown>();
-  private readonly storageKey = 'zolvery-client-cache';
+  private readonly storageKey = "zolvery-client-cache";
 
   public constructor() {
     this.loadFromLocalStorage();
@@ -65,7 +65,7 @@ export class ClientStorage {
    * Load cache from localStorage if available
    */
   private loadFromLocalStorage(): void {
-    if (typeof localStorage === 'undefined') {
+    if (typeof localStorage === "undefined") {
       return;
     }
 
@@ -76,7 +76,7 @@ export class ClientStorage {
         this.cache = new Map(Object.entries(data));
       }
     } catch (error) {
-      console.warn('Failed to load cache from localStorage:', error);
+      console.warn("Failed to load cache from localStorage:", error);
     }
   }
 
@@ -84,7 +84,7 @@ export class ClientStorage {
    * Save cache to localStorage if available
    */
   private saveToLocalStorage(): void {
-    if (typeof localStorage === 'undefined') {
+    if (typeof localStorage === "undefined") {
       return;
     }
 
@@ -92,7 +92,7 @@ export class ClientStorage {
       const data = Object.fromEntries(this.cache.entries());
       localStorage.setItem(this.storageKey, JSON.stringify(data));
     } catch (error) {
-      console.warn('Failed to save cache to localStorage:', error);
+      console.warn("Failed to save cache to localStorage:", error);
     }
   }
 }
