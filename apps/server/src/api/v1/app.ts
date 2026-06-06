@@ -124,8 +124,8 @@ export const buildAppRouter = ({ services }: { services: Services }) => {
   router.use(authMiddleware);
 
   router.get('/:appId+', async (ctx: AuthContext) => {
-    logger.info('Fetching app by ID', { appId: ctx.params.appId });
     const { appId } = ctx.params;
+    logger.info({ appId }, 'Fetching app by ID');
 
     try {
       const userId = ctx.user.userId;
@@ -133,7 +133,7 @@ export const buildAppRouter = ({ services }: { services: Services }) => {
       sendSuccessResponse(ctx, 200, { app });
     } catch (error) {
       if (error instanceof NotFoundError) {
-        logger.warn('App not found', { appId });
+        logger.warn({ appId }, 'App not found');
         sendErrorResponse(ctx, 404, 'App not found');
         return;
       }

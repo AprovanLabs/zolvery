@@ -5,7 +5,7 @@ import { createEvent, isCoreEvent } from '../events.js';
 import { Localization } from './localization.js';
 import { ClientEventBus } from './event-bus.js';
 import { ClientStorage } from './storage.js';
-import { ClientAPI } from './api.js';
+import { ClientAPI, AppEvent, SubmitScoreRequest } from './api.js';
 
 /**
  * Core client events that are managed by the system
@@ -187,7 +187,7 @@ export class Client {
       'client',
       this.user.userId,
     );
-    this.transport.dispatchEvent(transportEvent as Event);
+    this.transport.dispatchEvent(transportEvent as unknown as Event);
   };
 
   /**
@@ -239,7 +239,9 @@ export class Client {
   private setupEventHandlers(): void {
     this.transport.addEventListener('message', (message) => {
       // Handle incoming events from transport
-      this.handleTransportMessage(message as Record<string, unknown>);
+      this.handleTransportMessage(
+        message as unknown as Record<string, unknown>,
+      );
     });
   }
 
@@ -326,7 +328,7 @@ export class Client {
     const events = await this.api.getEvents(this.getCurrentDay());
     this.scoreSubmittedToday =
       events?.some(
-        (event: Record<string, unknown>) =>
+        (event: AppEvent) =>
           event.eventKey === 'score' || event.eventKey === 'final_score',
       ) || false;
   }
@@ -348,7 +350,9 @@ export class Client {
         break;
       case CoreEventType.DATA_REQUEST:
         await this.requestData(
-          (event.data as Record<string, unknown>)?.key as string | undefined,
+          ((event.data as Record<string, unknown>)?.key as
+            | string
+            | undefined) ?? 'data',
         );
         break;
       case CoreEventType.USER_ACTION:
@@ -401,7 +405,7 @@ export class Client {
       });
 
       // Submit to leaderboard
-      await this.api.submitScore(event.data);
+      await this.api.submitScore(event.data as SubmitScoreRequest);
 
       this.scoreSubmittedToday = true;
       this.emitInternal(CoreEventType.SCORE_ACCEPTED, event.data);
@@ -450,10 +454,9 @@ export class Client {
    * Handle messages from transport
    */
   private handleTransportMessage(message: Record<string, unknown>): void {
-    // Handle incoming events from server/transport
     if (message.type) {
       this.triggerLocalHandlers({
-        type: message.type,
+        type: message.type as string,
         data: message.data,
         timestamp: Date.now(),
         source: 'server',

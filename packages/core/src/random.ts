@@ -46,7 +46,7 @@ export class Random {
       .map(() => this.random() < p);
 
     if (onlyOne) {
-      return results[0];
+      return results[0]!;
     }
     return results;
   }

@@ -103,7 +103,7 @@ function getCognitoSubFromRequest(ctx: Context): string | null {
 function getCognitoUsernameFromRequest(ctx: Context): string | null {
   try {
     const claims = getCognitoClaimsFromRequest(ctx);
-    return claims['cognito:username'] || null;
+    return (claims['cognito:username'] as string) || null;
   } catch (error) {
     logger.error(
       {

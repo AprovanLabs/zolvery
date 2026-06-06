@@ -89,7 +89,7 @@ export class ClientAPI {
    */
   public async createEvent(request: CreateEventRequest): Promise<AppEvent> {
     const url = `${this.baseUrl}/events/${request.appId}`;
-    return this.request('POST', url, request);
+    return this.request('POST', url, request) as Promise<AppEvent>;
   }
 
   /**
@@ -97,7 +97,7 @@ export class ClientAPI {
    */
   public async getEvents(day: string): Promise<AppEvent[]> {
     const url = `${this.baseUrl}/events/${this.getAppId()}/${day}`;
-    return this.request('GET', url);
+    return this.request('GET', url) as Promise<AppEvent[]>;
   }
 
   /**
@@ -108,7 +108,7 @@ export class ClientAPI {
     eventKey: string,
   ): Promise<AppEvent | null> {
     const url = `${this.baseUrl}/events/${this.getAppId()}/${day}/${eventKey}`;
-    return this.request('GET', url);
+    return this.request('GET', url) as Promise<AppEvent | null>;
   }
 
   /**
@@ -129,7 +129,7 @@ export class ClientAPI {
     type: 'global' | 'friends' = 'global',
   ): Promise<LeaderboardEntry[]> {
     const url = `${this.baseUrl}/leaderboard/${this.getAppId()}?type=${type}`;
-    return this.request('GET', url);
+    return this.request('GET', url) as Promise<LeaderboardEntry[]>;
   }
 
   /**
@@ -137,7 +137,7 @@ export class ClientAPI {
    */
   public async getI18nData(locale: string): Promise<Record<string, string>> {
     const url = `${this.baseUrl}/i18n/${this.getAppId()}/${locale}`;
-    return this.request('GET', url);
+    return this.request('GET', url) as Promise<Record<string, string>>;
   }
 
   /**
@@ -169,15 +169,15 @@ export class ClientAPI {
       const response = await fetch(url, {
         method,
         headers,
-        body: body ? JSON.stringify(body) : undefined,
+        body: body ? JSON.stringify(body) : (undefined as string | undefined),
       });
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
-      const data = await response.json();
-      return data.data || data; // Handle wrapped responses
+      const data = (await response.json()) as Record<string, unknown>;
+      return ((data.data as unknown) || data) as unknown;
     } catch (error) {
       console.error(`API request failed: ${method} ${url}`, error);
       throw error;

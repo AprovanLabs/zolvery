@@ -72,8 +72,8 @@ export const requestLogger = async (
 
     // Log error response
     logger.error(
-      error,
       {
+        err: error instanceof Error ? error : new Error(String(error)),
         status: ctx.status || 500,
         duration: `${duration.toFixed(2)}ms`,
       },

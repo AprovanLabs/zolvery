@@ -9,9 +9,6 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'src'),
-      '../events.js': path.resolve(__dirname, 'src/__mocks__/events.ts'),
-      '../../events': path.resolve(__dirname, 'src/__mocks__/events.ts'),
-      './events': path.resolve(__dirname, 'src/__mocks__/events.ts'),
     },
   },
 });
