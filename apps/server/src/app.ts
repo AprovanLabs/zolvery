@@ -11,8 +11,8 @@ import { buildApiRouter } from './api';
 import type { LogContext } from '@/middleware/logger';
 import { buildServices } from './services';
 
-const app = new Koa<{}, LogContext>();
-const router = new Router<{}, LogContext>();
+const app = new Koa<Record<string, unknown>, LogContext>();
+const router = new Router<Record<string, unknown>, LogContext>();
 
 // Log application startup
 logger.info(
@@ -66,7 +66,7 @@ app.use(
         method?: string;
         path?: string;
       };
-      logger.error(err, { requestId: logCtx.requestId }, 'Body parser error');
+      logger.error({ err, requestId: logCtx.requestId }, 'Body parser error');
       throw err;
     },
   }),

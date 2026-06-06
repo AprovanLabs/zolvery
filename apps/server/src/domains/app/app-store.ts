@@ -42,10 +42,14 @@ export class DynamoDbAppStore implements AppStore {
       }
       return result.Item as DynamoDbRecord<App>;
     } catch (error) {
-      logger.error(error as Error, {
-        operation: 'get',
-        tableName: this.tableName,
-      });
+      logger.error(
+        {
+          err: error instanceof Error ? error : new Error(String(error)),
+          operation: 'get',
+          tableName: this.tableName,
+        },
+        'DynamoDB getApp failed',
+      );
       throw error;
     }
   }

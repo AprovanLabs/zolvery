@@ -106,8 +106,8 @@ export const errorLogger = async (
     };
 
     logger.error(
-      err,
       {
+        err,
         body: ctx.request.body,
         query: ctx.query,
         headers: ctx.headers,
