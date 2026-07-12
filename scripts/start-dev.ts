@@ -8,7 +8,7 @@
 import { spawn, execSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { allocatePorts, PROJECT_BASES } from "@aprovan/copilot-proxy";
+import { allocatePorts } from "@aprovan/devtools";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, "..");
@@ -17,7 +17,7 @@ async function main() {
   console.log("\n🎮 Starting Zolvery dev services...\n");
 
   const { base, ports } = await allocatePorts({
-    base: PROJECT_BASES.zolvery,
+    base: 4700,
     count: 4,
     increment: 10,
   });
